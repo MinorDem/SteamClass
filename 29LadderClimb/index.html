@@ -13,7 +13,7 @@ button,select,input{font:700 13px system-ui;padding:9px 12px;border-radius:10px;
 button{cursor:pointer}.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
 .stats{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:10px;color:var(--muted);font-weight:700}.val{color:var(--ink)}
 .play{min-height:360px;border:1px solid var(--line);border-radius:16px;background:#fff;padding:16px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;text-align:center}
-.grid{display:grid;gap:10px;width:100%;max-width:760px}.ladder-row{display:grid;gap:8px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#f3f4f6;opacity:.62}.ladder-row.active{background:#eff6ff;border-color:#60a5fa;box-shadow:0 0 0 3px rgba(37,99,235,.13);opacity:1}.ladder-row.done{background:#f0fdf4;border-color:#86efac;opacity:1}.tile{min-width:0;min-height:58px;border:1px solid var(--line);border-radius:10px;background:#e5e7eb;color:#9ca3af;display:flex;align-items:center;justify-content:center;font-weight:900;cursor:not-allowed;user-select:none}.ladder-row.active .tile{background:#f8fafc;color:var(--ink);cursor:pointer}.tile.good{background:#dcfce7!important;border-color:#16a34a;color:#166534}.tile.bad{background:#fee2e2!important;border-color:#dc2626;color:#991b1b}.row-label{font-size:12px;color:var(--muted);font-weight:900;text-transform:uppercase;letter-spacing:.04em;margin-bottom:-4px}
+.path-board{position:relative;width:100%;max-width:860px;padding:42px 18px 18px;overflow:hidden}.grid{display:grid;gap:10px;width:100%}.ladder-col{display:grid;grid-template-rows:repeat(3,minmax(48px,1fr));gap:8px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#f3f4f6;opacity:.62}.ladder-col.active{background:#eff6ff;border-color:#60a5fa;box-shadow:0 0 0 3px rgba(37,99,235,.13);opacity:1}.ladder-col.done{background:#f0fdf4;border-color:#86efac;opacity:1}.tile{min-width:0;min-height:52px;border:1px solid var(--line);border-radius:10px;background:#e5e7eb;color:#9ca3af;display:flex;align-items:center;justify-content:center;font-weight:900;cursor:not-allowed;user-select:none}.ladder-col.active .tile{background:#f8fafc;color:var(--ink);cursor:pointer}.tile.good{background:#dcfce7!important;border-color:#16a34a;color:#166534}.tile.bad{background:#fee2e2!important;border-color:#dc2626;color:#991b1b}.avatar{position:absolute;z-index:4;left:var(--avatar-x);top:var(--avatar-y);width:34px;height:34px;border-radius:50% 50% 44% 44%;background:#f59e0b;border:3px solid #92400e;box-shadow:0 8px 16px rgba(15,23,42,.18);transform:translate(-50%,-50%);transition:left .28s ease,top .28s ease}.avatar:before,.avatar:after{content:"";position:absolute;top:10px;width:5px;height:5px;border-radius:50%;background:#111827}.avatar:before{left:8px}.avatar:after{right:8px}.avatar.falling{animation:fallAvatar .9s ease-in forwards}.shard{position:absolute;z-index:5;left:var(--avatar-x);bottom:10px;width:12px;height:12px;background:#f59e0b;border:2px solid #92400e;opacity:0;animation:splitPiece .75s .75s ease-out forwards}.shard:nth-child(2){--dx:-34px;--rot:-95deg}.shard:nth-child(3){--dx:-12px;--rot:60deg}.shard:nth-child(4){--dx:18px;--rot:130deg}.shard:nth-child(5){--dx:42px;--rot:-160deg}@keyframes fallAvatar{0%{top:-50px;transform:translate(-50%,-50%) rotate(0)}70%{top:calc(100% - 20px);transform:translate(-50%,-50%) rotate(190deg);opacity:1}100%{top:calc(100% - 20px);transform:translate(-50%,-50%) rotate(220deg);opacity:0}}@keyframes splitPiece{0%{opacity:0;transform:translate(-50%,0) rotate(0) scale(.6)}35%{opacity:1}100%{opacity:1;transform:translate(calc(-50% + var(--dx)),0) rotate(var(--rot)) scale(1)}}
 .rank-sidebar{position:sticky;top:58px}.rank-card h3{font-size:18px;margin-bottom:4px}.rank-note{font-size:12px;color:var(--muted);margin-bottom:12px}
 .rank-sub{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px}.rank-sub-title{font-weight:900;color:var(--accent);font-size:12px;margin-bottom:6px}.rank-sub ol{padding-left:20px}.rank-sub li{font-size:12px;margin:4px 0;color:var(--muted)}
 #nameDialog{position:fixed;inset:0;background:rgba(15,23,42,.35);display:none;align-items:center;justify-content:center;z-index:99}.dialog{background:#fff;border-radius:16px;padding:22px;max-width:380px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,.22)}.dialog h3{margin-bottom:8px}.dialog input{width:100%;margin:10px 0}.dialog-actions{display:flex;gap:10px;justify-content:flex-end}
@@ -23,7 +23,7 @@ footer{position:fixed;bottom:0;left:0;width:100%;background:rgba(255,255,255,.95
 </style></head><body>
 <header class="back-header"><a class="back-link" href="/puzzle">← Back to Puzzle Home</a></header>
 <div class="page"><div class="layout"><main><section class="card">
-<h1>🪜 Ladder Climb</h1><div class="sub">Choose safe ladder steps to climb to the top.</div>
+<h1>🪜 Ladder Climb</h1><div class="sub">Choose safe ladder steps to move from left to right.</div>
 <div class="controls"><span>Level:</span><select id="diffSelect"><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select><button class="primary" id="newBtn">New Game</button></div>
 <div class="stats"><div>⏱ Time <span class="val" id="timeEl">0</span>s</div><div id="extraStat"></div><div id="msg" class="msg"></div></div>
 <div class="play"><div id="gameArea"></div></div></section></main>
@@ -49,30 +49,30 @@ function openWinDialog(){el('dialogPrompt').textContent=`${TITLE} · ${difficult
 function closeWinDialog(){el('nameDialog').style.display='none'}
 function wireDialog(){el('cancelName').onclick=closeWinDialog;el('submitName').onclick=async()=>{const name=el('dialogName').value.trim();if(!name){el('dialogStatus').textContent='Name is required.';return}el('submitName').disabled=true;el('dialogStatus').textContent='Saving…';const ok=await submitScore(name);if(ok){closeWinDialog();loadAllRanks()}else el('dialogStatus').textContent='Could not save.';el('submitName').disabled=false}}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeWinDialog();if(e.key==='Enter'&&el('nameDialog').style.display==='flex')el('submitName').click()});
-let row=0,totalRows=5,cols=3,safe=[],picked=[];
-const diffRows={easy:5,medium:7,hard:9};
-function newGame(){resetBase();row=0;totalRows=diffRows[difficulty];cols=3;safe=Array.from({length:totalRows},()=>{const bad=Math.floor(Math.random()*cols);return [0,1,2].filter(c=>c!==bad)});picked=Array(totalRows).fill(null);el('extraStat').textContent=`Grid: ${totalRows} x ${cols}`;draw()}
+let stage=0,totalStages=5,lanes=3,safe=[],picked=[],avatarLane=1,failed=false;
+const diffStages={easy:5,medium:7,hard:9};
+function newGame(){resetBase();stage=0;totalStages=diffStages[difficulty];lanes=3;avatarLane=1;failed=false;safe=Array.from({length:totalStages},()=>{const bad=Math.floor(Math.random()*lanes);return [0,1,2].filter(c=>c!==bad)});picked=Array(totalStages).fill(null);el('extraStat').textContent=`Path: ${totalStages} x ${lanes}`;draw()}
 function draw(){
-  const ladderWidth=Math.min(760,cols*82+(cols-1)*8+20);
-  el('gameArea').innerHTML=`<h2>Row ${Math.min(row+1,totalRows)}/${totalRows}</h2><div class="sub">Choose one step in the highlighted row.</div><div class="grid" id="ladder" style="max-width:${ladderWidth}px"></div>`;
-  for(let r=0;r<totalRows;r++){
-    const rowEl=document.createElement('div');
-    rowEl.className='ladder-row'+(r===row&&!gameOver?' active':'')+(r<row?' done':'');
-    rowEl.style.gridTemplateColumns=`repeat(${cols},minmax(42px,1fr))`;
-    rowEl.setAttribute('aria-label',`Row ${r+1}`);
-    for(let c=0;c<cols;c++){
+  const x=failed?((stage+.5)/totalStages)*100:(stage===0?0:(stage===totalStages?100:((stage-.5)/totalStages)*100));
+  const y=((avatarLane+.5)/lanes)*100;
+  el('gameArea').innerHTML=`<h2>Step ${Math.min(stage+1,totalStages)}/${totalStages}</h2><div class="sub">Choose one step in the highlighted column.</div><div class="path-board" id="pathBoard" style="--avatar-x:${x}%;--avatar-y:${y}%"><div class="avatar${failed?' falling':''}" aria-hidden="true"></div>${failed?'<div class="shard"></div><div class="shard"></div><div class="shard"></div><div class="shard"></div>':''}<div class="grid" id="ladder" style="grid-template-columns:repeat(${totalStages},minmax(54px,1fr))"></div></div>`;
+  for(let s=0;s<totalStages;s++){
+    const colEl=document.createElement('div');
+    colEl.className='ladder-col'+(s===stage&&!gameOver?' active':'')+(s<stage?' done':'');
+    colEl.setAttribute('aria-label',`Step ${s+1}`);
+    for(let lane=0;lane<lanes;lane++){
       const b=document.createElement('button');
       b.className='tile';
-      b.textContent=c+1;
-      b.disabled=r!==row||gameOver;
-      if(picked[r]===c&&safe[r].includes(c))b.classList.add('good');
-      if(picked[r]===c&&!safe[r].includes(c))b.classList.add('bad');
-      if((r<row||gameOver)&&safe[r].includes(c))b.classList.add('good');
-      b.onclick=()=>step(r,c);
-      rowEl.appendChild(b);
+      b.textContent=lane+1;
+      b.disabled=s!==stage||gameOver;
+      if(picked[s]===lane&&safe[s].includes(lane))b.classList.add('good');
+      if(picked[s]===lane&&!safe[s].includes(lane))b.classList.add('bad');
+      if((s<stage||gameOver)&&safe[s].includes(lane))b.classList.add('good');
+      b.onclick=()=>step(s,lane);
+      colEl.appendChild(b);
     }
-    el('ladder').appendChild(rowEl);
+    el('ladder').appendChild(colEl);
   }
 }
-function step(r,c){if(gameOver||r!==row)return;picked[r]=c;if(!safe[r].includes(c)){el('msg').textContent='That step broke. Try again.';el('msg').className='msg bad';gameOver=true;stopTimer();draw();return}row++;if(row===totalRows){draw();winGame()}else{el('msg').textContent='Good step. Try the next row.';el('msg').className='msg ok';draw()}}
+function step(s,lane){if(gameOver||s!==stage)return;picked[s]=lane;avatarLane=lane;if(!safe[s].includes(lane)){el('msg').textContent='That step broke. Try again.';el('msg').className='msg bad';gameOver=true;failed=true;stopTimer();draw();return}stage++;if(stage===totalStages){draw();winGame()}else{el('msg').textContent='Good step. Move right to the next column.';el('msg').className='msg ok';draw()}}
 wireDialog();el('newBtn').onclick=newGame;el('diffSelect').onchange=newGame;newGame();</script></body></html>
