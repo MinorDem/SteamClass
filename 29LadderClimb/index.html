@@ -49,9 +49,9 @@ function openWinDialog(){el('dialogPrompt').textContent=`${TITLE} · ${difficult
 function closeWinDialog(){el('nameDialog').style.display='none'}
 function wireDialog(){el('cancelName').onclick=closeWinDialog;el('submitName').onclick=async()=>{const name=el('dialogName').value.trim();if(!name){el('dialogStatus').textContent='Name is required.';return}el('submitName').disabled=true;el('dialogStatus').textContent='Saving…';const ok=await submitScore(name);if(ok){closeWinDialog();loadAllRanks()}else el('dialogStatus').textContent='Could not save.';el('submitName').disabled=false}}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeWinDialog();if(e.key==='Enter'&&el('nameDialog').style.display==='flex')el('submitName').click()});
-let row=0,totalRows=3,cols=5,safe=[],picked=[];
-const diffCols={easy:5,medium:7,hard:9};
-function newGame(){resetBase();row=0;totalRows=3;cols=diffCols[difficulty];safe=Array.from({length:totalRows},()=>Math.floor(Math.random()*cols));picked=Array(totalRows).fill(null);el('extraStat').textContent=`Grid: ${totalRows} x ${cols}`;draw()}
+let row=0,totalRows=5,cols=3,safe=[],picked=[];
+const diffRows={easy:5,medium:7,hard:9};
+function newGame(){resetBase();row=0;totalRows=diffRows[difficulty];cols=3;safe=Array.from({length:totalRows},()=>{const bad=Math.floor(Math.random()*cols);return [0,1,2].filter(c=>c!==bad)});picked=Array(totalRows).fill(null);el('extraStat').textContent=`Grid: ${totalRows} x ${cols}`;draw()}
 function draw(){
   const ladderWidth=Math.min(760,cols*82+(cols-1)*8+20);
   el('gameArea').innerHTML=`<h2>Row ${Math.min(row+1,totalRows)}/${totalRows}</h2><div class="sub">Choose one step in the highlighted row.</div><div class="grid" id="ladder" style="max-width:${ladderWidth}px"></div>`;
@@ -65,14 +65,14 @@ function draw(){
       b.className='tile';
       b.textContent=c+1;
       b.disabled=r!==row||gameOver;
-      if(picked[r]===c&&c===safe[r])b.classList.add('good');
-      if(picked[r]===c&&c!==safe[r])b.classList.add('bad');
-      if((r<row||gameOver)&&c===safe[r])b.classList.add('good');
+      if(picked[r]===c&&safe[r].includes(c))b.classList.add('good');
+      if(picked[r]===c&&!safe[r].includes(c))b.classList.add('bad');
+      if((r<row||gameOver)&&safe[r].includes(c))b.classList.add('good');
       b.onclick=()=>step(r,c);
       rowEl.appendChild(b);
     }
     el('ladder').appendChild(rowEl);
   }
 }
-function step(r,c){if(gameOver||r!==row)return;picked[r]=c;if(c!==safe[r]){el('msg').textContent='That step broke. Try again.';el('msg').className='msg bad';gameOver=true;stopTimer();draw();return}row++;if(row===totalRows){draw();winGame()}else{el('msg').textContent='Good step. Try the next row.';el('msg').className='msg ok';draw()}}
+function step(r,c){if(gameOver||r!==row)return;picked[r]=c;if(!safe[r].includes(c)){el('msg').textContent='That step broke. Try again.';el('msg').className='msg bad';gameOver=true;stopTimer();draw();return}row++;if(row===totalRows){draw();winGame()}else{el('msg').textContent='Good step. Try the next row.';el('msg').className='msg ok';draw()}}
 wireDialog();el('newBtn').onclick=newGame;el('diffSelect').onchange=newGame;newGame();</script></body></html>
