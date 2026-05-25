@@ -1,0 +1,115 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Color Link · Ranked</title><style>
+:root{--bg:#f6f7fb;--card:#fff;--ink:#1f2937;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#16a34a;--bad:#dc2626}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:linear-gradient(180deg,#f8fafc,#eef2ff);color:var(--ink);min-height:100vh;padding-bottom:56px}
+.back-header{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.92);border-bottom:1px solid var(--line);padding:9px 16px;backdrop-filter:blur(8px)}
+.back-link{text-decoration:none;color:var(--ink);font-weight:800;font-size:14px}
+.page{max-width:1120px;margin:0 auto;padding:18px 12px}.layout{display:grid;grid-template-columns:minmax(0,1fr)300px;gap:18px;align-items:start}
+.card,.rank-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 12px 30px rgba(15,23,42,.08)}
+h1{font-size:28px;margin-bottom:4px}.sub{color:var(--muted);font-size:13px;margin-bottom:14px}
+.controls,.stats{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+button,select,input{font:700 13px system-ui;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:#f8fafc;color:var(--ink)}
+button{cursor:pointer}.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.stats{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:10px;color:var(--muted);font-weight:700}.val{color:var(--ink)}
+.play{min-height:360px;border:1px solid var(--line);border-radius:16px;background:#fff;padding:16px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;text-align:center}
+.grid{display:grid;gap:8px}.tile{border:1px solid var(--line);border-radius:10px;background:#f8fafc;display:flex;align-items:center;justify-content:center;font-weight:900;cursor:pointer;user-select:none}.tile.good{background:#dcfce7;border-color:#16a34a}.tile.bad{background:#fee2e2;border-color:#dc2626}
+.rank-sidebar{position:sticky;top:58px}.rank-card h3{font-size:18px;margin-bottom:4px}.rank-note{font-size:12px;color:var(--muted);margin-bottom:12px}
+.rank-sub{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px}.rank-sub-title{font-weight:900;color:var(--accent);font-size:12px;margin-bottom:6px}.rank-sub ol{padding-left:20px}.rank-sub li{font-size:12px;margin:4px 0;color:var(--muted)}
+#nameDialog{position:fixed;inset:0;background:rgba(15,23,42,.35);display:none;align-items:center;justify-content:center;z-index:99}.dialog{background:#fff;border-radius:16px;padding:22px;max-width:380px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,.22)}.dialog h3{margin-bottom:8px}.dialog input{width:100%;margin:10px 0}.dialog-actions{display:flex;gap:10px;justify-content:flex-end}
+.msg.ok{color:var(--ok);font-weight:900}.msg.bad{color:var(--bad);font-weight:900}
+footer{position:fixed;bottom:0;left:0;width:100%;background:rgba(255,255,255,.95);border-top:1px solid var(--line);text-align:center;padding:7px;font-size:12px;color:var(--muted)}
+
+.color-legend{
+  margin-top:14px;
+  padding:14px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:#f8fafc;
+  text-align:left;
+  width:100%;
+}
+.color-legend h3{
+  font-size:14px;
+  margin-bottom:10px;
+  color:var(--ink);
+}
+.legend-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(95px,1fr));
+  gap:8px;
+}
+.legend-item{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:12px;
+  font-weight:700;
+  color:var(--ink);
+}
+.legend-swatch{
+  width:20px;
+  height:20px;
+  border-radius:6px;
+  border:1px solid rgba(0,0,0,.18);
+  flex-shrink:0;
+}
+
+@media(max-width:850px){.layout{grid-template-columns:1fr}.rank-sidebar{position:static}}
+</style></head><body>
+<header class="back-header"><a class="back-link" href="/puzzle">← Back to Puzzle Home</a></header>
+<div class="page"><div class="layout"><main><section class="card">
+<h1>🎨 Color Link</h1><div class="sub">Match each color name with the correct tile through multiple rounds. One mistake ends the game.</div>
+<div class="controls"><span>Level:</span><select id="diffSelect"><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select><button class="primary" id="newBtn">New Game</button></div>
+<div class="stats"><div>⏱ Time <span class="val" id="timeEl">0</span>s</div><div id="extraStat"></div><div id="msg" class="msg"></div></div>
+<div class="play"><div id="gameArea"></div><div id="colorLegend" class="color-legend"></div></div></section></main>
+<aside class="rank-sidebar"><section class="rank-card"><h3>🏆 Leaderboard</h3><div class="rank-note">Ranking: wins first, then best time.</div>
+<div class="rank-sub"><div class="rank-sub-title">Easy</div><ol id="rankEasy"><li>Loading…</li></ol></div>
+<div class="rank-sub"><div class="rank-sub-title">Medium</div><ol id="rankMedium"><li>Loading…</li></ol></div>
+<div class="rank-sub"><div class="rank-sub-title">Hard</div><ol id="rankHard"><li>Loading…</li></ol></div>
+</section></aside></div></div>
+<div id="nameDialog"><div class="dialog"><h3>🎉 You won!</h3><p id="dialogPrompt"></p><input id="dialogName" placeholder="Your name" maxlength="40"/><div class="dialog-actions"><button id="cancelName">Cancel</button><button class="primary" id="submitName">Submit</button></div><div id="dialogStatus" class="msg bad"></div></div></div>
+<footer>© 2026 Yinghua International School. Made by Science and STEAM Teacher Chao Yu. For educational purposes only.</footer>
+<script>const TITLE="Color Link";const BASE_GAME_ID="colorlink";
+const el=id=>document.getElementById(id);
+let difficulty='easy',seconds=0,timer=null,gameOver=false,submitted=false;
+function gameId(diff=difficulty){return `${BASE_GAME_ID}_${diff}`;}
+function startTimer(){if(timer)return;timer=setInterval(()=>{seconds++;el('timeEl').textContent=seconds},1000)}
+function stopTimer(){clearInterval(timer);timer=null}
+function resetBase(){difficulty=el('diffSelect').value;seconds=0;gameOver=false;submitted=false;stopTimer();startTimer();el('timeEl').textContent='0';el('msg').textContent='';el('msg').className='msg';loadAllRanks()}
+function winGame(){if(gameOver)return;gameOver=true;stopTimer();el('msg').textContent=`Completed in ${seconds}s!`;el('msg').className='msg ok';if(!submitted){submitted=true;openWinDialog()}}
+async function submitScore(name){try{const res=await fetch('/api/score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:gameId(),player_name:name.trim().slice(0,40),seconds})});if(!res.ok)return false;const data=await res.json().catch(()=>({}));return data.ok===true}catch{return false}}
+async function loadRankList(diff){const list=el(`rank${diff[0].toUpperCase()+diff.slice(1)}`);try{const res=await fetch(`/api/leaderboard?game=${encodeURIComponent(gameId(diff))}&limit=5`,{cache:'no-store'});const data=await res.json();const rows=Array.isArray(data)?data:(data.rows||[]);list.innerHTML='';if(!rows.length){list.innerHTML='<li>No scores yet.</li>';return}rows.forEach((r,i)=>{const name=r.player_name??r.playerName??'Unknown';const wins=r.win_count??r.wins??r.winCount??0;const best=r.best_seconds??r.bestSeconds??null;const li=document.createElement('li');li.textContent=`#${i+1} ${name} — ${wins}W`+(best!=null?` — Best: ${best}s`:'');list.appendChild(li)})}catch{list.innerHTML='<li>Could not load.</li>'}}
+async function loadAllRanks(){await Promise.all(['easy','medium','hard'].map(loadRankList))}
+function openWinDialog(){el('dialogPrompt').textContent=`${TITLE} · ${difficulty.toUpperCase()} · ${seconds}s. Enter your name:`;el('dialogName').value='';el('dialogStatus').textContent='';el('nameDialog').style.display='flex';setTimeout(()=>el('dialogName').focus(),50)}
+function closeWinDialog(){el('nameDialog').style.display='none'}
+function wireDialog(){el('cancelName').onclick=closeWinDialog;el('submitName').onclick=async()=>{const name=el('dialogName').value.trim();if(!name){el('dialogStatus').textContent='Name is required.';return}el('submitName').disabled=true;el('dialogStatus').textContent='Saving…';const ok=await submitScore(name);if(ok){closeWinDialog();loadAllRanks()}else el('dialogStatus').textContent='Could not save.';el('submitName').disabled=false}}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeWinDialog();if(e.key==='Enter'&&el('nameDialog').style.display==='flex')el('submitName').click()});
+let answer='',round=0,targetRounds=5;
+const colors=['red','blue','green','yellow','purple','orange','pink','brown','black','gray','cyan','lime'];
+
+const COLOR_LABELS={
+  red:'Red',
+  blue:'Blue',
+  green:'Green',
+  yellow:'Yellow',
+  purple:'Purple',
+  orange:'Orange',
+  pink:'Pink',
+  brown:'Brown',
+  black:'Black',
+  gray:'Gray',
+  cyan:'Cyan',
+  lime:'Lime'
+};
+
+function renderLegend(){
+  const legend=el('colorLegend');
+  legend.innerHTML='<h3>Color Legend</h3><div class="legend-grid">'+
+    colors.map(c=>`<div class="legend-item"><span class="legend-swatch" style="background:${c}"></span><span>${COLOR_LABELS[c]}</span></div>`).join('')+
+    '</div>';
+}
+function newGame(){resetBase();renderLegend();round=0;targetRounds={easy:8,medium:12,hard:18}[difficulty];nextRound()}
+function nextRound(){let count={easy:8,medium:10,hard:12}[difficulty];let opts=colors.slice(0,count).sort(()=>Math.random()-.5);answer=opts[Math.floor(Math.random()*opts.length)];el('extraStat').textContent=`Round: ${round+1}/${targetRounds} · Choices: ${count}`;const cols=difficulty==='easy'?4:Math.min(count,6);el('gameArea').innerHTML=`<h2>Choose: ${COLOR_LABELS[answer].toUpperCase()}</h2><div class="grid" id="colors" style="grid-template-columns:repeat(${cols},70px)"></div>`;opts.forEach(c=>{let b=document.createElement('button');b.className='tile';b.style.width='70px';b.style.height='70px';b.style.background=c;b.title=c;b.onclick=()=>pick(c);el('colors').appendChild(b)})}
+function pick(c){if(gameOver)return;if(c===answer){round++;if(round>=targetRounds)winGame();else nextRound()}else{el('msg').textContent='Wrong color. Try a new game.';el('msg').className='msg bad';gameOver=true;stopTimer()}}
+wireDialog();el('newBtn').onclick=newGame;el('diffSelect').onchange=newGame;newGame();</script></body></html>

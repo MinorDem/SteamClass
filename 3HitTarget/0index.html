@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hit the Target (Difficulty + Name + Win)</title>
+  <style>
+    body{
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:#ffffff;
+      margin:0;
+      padding:16px;
+      color:#111827;
+    }
+    .container{
+      max-width: 980px;
+      margin: 0 auto;
+    }
+    h1{ margin: 8px 0 6px; }
+
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      padding: 8px 0 4px;
+    }
+    .controls input[type="text"]{
+      padding:6px 8px;
+      font-size:14px;
+      border:1px solid #d1d5db;
+      border-radius:6px;
+      outline:none;
+      width: 220px;
+    }
+    .controls button{
+      padding:6px 12px;
+      font-size:14px;
+      border-radius:6px;
+      border:1px solid #2563eb;
+      background:#2563eb;
+      color:#fff;
+      cursor:pointer;
+    }
+    .controls button.secondary{
+      background:#fff;
+      color:#2563eb;
+    }
+
+    .difficulty{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      padding: 6px 0;
+    }
+    .difficulty label{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 10px;
+      border:1px solid #d1d5db;
+      border-radius:6px;
+      cursor:pointer;
+      user-select:none;
+    }
+
+    .stats{
+      margin-left:auto;
+      font-weight:600;
+      white-space:nowrap;
+    }
+
+    .game-area{
+      position:relative;
+      width:100%;
+      height:62vh;
+      min-height:340px;
+      border:2px dashed #e5e7eb;
+      border-radius:10px;
+      overflow:hidden;
+      cursor:crosshair;
+      margin-top: 8px;
+    }
+
+    .target{
+      position:absolute;
+      border-radius:50%;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      color:#fff;
+      font-weight:800;
+      user-select:none;
+      box-shadow:0 6px 14px rgba(0,0,0,.2);
+      background: radial-gradient(circle at 30% 30%, #ffb703, #fb8500);
+    }
+
+    .message{
+      margin-top:10px;
+      min-height:22px;
+      font-weight:700;
+    }
+    .sub{
+      margin-top: 4px;
+      color:#374151;
+      font-size:14px;
+      min-height:18px;
+    }
+
+    .win-badge{
+      display:inline-block;
+      padding: 4px 10px;
+      border: 1px solid #10b981;
+      border-radius: 999px;
+      color:#065f46;
+      background:#ecfdf5;
+      font-weight:800;
+      margin-left: 6px;
+    }
+    /* Back link (top-left) */
+    .back-header{
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 1000;
+    }
+    .back-link{
+      text-decoration:none;
+      color:#000000;
+      font-weight:700;
+      font-size:16px;
+    }
+  </style>
+</head>
+<body>
+   <header class="back-header">
+    <a class="back-link" href="/puzzle">← Back to Puzzle Home</a>
+  </header>
+  
+  <div class="container">
+    <h1>Hit the Target</h1>
+
+    <div class="controls">
+      <input id="nameInput" type="text" placeholder="Student name" />
+      <button id="startBtn">Start</button>
+      <button id="resetBtn" class="secondary">Reset</button>
+
+      <div class="stats">
+        Time: <span id="timeLeft">30</span>s ·
+        Score: <span id="score">0</span> ·
+        Goal: <span id="goal">12</span>
+      </div>
+    </div>
+
+    <div class="difficulty" role="radiogroup" aria-label="Difficulty">
+      <strong>Difficulty:</strong>
+      <label>
+        <input type="radio" name="difficulty" value="easy" checked />
+        Easy
+      </label>
+      <label>
+        <input type="radio" name="difficulty" value="medium" />
+        Medium
+      </label>
+      <label>
+        <input type="radio" name="difficulty" value="hard" />
+        Hard
+      </label>
+    </div>
+
+    <div class="game-area" id="gameArea">
+      <div class="target" id="target">+</div>
+    </div>
+
+    <div class="message" id="message"></div>
+    <div class="sub" id="sub"></div>
+  </div>
+
+  <script>function _0x40a5(_0x3cbb36,_0x392eac){_0x3cbb36=_0x3cbb36-0xf8;const _0x34a86a=_0x34a8();let _0x40a550=_0x34a86a[_0x3cbb36];return _0x40a550;}const _0x32cc8d=_0x40a5;(function(_0x431927,_0x3b2c39){const _0x5a88b0=_0x40a5,_0x5f11ea=_0x431927();while(!![]){try{const _0x1c1eaa=-parseInt(_0x5a88b0(0x11d))/0x1*(parseInt(_0x5a88b0(0x10b))/0x2)+-parseInt(_0x5a88b0(0x121))/0x3+parseInt(_0x5a88b0(0x11c))/0x4+-parseInt(_0x5a88b0(0xfa))/0x5*(-parseInt(_0x5a88b0(0x125))/0x6)+-parseInt(_0x5a88b0(0x100))/0x7+parseInt(_0x5a88b0(0x11b))/0x8*(-parseInt(_0x5a88b0(0x10c))/0x9)+parseInt(_0x5a88b0(0x111))/0xa*(parseInt(_0x5a88b0(0x112))/0xb);if(_0x1c1eaa===_0x3b2c39)break;else _0x5f11ea['push'](_0x5f11ea['shift']());}catch(_0x1a3583){_0x5f11ea['push'](_0x5f11ea['shift']());}}}(_0x34a8,0xac94d));const DIFFICULTIES={'easy':{'targetSize':0x46,'moveIntervalMs':0x3e8,'durationSec':0x1e,'goal':0xc},'medium':{'targetSize':0x34,'moveIntervalMs':0x320,'durationSec':0x1e,'goal':0x12},'hard':{'targetSize':0x28,'moveIntervalMs':0x258,'durationSec':0x1e,'goal':0x19}};let difficultyKey='easy',score=0x0,timeLeft=DIFFICULTIES[difficultyKey]['durationSec'],goal=DIFFICULTIES[difficultyKey]['goal'],playing=![],won=![],timerId=null,moveId=null;const gameArea=document[_0x32cc8d(0x12e)](_0x32cc8d(0x128)),target=document['getElementById'](_0x32cc8d(0x12b)),timeLeftEl=document[_0x32cc8d(0x12e)](_0x32cc8d(0x108)),scoreEl=document['getElementById'](_0x32cc8d(0x11a)),goalEl=document['getElementById']('goal'),messageEl=document[_0x32cc8d(0x12e)](_0x32cc8d(0x126)),subEl=document[_0x32cc8d(0x12e)](_0x32cc8d(0xfd)),nameInput=document['getElementById'](_0x32cc8d(0x11f)),startBtn=document['getElementById'](_0x32cc8d(0x127)),resetBtn=document[_0x32cc8d(0x12e)]('resetBtn');function formatName(){const _0x50bedb=_0x32cc8d,_0x2eaff6=nameInput[_0x50bedb(0x119)][_0x50bedb(0x12a)]();return _0x2eaff6[_0x50bedb(0xfc)]?_0x2eaff6:_0x50bedb(0x105);}function applyDifficulty(_0x224fad){const _0x4e520a=_0x32cc8d;difficultyKey=_0x224fad;const _0x180072=DIFFICULTIES[difficultyKey];timeLeft=_0x180072[_0x4e520a(0xfe)],goal=_0x180072[_0x4e520a(0x10a)],target['style'][_0x4e520a(0x106)]=_0x180072['targetSize']+'px',target['style'][_0x4e520a(0x124)]=_0x180072[_0x4e520a(0x131)]+'px',goalEl['textContent']=goal,timeLeftEl[_0x4e520a(0x12f)]=timeLeft;if(playing)resetGame();}function randomPos(){const _0x25a9d3=_0x32cc8d,_0x18b47e=gameArea['getBoundingClientRect'](),_0xd8937=DIFFICULTIES[difficultyKey][_0x25a9d3(0x131)],_0x21a7d7=Math[_0x25a9d3(0x118)](0x0,_0x18b47e[_0x25a9d3(0x106)]-_0xd8937),_0x361cae=Math[_0x25a9d3(0x118)](0x0,_0x18b47e[_0x25a9d3(0x124)]-_0xd8937),_0x199400=Math[_0x25a9d3(0x12d)]()*_0x21a7d7,_0x193365=Math['random']()*_0x361cae;return{'x':_0x199400,'y':_0x193365};}function moveTarget(){const _0x4f3698=_0x32cc8d,{x:_0x9bbdb9,y:_0x57d1d1}=randomPos();target[_0x4f3698(0x11e)][_0x4f3698(0x120)]=_0x9bbdb9+'px',target[_0x4f3698(0x11e)]['top']=_0x57d1d1+'px',target['style'][_0x4f3698(0x103)]=_0x4f3698(0x114);}function updateUI(){const _0x5118bb=_0x32cc8d;timeLeftEl[_0x5118bb(0x12f)]=timeLeft,scoreEl[_0x5118bb(0x12f)]=score,goalEl[_0x5118bb(0x12f)]=goal;}function startGame(){const _0x1ad4c4=_0x32cc8d;if(playing)return;playing=!![],won=![],score=0x0;const _0x2f68ce=DIFFICULTIES[difficultyKey];timeLeft=_0x2f68ce['durationSec'],goal=_0x2f68ce[_0x1ad4c4(0x10a)],updateUI(),messageEl[_0x1ad4c4(0x12f)]=_0x1ad4c4(0x104),subEl[_0x1ad4c4(0x12f)]='Reach\x20'+goal+_0x1ad4c4(0x10e),moveTarget(),moveId=setInterval(moveTarget,_0x2f68ce[_0x1ad4c4(0x12c)]),timerId=setInterval(()=>{timeLeft--,updateUI(),timeLeft<=0x0&&endGame(![]);},0x3e8);}function endGame(_0x307f24){const _0x10297a=_0x32cc8d;playing=![],clearInterval(timerId),clearInterval(moveId),target['style']['display']=_0x10297a(0x107);const _0x4e7d13=formatName();_0x307f24?(won=!![],messageEl[_0x10297a(0x102)]='🎉\x20You\x20WIN!\x20<span\x20class=\x22win-badge\x22>'+_0x4e7d13+_0x10297a(0x10f),subEl['textContent']=_0x10297a(0x109)+_0x4e7d13+_0x10297a(0x110)+score+'.'):(messageEl[_0x10297a(0x12f)]=_0x10297a(0x117)+_0x4e7d13+_0x10297a(0x129)+score+'.',subEl[_0x10297a(0x12f)]=_0x10297a(0xf8)+goal+_0x10297a(0x123));}function resetGame(){const _0x3847a3=_0x32cc8d;playing=![],won=![],clearInterval(timerId),clearInterval(moveId),score=0x0;const _0xa6e257=DIFFICULTIES[difficultyKey];timeLeft=_0xa6e257[_0x3847a3(0xfe)],goal=_0xa6e257[_0x3847a3(0x10a)],target['style'][_0x3847a3(0x103)]=_0x3847a3(0x107),updateUI(),messageEl[_0x3847a3(0x12f)]=_0x3847a3(0x113),subEl['textContent']=_0x3847a3(0xff)+goal+_0x3847a3(0x116)+timeLeft+_0x3847a3(0x101);}function _0x34a8(){const _0x199077=['click','35TXudVX','querySelectorAll','length','sub','durationSec','Goal:\x20','5084163njjqPL','\x20seconds.','innerHTML','display','Click\x20the\x20target\x20to\x20score\x20points.','Student','width','none','timeLeft','Great\x20job,\x20','goal','2qyssNp','9JQLEbG','forEach','\x20points\x20before\x20time\x20runs\x20out\x20to\x20WIN.','</span>','!\x20Final\x20score:\x20','18629870oBYUrl','11LhlJRJ','Click\x20Start\x20to\x20play.','flex','easy','\x20points\x20in\x20','Time\x27s\x20up!\x20','max','value','score','1867936mVcHjC','2828716SizSQc','1011403Lrlfol','style','nameInput','left','1358454qXVsTH','input[name=\x22difficulty\x22]','.\x20Click\x20Start\x20to\x20try\x20again.','height','480642LHBqQm','message','startBtn','gameArea','\x20scored\x20','trim','target','moveIntervalMs','random','getElementById','textContent','addEventListener','targetSize','Goal\x20was\x20'];_0x34a8=function(){return _0x199077;};return _0x34a8();}target[_0x32cc8d(0x130)](_0x32cc8d(0xf9),_0x1f818c=>{if(!playing||won)return;_0x1f818c['stopPropagation'](),score++,updateUI(),moveTarget(),score>=goal&&endGame(!![]);}),startBtn['addEventListener'](_0x32cc8d(0xf9),startGame),resetBtn[_0x32cc8d(0x130)](_0x32cc8d(0xf9),resetGame),document[_0x32cc8d(0xfb)](_0x32cc8d(0x122))[_0x32cc8d(0x10d)](_0xde4e=>{const _0x3b7bde=_0x32cc8d;_0xde4e[_0x3b7bde(0x130)]('change',_0x196c63=>applyDifficulty(_0x196c63[_0x3b7bde(0x12b)][_0x3b7bde(0x119)]));}),applyDifficulty(_0x32cc8d(0x115)),resetGame();
+  </script>
+
+  <footer style="
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          background: #fafafa;
+          text-align: center;
+          padding: 8px 0;
+          font-size: 14px;
+          color: #555;
+          border-top: 1px solid #ccc;
+        ">
+          © 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528. <br>
+          The STEAM Teacher is Chao Yu. For educational purposes only. All rights reserved.
+      </footer>
+      
+</body>
+</html>

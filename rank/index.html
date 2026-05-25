@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>🏆 Ranking</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:#fffde7; --panel:#fffacd; --border:#e8d96a;
+      --gold:#b8860b; --silver:#7a8a9a; --bronze:#a0622a;
+      --accent:#1a6fb5; --pink:#c0392b; --green:#1e8449;
+      --purple:#6c3483; --text:#2c2a00; --dim:#8a7e30;
+      --head-bg:#fdf5a0;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    .back{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink);background:#fff;border:2px solid var(--line);border-radius:999px;padding:8px 14px;font-weight:800;box-shadow:0 3px 10px rgba(0,0,0,.08);margin-bottom:14px}
+    body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;padding:24px 16px 48px;min-height:100vh;}
+    h1{font-family:'Press Start 2P',monospace;font-size:clamp(13px,2.5vw,22px);text-align:center;color:var(--gold);text-shadow:1px 1px 0 rgba(0,0,0,.15);margin-bottom:6px;letter-spacing:3px;}
+    .subtitle{text-align:center;color:var(--dim);font-size:13px;letter-spacing:4px;text-transform:uppercase;margin-bottom:8px;}
+    .status{text-align:center;font-size:12px;letter-spacing:2px;min-height:20px;margin-bottom:14px;color:var(--accent);transition:color .3s;}
+    .status.err{color:var(--pink);}
+    .scroll-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);box-shadow:0 4px 18px rgba(180,160,0,.15);}
+    table{border-collapse:collapse;width:max-content;min-width:100%;font-size:13px;}
+    thead tr.group-row th{background:#fef08a;color:var(--purple);font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:6px 4px 4px;border:1px solid var(--border);}
+    thead tr.col-row th{background:var(--head-bg);color:var(--accent);font-size:11px;letter-spacing:1px;padding:6px 10px;border:1px solid var(--border);white-space:nowrap;}
+    th.sticky,td.sticky{position:sticky;background:var(--panel);z-index:3;box-shadow:2px 0 0 var(--border);}
+    th.s0,td.s0{left:0;min-width:42px;}
+    th.s1,td.s1{left:42px;min-width:130px;text-align:left;}
+    thead th.sticky{background:var(--head-bg);z-index:4;}
+    tbody tr{border-bottom:1px solid var(--border);}
+    tbody tr:nth-child(even){background:#fffef5;}
+    tbody tr:hover td{background:#fef9c3!important;}
+    td{padding:7px 10px;text-align:center;border-right:1px solid var(--border);white-space:nowrap;}
+    td.sticky{border-right:2px solid var(--border);}
+    .rank{font-family:'Press Start 2P',monospace;font-size:9px;}
+    .r1{color:#b8860b;}.r2{color:#5a6672;}.r3{color:#a0622a;}.r-else{color:var(--dim);}
+    .pname{font-weight:700;font-size:14px;letter-spacing:.5px;}
+    .total{color:var(--pink);font-weight:700;font-size:15px;}
+    .w0{color:#ccc89a;font-size:11px;}
+    .w-lo{color:var(--dim);}
+    .w-md{color:var(--accent);font-weight:600;}
+    .w-hi{color:var(--green);font-weight:700;}
+    .w-top{color:var(--gold);font-weight:700;font-size:15px;}
+    .legend{margin-top:18px;display:flex;gap:20px;flex-wrap:wrap;justify-content:center;font-size:12px;color:var(--dim);letter-spacing:1px;}
+    .legend span{display:flex;align-items:center;gap:6px;}
+    .dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
+  </style>
+</head>
+<body>
+<a class="back" href="/puzzle">← Back to Puzzle Home</a>
+<h1>🏆 ALL PUZZLE RANK</h1>
+<p class="subtitle">All Games · All Players</p>
+<p class="status" id="status">Loading…</p>
+
+<div class="scroll-wrap">
+  <table id="board"></table>
+</div>
+
+<div class="legend">
+  <span><span class="dot" style="background:var(--gold)"></span>100+</span>
+  <span><span class="dot" style="background:var(--green)"></span>50–99</span>
+  <span><span class="dot" style="background:var(--accent)"></span>10–49</span>
+  <span><span class="dot" style="background:var(--dim)"></span>1–9</span>
+  <span><span class="dot" style="background:#ccc89a"></span>0 / —</span>
+</div>
+
+<script>
+/* ── ALL GAME IDs ─────────────────────────────────────────────────── */
+const ALL_GAMES = [
+  'wordguess_5','wordguess_6','wordguess_7',
+  'numberguess_easy','numberguess_medium','numberguess_hard',
+  'slidingpuzzle_3x3','slidingpuzzle_4x4','slidingpuzzle_5x5','slidingpuzzle_6x6',
+  'snake_easy','snake_medium','snake_hard',
+  'hittarget_easy','hittarget_medium','hittarget_hard',
+  'chessai_easy','chessai_medium','chessai_hard',
+  'flippingbird_easy','flippingbird_medium','flippingbird_hard',
+  'dishmaker_easy','dishmaker_medium','dishmaker_hard',
+  'fishing_easy','fishing_medium','fishing_hard',
+  'second_10','second_20','second_30',
+  'memorymatch_easy','memorymatch_medium','memorymatch_hard',
+  'mathspeedquiz_easy','mathspeedquiz_medium','mathspeedquiz_hard',
+  'finddiff_easy','finddiff_medium','finddiff_hard',
+  'flow_links_8x8','flow_links_9x9','flow_links_10x10',
+  'pipes_3x3','pipes_4x4','pipes_5x5','pipes_8x8',
+  'uno_rush','checkers_vs_computer',
+  'sciencespeedquiz_easy','sciencespeedquiz_medium','sciencespeedquiz_hard',
+  'mystery_picture','fight_landlord',
+  'sidefinishrun_easy','sidefinishrun_medium','sidefinishrun_hard',
+];
+
+/* ── GAME CATEGORIES ──────────────────────────────────────────────── */
+const CATS = [
+  {label:'🔤 Word',      games:['wordguess_5','wordguess_6','wordguess_7']},
+  {label:'🔢 Number',    games:['numberguess_easy','numberguess_medium','numberguess_hard']},
+  {label:'🧩 Slide',     games:['slidingpuzzle_3x3','slidingpuzzle_4x4','slidingpuzzle_5x5','slidingpuzzle_6x6']},
+  {label:'🐍 Snake',     games:['snake_easy','snake_medium','snake_hard']},
+  {label:'🎯 Hit',       games:['hittarget_easy','hittarget_medium','hittarget_hard']},
+  {label:'♟ Chess',     games:['chessai_easy','chessai_medium','chessai_hard']},
+  {label:'🐦 Bird',      games:['flippingbird_easy','flippingbird_medium','flippingbird_hard']},
+  {label:'🍽 Dish',      games:['dishmaker_easy','dishmaker_medium','dishmaker_hard']},
+  {label:'🎣 Fishing',   games:['fishing_easy','fishing_medium','fishing_hard']},
+  {label:'⏱ Timer',     games:['second_10','second_20','second_30']},
+  {label:'🃏 Memory',    games:['memorymatch_easy','memorymatch_medium','memorymatch_hard']},
+  {label:'➗ Math',      games:['mathspeedquiz_easy','mathspeedquiz_medium','mathspeedquiz_hard']},
+  {label:'🔍 Find Diff', games:['finddiff_easy','finddiff_medium','finddiff_hard']},
+  {label:'🔗 Flow',      games:['flow_links_8x8','flow_links_9x9','flow_links_10x10']},
+  {label:'🔧 Pipes',     games:['pipes_3x3','pipes_4x4','pipes_5x5','pipes_6x6','pipes_7x7','pipes_8x8']},
+  {label:'🂡 Uno',       games:['uno_rush']},
+  {label:'♔ Checkers',  games:['checkers_vs_computer']},
+  {label:'🔬 Science',   games:['sciencespeedquiz_easy','sciencespeedquiz_medium','sciencespeedquiz_hard']},
+  {label:'🖼 Mystery',   games:['mystery_picture']},
+  {label:'🀄 Fight',     games:['fight_landlord']},
+  {label:'🔍 Run Finish', games:['sidefinishrun_easy','sidefinishrun_medium','sidefinishrun_hard']},
+];
+const DISPLAY_GAMES = CATS.flatMap(cat => cat.games);
+
+const DIFF={easy:'E',medium:'M',hard:'H','3x3':'3','4x4':'4','5x5':'5','6x6':'6','7x7':'7','8x8':'8','9x9':'9','10x10':'10','10':'10','20':'20','30':'30',rush:'R'};
+function shortLabel(g){const p=g.split('_');const s=p[p.length-1];return DIFF[s]||s.toUpperCase().slice(0,3);}
+
+/* ── NAME NORMALIZATION ───────────────────────────────────────────── */
+const JUNK=new Set(['find who i am for $1','ra','emmq','rat','37','fgk l','mmmmmmmmmmmmmmmmmm',
+  'cynthia and eme','joicoolkid','mommy','aedan swaney','aidn','eman','maessi','xy','y','s',
+  'rainy','alaina','eme','violet','diane','trevortrevortrevortrevortrevortrevortrev']);
+const NMAP={'laosh':'laoshi','derek tsan':'derek tsang','derek tsang4':'derek tsang', 'derek':'derek tsang',
+  'joel':'Joel','joel!':'Joel','joel ':'Joel','JOel':'Joel','JOEL':'Joel',
+  'emma':'Emma','trevor':'Trevor','aiden':'Aiden','eli':'Eli','river':'River',
+  'rams':'Rams','emanuel':'Emanuel', 'patrick':'messi', 'max':'yuji'};
+function normName(n){
+  const s=n.trim();
+  if(!s||s.startsWith('http')||s.length>28) return null;
+  if(JUNK.has(s.toLowerCase())) return null;
+  return NMAP[s]||NMAP[s.toLowerCase()]||s;
+}
+
+/* ── FETCH ALL GAMES IN PARALLEL ─────────────────────────────────── */
+async function fetchGame(game){
+  const res=await fetch(`/api/leaderboard?game=${encodeURIComponent(game)}&limit=999`,{cache:'no-store'});
+  if(!res.ok) return [];
+  const data=await res.json();
+  const rows=Array.isArray(data)?data:(data.rows||[]);
+  return rows.map(r=>({
+    game,
+    player: r.player_name??r.playerName??'',
+    wins:   +(r.win_count??r.wins??r.winCount??0),
+  }));
+}
+
+async function loadAll(){
+  const status=document.getElementById('status');
+  status.textContent='Fetching scores…';
+  status.className='status';
+
+  let results;
+  try{
+    results=await Promise.all(DISPLAY_GAMES.map(fetchGame));
+  }catch(e){
+    status.textContent='Network error — could not reach /api/leaderboard';
+    status.className='status err';
+    return;
+  }
+
+  // aggregate
+  const players={};
+  results.flat().forEach(({game,player,wins})=>{
+    const name=normName(player);
+    if(!name||wins<=0) return;
+    const key=name.toLowerCase();
+    if(!players[key]) players[key]={display:name,games:{}};
+    players[key].games[game]=(players[key].games[game]||0)+wins;
+  });
+
+  const rows=Object.values(players).map(p=>{
+    const total=DISPLAY_GAMES.reduce((s,g)=>s+(p.games[g]||0),0);
+    return{...p,total};
+  }).filter(p=>p.total>0).sort((a,b)=>b.total-a.total);
+
+  const gameMax={};
+  DISPLAY_GAMES.forEach(g=>{gameMax[g]=Math.max(1,...rows.map(r=>r.games[g]||0));});
+
+  renderTable(rows,gameMax);
+  status.textContent=`Updated ${new Date().toLocaleTimeString()} · ${rows.length} players`;
+}
+
+/* ── RENDER ──────────────────────────────────────────────────────── */
+function renderTable(rows,gameMax){
+  const tbl=document.getElementById('board');
+  tbl.innerHTML='';
+
+  // group header
+  const grpRow=document.createElement('tr');
+  grpRow.className='group-row';
+  [['','s0'],['','s1'],['TOTAL','']].forEach(([t,cls])=>{
+    const th=document.createElement('th');
+    th.className=cls ? ('sticky '+cls) : '';
+    th.textContent=t;
+    if(t==='TOTAL') th.style.color='var(--pink)';
+    grpRow.appendChild(th);
+  });
+  CATS.forEach(cat=>{
+    const th=document.createElement('th');
+    th.colSpan=cat.games.length; th.textContent=cat.label;
+    grpRow.appendChild(th);
+  });
+
+  // col header
+  const colRow=document.createElement('tr');
+  colRow.className='col-row';
+  [['#','s0'],['PLAYER','s1'],['ALL','']].forEach(([t,cls])=>{
+    const th=document.createElement('th');
+    th.className=cls ? ('sticky '+cls) : '';
+    th.textContent=t;
+    colRow.appendChild(th);
+  });
+  CATS.forEach(cat=>cat.games.forEach(g=>{
+    const th=document.createElement('th');
+    th.textContent=shortLabel(g);
+    colRow.appendChild(th);
+  }));
+
+  const thead=document.createElement('thead');
+  thead.appendChild(grpRow); thead.appendChild(colRow);
+  tbl.appendChild(thead);
+
+  // body
+  const tbody=document.createElement('tbody');
+  rows.forEach((row,idx)=>{
+    const tr=document.createElement('tr');
+
+    const rankTd=document.createElement('td');
+    rankTd.className='sticky s0 rank';
+    const medal=['🥇','🥈','🥉'][idx]||`#${idx+1}`;
+    const rc=idx===0?'r1':idx===1?'r2':idx===2?'r3':'r-else';
+    rankTd.innerHTML=`<span class="${rc}">${medal}</span>`;
+    tr.appendChild(rankTd);
+
+    const nameTd=document.createElement('td');
+    nameTd.className='sticky s1 pname'; nameTd.textContent=row.display;
+    tr.appendChild(nameTd);
+
+    const totTd=document.createElement('td');
+    totTd.className='total'; totTd.textContent=row.total;
+    tr.appendChild(totTd);
+
+    DISPLAY_GAMES.forEach(g=>{
+      const w=row.games[g]||0;
+      const td=document.createElement('td');
+      if(w===0){td.className='w0';td.textContent='-';}
+      else{
+        const cls=
+          w>=100 ? 'w-top' :
+          w>=50  ? 'w-hi'  :
+          w>=10  ? 'w-md'  :
+                    'w-lo';
+        td.className=cls; td.textContent=w;
+      }
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  tbl.appendChild(tbody);
+}
+
+loadAll();
+</script>
+</body>
+</html>

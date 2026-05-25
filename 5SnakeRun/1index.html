@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Flappy (Leaderboard)</title>
+  <style>
+    html, body { height: 100%; margin: 0; background:#111; display:grid; place-items:center; }
+    canvas { background: #70c5ce; border: 2px solid #000; image-rendering: pixelated; }
+    .hint { color:#ddd; font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial; margin-top:10px; text-align:center; }
+    .hint b { color:#fff; }
+
+    /* View leaderboard icon */
+    #viewRankBtn{
+      position: fixed;
+      right: 16px;
+      top: 12px;
+      z-index: 2500;
+      text-decoration: none;
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 999px;
+      background: #ffffff;
+      color: #111827;
+      font-weight: 800;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #viewRankBtn:active{ transform: translateY(1px); }
+  </style>
+</head>
+<body>
+  <!-- View Leaderboard -->
+  <a href="/puzzle/rank" id="viewRankBtn" title="View Leaderboard">🏆</a>
+
+  <div>
+    <canvas id="c" width="360" height="520"></canvas>
+    <div class="hint">
+      <b>Click</b> or <b>Space</b> = flap · <b>R</b> = restart
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("c");
+    const ctx = canvas.getContext("2d");
+
+    // --- Game constants ---
+    const W = canvas.width, H = canvas.height;
+    const GRAVITY = 0.45;
+    const FLAP = -7.5;
+    const PIPE_SPEED = 2.4;
+    const PIPE_GAP = 135;
+    const PIPE_WIDTH = 54;
+    const PIPE_SPACING = 170;
+    const GROUND_H = 70;
+
+    // ===== Save score to database (same /api/score pattern) =====
+    // NOTE: Other games often rank "lower seconds is better".
+    // For Flappy, "MORE time is better", so we submit NEGATIVE seconds
+    // so it ranks higher when sorted ascending.
+    const GAME_ID = "flappy";
+
+    let roundStartMs = Date.now();
+    function resetRoundTimer(){ roundStartMs = Date.now(); }
+    function getRoundSeconds(){ return Math.max(1, Math.round((Date.now() - roundStartMs) / 1000)); }
+
+    function sanitizeName(name){
+      return (name || "").trim().slice(0, 40);
+    }
+
+    async function promptForNameOnGameOver() {
+      while (true) {
+        const input = window.prompt("Game Over! Enter your name for the leaderboard (not anonymous):", "");
+        if (input === null) return null;
+        const name = sanitizeName(input);
+        if (name) return name;
+        alert("Name is required (not anonymous). Please enter your name.");
+      }
+    }
+
+    async function submitToDB(playerName, seconds) {
+      try {
+        await fetch("/api/score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            game: GAME_ID,
+            player_name: playerName,
+            seconds: seconds
+          })
+        });
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    // --- State ---
+    let bird, pipes, score, best, running, gameOver, submitted;
+
+    best = Number(localStorage.getItem("flappy_best") || 0);
+
+    function reset() {
+      resetRoundTimer();
+      submitted = false;
+
+      bird = { x: 90, y: H/2, vy: 0, r: 12 };
+      pipes = [];
+      score = 0;
+      running = true;
+      gameOver = false;
+
+      // seed a couple pipes
+      for (let i = 0; i < 3; i++) spawnPipe(W + i * PIPE_SPACING);
+    }
+
+    function spawnPipe(x) {
+      const topMin = 40;
+      const topMax = H - GROUND_H - PIPE_GAP - 40;
+      const topH = topMin + Math.random() * (topMax - topMin);
+      pipes.push({ x, topH, passed: false });
+    }
+
+    function flap() {
+      if (!running) return;
+      if (gameOver) { reset(); return; }
+      bird.vy = FLAP;
+    }
+
+    function rectCircleCollide(rx, ry, rw, rh, cx, cy, cr) {
+      const px = Math.max(rx, Math.min(cx, rx + rw));
+      const py = Math.max(ry, Math.min(cy, ry + rh));
+      const dx = cx - px;
+      const dy = cy - py;
+      return (dx*dx + dy*dy) <= cr*cr;
+    }
+
+    // Input
+    addEventListener("keydown", (e) => {
+      if (e.code === "Space") { e.preventDefault(); flap(); }
+      if (e.key === "r" || e.key === "R") reset();
+    }, { passive: false });
+
+    canvas.addEventListener("pointerdown", flap);
+
+    function triggerGameOverOnce() {
+      if (gameOver) return;
+      gameOver = true;
+
+      if (!submitted) {
+        submitted = true;
+        (async () => {
+          const seconds = getRoundSeconds();
+          const name = await promptForNameOnGameOver();
+          if (!name) return;
+
+          // Submit NEGATIVE seconds so "more time" ranks higher (when sorted ascending).
+          const ok = await submitToDB(name, -seconds);
+          if (!ok) alert("Could not save your score. Please tell the teacher.");
+        })();
+      }
+    }
+
+    function update() {
+      if (!running) return;
+
+      // bird physics
+      bird.vy += GRAVITY;
+      bird.y += bird.vy;
+
+      // move pipes
+      for (const p of pipes) p.x -= PIPE_SPEED;
+
+      // recycle pipes
+      if (pipes.length && pipes[0].x + PIPE_WIDTH < -10) {
+        pipes.shift();
+        const lastX = pipes[pipes.length - 1].x;
+        spawnPipe(lastX + PIPE_SPACING);
+      }
+
+      // score (when bird passes a pipe)
+      for (const p of pipes) {
+        if (!p.passed && p.x + PIPE_WIDTH < bird.x - bird.r) {
+          p.passed = true;
+          score++;
+          if (score > best) {
+            best = score;
+            localStorage.setItem("flappy_best", String(best));
+          }
+        }
+      }
+
+      // collisions: bounds
+      if (bird.y - bird.r < 0) {
+        bird.y = bird.r;
+        bird.vy = 0;
+      }
+      if (bird.y + bird.r > H - GROUND_H) {
+        bird.y = H - GROUND_H - bird.r;
+        triggerGameOverOnce();
+      }
+
+      // collisions: pipes
+      for (const p of pipes) {
+        const topRect = { x: p.x, y: 0, w: PIPE_WIDTH, h: p.topH };
+        const botY = p.topH + PIPE_GAP;
+        const botRect = { x: p.x, y: botY, w: PIPE_WIDTH, h: (H - GROUND_H) - botY };
+
+        if (rectCircleCollide(topRect.x, topRect.y, topRect.w, topRect.h, bird.x, bird.y, bird.r) ||
+            rectCircleCollide(botRect.x, botRect.y, botRect.w, botRect.h, bird.x, bird.y, bird.r)) {
+          triggerGameOverOnce();
+        }
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+
+      // clouds
+      ctx.globalAlpha = 0.15;
+      ctx.fillStyle = "#fff";
+      for (let i = 0; i < 5; i++) {
+        const x = (i * 90 + (Date.now() * 0.02) % (W+100)) - 100;
+        const y = 60 + i * 25;
+        ctx.beginPath();
+        ctx.arc(x, y, 18, 0, Math.PI*2);
+        ctx.arc(x+18, y-8, 22, 0, Math.PI*2);
+        ctx.arc(x+40, y, 18, 0, Math.PI*2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
+      // pipes
+      for (const p of pipes) {
+        const topH = p.topH;
+        const botY = topH + PIPE_GAP;
+
+        ctx.fillStyle = "#2ecc71";
+        ctx.fillRect(p.x, 0, PIPE_WIDTH, topH);
+        ctx.fillRect(p.x, botY, PIPE_WIDTH, (H - GROUND_H) - botY);
+
+        ctx.fillStyle = "#27ae60";
+        ctx.fillRect(p.x - 4, topH - 10, PIPE_WIDTH + 8, 10);
+        ctx.fillRect(p.x - 4, botY, PIPE_WIDTH + 8, 10);
+      }
+
+      // ground
+      ctx.fillStyle = "#d9a441";
+      ctx.fillRect(0, H - GROUND_H, W, GROUND_H);
+      ctx.fillStyle = "#b8872b";
+      for (let x = 0; x < W; x += 18) ctx.fillRect(x, H - GROUND_H + 10, 10, 6);
+
+      // bird
+      ctx.save();
+      ctx.translate(bird.x, bird.y);
+      const tilt = Math.max(-0.6, Math.min(0.8, bird.vy / 10));
+      ctx.rotate(tilt);
+      ctx.fillStyle = "#f1c40f";
+      ctx.beginPath();
+      ctx.arc(0, 0, bird.r, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(5, -4, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#111";
+      ctx.beginPath();
+      ctx.arc(6, -4, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#e67e22";
+      ctx.beginPath();
+      ctx.moveTo(10, 1);
+      ctx.lineTo(20, 5);
+      ctx.lineTo(10, 9);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      // HUD
+      const t = getRoundSeconds();
+      ctx.fillStyle = "#111";
+      ctx.font = "bold 22px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      ctx.fillText(`Time: ${t}s`, 12, 32);
+      ctx.font = "14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      ctx.fillText(`Pipes: ${score}  ·  Best pipes: ${best}`, 12, 52);
+
+      if (gameOver) {
+        ctx.fillStyle = "rgba(0,0,0,0.45)";
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 34px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("Game Over", W/2, H/2 - 28);
+        ctx.font = "16px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+        ctx.fillText("Click / Space to restart", W/2, H/2 + 4);
+        ctx.fillText("Your time will be saved to the leaderboard", W/2, H/2 + 28);
+        ctx.textAlign = "left";
+      }
+    }
+
+    function loop() {
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    reset();
+    loop();
+  </script>
+</body>
+</html>

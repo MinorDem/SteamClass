@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Math Speed Quiz</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #fff9f0;
+      --card: #ffffff;
+      --primary: #ff6b35;
+      --secondary: #4ecdc4;
+      --accent: #ffe66d;
+      --purple: #a855f7;
+      --green: #22c55e;
+      --red: #ef4444;
+      --text: #1a1a2e;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      background-image: radial-gradient(circle at 20% 20%, #ffe66d33 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, #4ecdc433 0%, transparent 50%);
+      min-height: 100vh;
+      color: var(--text);
+      padding: 60px 16px 80px;
+    }
+    h1 {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(2rem, 5vw, 3rem);
+      color: var(--primary);
+      text-shadow: 3px 3px 0 #ff6b3533;
+      margin-bottom: 4px;
+    }
+    .tagline { color: var(--muted); font-size: 15px; margin-bottom: 20px; }
+
+    .layout {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0,1fr) 320px;
+      gap: 24px;
+      align-items: start;
+    }
+    @media(max-width:860px){ .layout{ grid-template-columns:1fr; } .sidebar{ position:static!important; } }
+
+    .card {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: 0 4px 24px #0000000d;
+      border: 2px solid var(--border);
+    }
+
+    /* Level selector */
+    .level-row { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
+    .lvl-btn {
+      padding: 8px 18px;
+      border-radius: 999px;
+      border: 2px solid var(--border);
+      background: white;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all .18s;
+    }
+    .lvl-btn.active, .lvl-btn:hover { background: var(--primary); color: white; border-color: var(--primary); transform: translateY(-2px); }
+
+    /* Timer bar */
+    .timer-wrap { margin-bottom: 16px; }
+    .timer-label { font-size:13px; color:var(--muted); margin-bottom:5px; display:flex; justify-content:space-between; }
+    .timer-bar-bg { background:#f3f4f6; border-radius:999px; height:12px; overflow:hidden; }
+    .timer-bar { height:100%; border-radius:999px; background: linear-gradient(90deg, var(--secondary), var(--primary)); transition: width .25s linear, background .5s; }
+    .timer-bar.danger { background: linear-gradient(90deg, #fbbf24, var(--red)); }
+
+    /* Question display */
+    .question-box {
+      background: linear-gradient(135deg, var(--primary) 0%, #ff9f68 100%);
+      border-radius: 18px;
+      padding: 32px;
+      text-align: center;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .question-box::before {
+      content: '';
+      position: absolute;
+      top: -30px; right: -30px;
+      width: 100px; height: 100px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 50%;
+    }
+    .q-number { font-size: clamp(2.5rem,8vw,4.5rem); font-family:'Fredoka One',cursive; color:white; text-shadow:3px 3px 0 rgba(0,0,0,0.15); line-height:1; }
+    .q-score-badge { position:absolute; top:12px; right:16px; background:rgba(255,255,255,0.25); color:white; font-weight:900; font-size:13px; padding:4px 10px; border-radius:999px; }
+
+    /* Answer input */
+    .answer-row { display:flex; gap:10px; margin-bottom:16px; }
+    .answer-row input {
+      flex:1;
+      padding: 14px 18px;
+      font-size: 1.4rem;
+      font-family: 'Fredoka One', cursive;
+      border: 3px solid var(--border);
+      border-radius: 14px;
+      outline: none;
+      text-align: center;
+      transition: border-color .2s;
+    }
+    .answer-row input:focus { border-color: var(--secondary); }
+    .answer-row input.correct { border-color: var(--green); background:#f0fdf4; animation: pop .3s; }
+    .answer-row input.wrong { border-color: var(--red); background:#fef2f2; animation: shake .3s; }
+    @keyframes pop { 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+
+    .submit-btn {
+      padding: 14px 24px;
+      background: var(--secondary);
+      border: none;
+      border-radius: 14px;
+      color: white;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all .18s;
+      white-space: nowrap;
+    }
+    .submit-btn:hover { transform: translateY(-2px); box-shadow:0 6px 20px #4ecdc455; }
+    .submit-btn:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+
+    .feedback { text-align:center; font-size:1.1rem; font-weight:700; min-height:28px; margin-bottom:8px; }
+    .feedback.correct { color:var(--green); }
+    .feedback.wrong { color:var(--red); }
+
+    /* Stats row */
+    .stats-strip {
+      display:grid;
+      grid-template-columns: repeat(3,1fr);
+      gap:10px;
+      margin-bottom:20px;
+    }
+    .stat-pill {
+      background: var(--bg);
+      border:2px solid var(--border);
+      border-radius:14px;
+      padding:10px;
+      text-align:center;
+    }
+    .stat-num { font-family:'Fredoka One',cursive; font-size:1.6rem; color:var(--primary); }
+    .stat-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+
+    .ctrl-row { display:flex; gap:10px; }
+    .btn-start {
+      flex:1;
+      padding:14px;
+      font-family:'Fredoka One',cursive;
+      font-size:1.15rem;
+      border:none;
+      border-radius:14px;
+      background:var(--primary);
+      color:white;
+      cursor:pointer;
+      transition:all .18s;
+    }
+    .btn-start:hover { transform:translateY(-2px); box-shadow:0 6px 20px #ff6b3555; }
+    .btn-reset { padding:14px 20px; font-family:'Fredoka One',cursive; font-size:1rem; border:2px solid var(--border); border-radius:14px; background:white; color:var(--text); cursor:pointer; transition:all .18s; }
+    .btn-reset:hover { border-color:var(--primary); color:var(--primary); }
+
+    /* Sidebar */
+    .sidebar { position:sticky; top:72px; max-height:calc(100vh - 96px); overflow:auto; }
+    .rank-card { background:var(--card); border-radius:20px; padding:20px; border:2px solid var(--border); box-shadow:0 4px 24px #0000000d; }
+    .rank-card h3 { font-family:'Fredoka One',cursive; font-size:1.3rem; margin-bottom:12px; }
+    .rank-section { background:var(--bg); border-radius:14px; padding:14px; margin-top:12px; }
+    .rank-section-title { font-weight:900; font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-bottom:8px; }
+    .rank-section ol { padding-left:20px; }
+    .rank-section li { font-size:14px; padding:4px 0; border-bottom:1px solid var(--border); }
+    .rank-section li:last-child { border:none; }
+    .rank-note { font-size:12px; color:var(--muted); margin-top:10px; }
+
+    /* Back header */
+    .back-header { position:fixed; top:14px; left:14px; z-index:1000; }
+    .back-link { text-decoration:none; color:var(--text); font-weight:700; font-size:15px; background:white; padding:6px 12px; border-radius:999px; border:2px solid var(--border); box-shadow:0 2px 8px #0000001a; }
+    .back-link:hover { border-color:var(--primary); color:var(--primary); }
+
+    /* Winner dialog */
+    .dialog-backdrop { position:fixed; inset:0; background:rgba(17,24,39,0.5); display:none; align-items:center; justify-content:center; z-index:4000; padding:16px; }
+    .dialog-backdrop.open { display:flex; }
+    .dialog { width:100%; max-width:380px; background:white; border-radius:24px; padding:28px; box-shadow:0 24px 48px #0000002a; text-align:center; }
+    .dialog-emoji { font-size:3.5rem; margin-bottom:12px; }
+    .dialog h4 { font-family:'Fredoka One',cursive; font-size:1.8rem; color:var(--primary); margin-bottom:8px; }
+    .dialog p { color:var(--muted); font-size:14px; margin-bottom:14px; }
+    .dialog input { width:100%; padding:12px 16px; border:2px solid var(--border); border-radius:12px; font-family:'Nunito',sans-serif; font-size:16px; outline:none; margin-bottom:4px; }
+    .dialog input:focus { border-color:var(--secondary); }
+    .dialog-actions { display:flex; gap:10px; margin-top:14px; }
+    .dialog-actions button { flex:1; padding:12px; border-radius:12px; font-family:'Fredoka One',cursive; font-size:1rem; cursor:pointer; border:2px solid var(--border); background:white; color:var(--text); }
+    .dialog-actions button.primary { background:var(--primary); border-color:var(--primary); color:white; }
+    .dialog-status { font-size:13px; color:var(--muted); margin-top:8px; min-height:18px; font-weight:700; }
+
+    footer { position:fixed; bottom:0; left:0; width:100%; background:rgba(255,249,240,0.95); backdrop-filter:blur(4px); text-align:center; padding:8px 0; font-size:13px; color:var(--muted); border-top:1px solid var(--border); }
+  </style>
+</head>
+<body>
+  <header class="back-header">
+    <a class="back-link" href="/puzzle">← Back to Puzzle Home</a>
+  </header>
+
+  <div class="layout">
+    <main>
+      <div class="card">
+        <h1>⚡ Math Speed Quiz</h1>
+        <p class="tagline">Answer as many math problems as you can before time runs out!</p>
+
+        <!-- Level select -->
+        <div class="level-row">
+          <button class="lvl-btn active" data-level="easy">🐣 Easy (+ / −, up to 99)</button>
+          <button class="lvl-btn" data-level="medium">🔥 Medium (All Ops, answer &gt; 10)</button>
+          <button class="lvl-btn" data-level="hard">🚀 Hard (All Ops, answer &gt; 100)</button>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-strip">
+          <div class="stat-pill"><div class="stat-num" id="scoreDisp">0</div><div class="stat-label">Score</div></div>
+          <div class="stat-pill"><div class="stat-num" id="streakDisp">0</div><div class="stat-label">Streak 🔥</div></div>
+          <div class="stat-pill"><div class="stat-num" id="qNumDisp">0</div><div class="stat-label">Answered</div></div>
+        </div>
+
+        <!-- Timer -->
+        <div class="timer-wrap">
+          <div class="timer-label"><span>Time Remaining</span><span id="timerText">60s</span></div>
+          <div class="timer-bar-bg"><div class="timer-bar" id="timerBar" style="width:100%"></div></div>
+        </div>
+
+        <!-- Question -->
+        <div class="question-box" id="questionBox">
+          <div class="q-score-badge" id="qBadge">Question 1</div>
+          <div class="q-number" id="questionText">Press Start!</div>
+        </div>
+
+        <div class="feedback" id="feedback"></div>
+
+        <div class="answer-row">
+          <input type="number" id="answerInput" placeholder="?" disabled />
+          <button class="submit-btn" id="submitBtn" disabled>✓</button>
+        </div>
+
+        <div class="ctrl-row">
+          <button class="btn-start" id="startBtn">🚀 Start Game</button>
+          <button class="btn-reset" id="resetBtn">↺ Reset</button>
+        </div>
+      </div>
+    </main>
+
+    <aside class="sidebar">
+      <div class="rank-card">
+        <h3>🏆 Leaderboard</h3>
+        <p style="font-size:13px;color:var(--muted);">Top 10 by score, per difficulty.</p>
+        <div class="rank-section">
+          <div class="rank-section-title">🐣 Easy</div>
+          <ol id="rankEasy"><li>Loading…</li></ol>
+        </div>
+        <div class="rank-section">
+          <div class="rank-section-title">🔥 Medium</div>
+          <ol id="rankMedium"><li>Loading…</li></ol>
+        </div>
+        <div class="rank-section">
+          <div class="rank-section-title">🚀 Hard</div>
+          <ol id="rankHard"><li>Loading…</li></ol>
+        </div>
+        <div class="rank-note" id="rankNote">Loading leaderboard…</div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Winner Dialog -->
+  <div class="dialog-backdrop" id="winDialog">
+    <div class="dialog">
+      <div class="dialog-emoji">🎉</div>
+      <h4>Time's Up!</h4>
+      <p id="winSummary">You scored 0 points!</p>
+      <p>Enter your name for the leaderboard:</p>
+      <input type="text" id="dialogName" placeholder="Your name" maxlength="40" autocomplete="off" />
+      <div class="dialog-actions">
+        <button id="dialogCancel">Skip</button>
+        <button class="primary" id="dialogSubmit">Submit ✓</button>
+      </div>
+      <div class="dialog-status" id="dialogStatus"></div>
+    </div>
+  </div>
+
+  <script>
+    const BASE_ID = "mathspeedquiz";
+    const GAME_DURATION = 60;
+
+    let level = "easy";
+    let score=0, streak=0, answered=0;
+    let timeLeft=GAME_DURATION, timerId=null;
+    let running=false, finished=false;
+    let currentQ=null;
+
+    const scoreDisp=document.getElementById("scoreDisp");
+    const streakDisp=document.getElementById("streakDisp");
+    const qNumDisp=document.getElementById("qNumDisp");
+    const timerText=document.getElementById("timerText");
+    const timerBar=document.getElementById("timerBar");
+    const questionText=document.getElementById("questionText");
+    const qBadge=document.getElementById("qBadge");
+    const feedback=document.getElementById("feedback");
+    const answerInput=document.getElementById("answerInput");
+    const submitBtn=document.getElementById("submitBtn");
+    const startBtn=document.getElementById("startBtn");
+
+    function gameKey(lv){ return `${BASE_ID}_${lv}`; }
+    function rand(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+
+    function genQuestion(){
+      let a, b, op, ans;
+      if(level==='easy'){
+        // + and only, operands 15-99, subtraction always positive
+        op = Math.random()<0.5 ? '+' : '-';
+        a = rand(15,99); b = rand(15,99);
+        if(op==='-'){ if(a<b)[a,b]=[b,a]; if(a===b) a+=rand(5,20); }
+        ans = op==='+' ? a+b : a-b;
+      } else if(level==='medium'){
+        // All four ops; answer always > 10
+        const ops=['+','-','x','÷'];
+        op = ops[Math.floor(Math.random()*ops.length)];
+        if(op==='+'){ a=rand(10,199); b=rand(10,199); ans=a+b; }
+        else if(op==='-'){ ans=rand(11,150); b=rand(10,99); a=ans+b; }
+        else if(op==='x'){ a=rand(6,15); b=rand(2,12); ans=a*b; if(Math.random()<0.5)[a,b]=[b,a]; }
+        else { ans=rand(11,30); b=rand(2,12); a=ans*b; }
+        op = op==='x' ? '×' : op;
+      } else {
+        // Hard all ops, answer always > 100
+        const ops=['+','-','x','÷'];
+        op = ops[Math.floor(Math.random()*ops.length)];
+        if(op==='+'){ a=rand(100,999); b=rand(100,999); ans=a+b; }
+        else if(op==='-'){ ans=rand(101,500); b=rand(100,499); a=ans+b; }
+        else if(op==='x'){ a=rand(12,25); b=rand(9,20); ans=a*b; if(Math.random()<0.5)[a,b]=[b,a]; }
+        else { ans=rand(101,200); b=rand(2,9); a=ans*b; }
+        op = op==='x' ? '×' : op;
+      }
+      return { text:`${a} ${op} ${b} = ?`, ans };
+    }
+
+    function updateUI(){
+      scoreDisp.textContent=score;
+      streakDisp.textContent=streak;
+      qNumDisp.textContent=answered;
+    }
+
+    function updateTimer(){
+      const pct=timeLeft/GAME_DURATION*100;
+      timerBar.style.width=pct+'%';
+      timerText.textContent=timeLeft+'s';
+      timerBar.classList.toggle('danger', timeLeft<=15);
+    }
+
+    function nextQuestion(){
+      currentQ=genQuestion();
+      questionText.textContent=currentQ.text;
+      qBadge.textContent='Question '+(answered+1);
+      answerInput.value='';
+      feedback.textContent='';
+      feedback.className='feedback';
+      answerInput.className='';
+      answerInput.focus();
+    }
+
+    function startGame(){
+      score=0; streak=0; answered=0;
+      timeLeft=GAME_DURATION;
+      running=true; finished=false;
+      updateUI(); updateTimer();
+      answerInput.disabled=false;
+      submitBtn.disabled=false;
+      startBtn.textContent='⏳ Playing…';
+      startBtn.disabled=true;
+      nextQuestion();
+      timerId=setInterval(()=>{
+        timeLeft--;
+        updateTimer();
+        if(timeLeft<=0){ endGame(); }
+      },1000);
+    }
+
+    function endGame(){
+      clearInterval(timerId);
+      running=false; finished=true;
+      answerInput.disabled=true;
+      submitBtn.disabled=true;
+      startBtn.textContent='🚀 Play Again';
+      startBtn.disabled=false;
+      questionText.textContent='🏁 Game Over!';
+      feedback.textContent=`Final score: ${score} pts`;
+      feedback.className='feedback correct';
+      document.getElementById("winSummary").textContent=`You scored ${score} points on ${level.toUpperCase()} mode! (${answered} questions)`;
+      setTimeout(()=>{ document.getElementById("winDialog").classList.add('open'); },600);
+    }
+
+    function submitAnswer(){
+      if(!running||!currentQ) return;
+      const val=parseInt(answerInput.value,10);
+      if(isNaN(val)){ feedback.textContent='Enter a number!'; return; }
+      answered++;
+      if(val===currentQ.ans){
+        streak++;
+        const bonus=streak>=5?3:streak>=3?2:1;
+        score+=bonus;
+        feedback.textContent=streak>=3?`✅ Correct! 🔥×${streak} (+${bonus}pts)`:'✅ Correct!';
+        feedback.className='feedback correct';
+        answerInput.className='correct';
+      } else {
+        streak=0;
+        feedback.textContent=`❌ Wrong! Answer was ${currentQ.ans}`;
+        feedback.className='feedback wrong';
+        answerInput.className='wrong';
+      }
+      updateUI();
+      setTimeout(nextQuestion, 400);
+    }
+
+    function resetAll(){
+      clearInterval(timerId);
+      running=false; finished=false;
+      score=0; streak=0; answered=0;
+      timeLeft=GAME_DURATION;
+      updateUI(); updateTimer();
+      questionText.textContent='Press Start!';
+      qBadge.textContent='Question 1';
+      feedback.textContent='';
+      feedback.className='feedback';
+      answerInput.disabled=true;
+      answerInput.value='';
+      submitBtn.disabled=true;
+      startBtn.textContent='🚀 Start Game';
+      startBtn.disabled=false;
+    }
+
+    document.querySelectorAll('.lvl-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        document.querySelectorAll('.lvl-btn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        level=btn.dataset.level;
+        resetAll();
+      });
+    });
+
+    startBtn.addEventListener('click',()=>{ if(!running) startGame(); });
+    document.getElementById("resetBtn").addEventListener('click', resetAll);
+    submitBtn.addEventListener('click', submitAnswer);
+    answerInput.addEventListener('keydown',e=>{ if(e.key==='Enter') submitAnswer(); });
+
+    // Dialog
+    async function submitWin(name,pts){
+      try{
+        const r=await fetch('/api/score',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            game:gameKey(level),
+            player_name:name,
+            best_scores: pts
+          })
+        });
+        const d=await r.json().catch(()=>({}));
+        return d.ok===true;
+      }catch(e){ return false; }
+    }
+    document.getElementById("dialogCancel").addEventListener('click',()=>{ document.getElementById("winDialog").classList.remove('open'); });
+    document.getElementById("dialogSubmit").addEventListener('click',async()=>{
+      const name=(document.getElementById("dialogName").value||"").trim();
+      if(!name){ document.getElementById("dialogStatus").textContent="Name required!"; return; }
+      document.getElementById("dialogSubmit").disabled=true;
+      document.getElementById("dialogStatus").textContent="Saving…";
+      const ok=await submitWin(name,score);
+      if(ok){ document.getElementById("dialogStatus").textContent="Saved ✅"; await loadBoards(); setTimeout(()=>document.getElementById("winDialog").classList.remove('open'),400); }
+      else { document.getElementById("dialogStatus").textContent="Could not save. Tell your teacher!"; }
+      document.getElementById("dialogSubmit").disabled=false;
+    });
+    document.getElementById("dialogName").addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById("dialogSubmit").click(); });
+
+    // Leaderboard
+    async function loadBoard(lv,listId){
+      const list=document.getElementById(listId);
+      try{
+        const r=await fetch(`/api/leaderboard?game=${encodeURIComponent(gameKey(lv))}&limit=10`,{cache:"no-store"});
+        const d=await r.json();
+        const rows=Array.isArray(d)?d:(d.rows||[]);
+        list.innerHTML = rows.length
+          ? rows.map((r,i)=>`<li>#${i+1} ${r.player_name||'Unknown'} — ${Number(r.best_scores)||0} pts (${r.win_count||0} games)</li>`).join('')
+          : '<li>No scores yet.</li>';
+      }catch(e){ list.innerHTML='<li>Could not load.</li>'; }
+    }
+    async function loadBoards(){
+      document.getElementById("rankNote").textContent="Loading…";
+      await Promise.all([loadBoard('easy','rankEasy'),loadBoard('medium','rankMedium'),loadBoard('hard','rankHard')]);
+      document.getElementById("rankNote").textContent="Updated just now.";
+    }
+    loadBoards();
+  </script>
+
+  <footer>
+    © 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528. <br>
+    The STEAM Teacher is Chao Yu. For educational purposes only. All rights reserved.
+  </footer>
+</body>
+</html>

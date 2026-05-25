@@ -1,0 +1,1171 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>Fishing Net Game (30s) — Leaderboards</title>
+
+  <style>
+    :root{
+      --border:#e5e7eb;
+      --muted:#6b7280;
+      --bg:#ffffff;
+      --blue:#2563eb;
+      --good:#16a34a;
+      --bad:#dc2626;
+      --cardshadow: 0 10px 30px rgba(0,0,0,0.04);
+    }
+    body{
+      margin: 16px;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:#111827;
+      background: var(--bg);
+      padding-bottom: 92px; /* leave room for fixed footer */
+    }
+
+    /* Back link (matches your other pages) */
+    .back-header{
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: #fff;
+      padding: 4px 10px;
+      border-bottom: 1px solid #eee;
+      margin: -16px -16px 12px -16px;
+    }
+    .back-header a{
+      font-size: 13px;
+      line-height: 1.2;
+      text-decoration: none;
+      color: var(--blue);
+      font-weight: 900;
+    }
+
+    .page{
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 16px;
+      align-items: start;
+    }
+    @media (max-width: 980px){
+      .page{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      border:1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      background:#fff;
+      box-shadow: var(--cardshadow);
+    }
+
+    .title{
+      margin:0 0 6px;
+      font-size: 22px;
+      letter-spacing: -0.02em;
+      font-weight: 900;
+    }
+    .sub{
+      margin:0 0 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .controls{
+      display:flex;
+      gap:10px;
+      flex-wrap: wrap;
+      align-items:center;
+      margin-bottom: 12px;
+    }
+    .seg{
+      display:flex;
+      gap:6px;
+      border:1px solid var(--border);
+      padding:6px;
+      border-radius: 12px;
+      background:#fafafa;
+    }
+    .seg button{
+      border:1px solid transparent;
+      background: transparent;
+      padding: 8px 10px;
+      border-radius: 10px;
+      cursor:pointer;
+      font-weight: 900;
+      color:#111827;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .seg button.active{
+      border-color:var(--blue);
+      background:#eff6ff;
+      color:#1d4ed8;
+    }
+    .btn{
+      border:1px solid var(--border);
+      background:#fff;
+      padding: 9px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight: 900;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn.primary{
+      background:var(--blue);
+      border-color:var(--blue);
+      color:#fff;
+    }
+    .btn:disabled{
+      opacity: .55;
+      cursor:not-allowed;
+    }
+
+    .hud{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items:center;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 14px;
+    }
+    .pill{
+      display:inline-block;
+      padding: 4px 10px;
+      border:1px solid var(--border);
+      border-radius: 999px;
+      background:#fafafa;
+      font-weight: 900;
+    }
+
+    /* Game canvas */
+    .game-wrap{
+      display:flex;
+      justify-content:center;
+      width: 100%;
+      margin-top: 8px;
+    }
+    .game-stage{
+      width: min(920px, 96vw);
+      border:1px solid var(--border);
+      border-radius: 16px;
+      overflow:hidden;
+      background: linear-gradient(#dbeafe, #93c5fd 35%, #1d4ed8 100%);
+      position: relative;
+      touch-action: none; /* smoother on iOS */
+      -webkit-tap-highlight-color: transparent;
+    }
+    canvas{
+      width: 100%;
+      height: auto;
+      display:block;
+    }
+
+    /* Mobile controls */
+    .touch-controls{
+      display:none;
+      gap: 10px;
+      justify-content: space-between;
+      margin-top: 12px;
+    }
+    .touch-controls .btn{
+      flex: 1;
+      padding: 12px 10px;
+      font-size: 16px;
+    }
+    @media (max-width: 980px){
+      .touch-controls{ display:flex; }
+    }
+
+    /* Leaderboard */
+    .lb-title{
+      margin: 0 0 8px;
+      font-size: 18px;
+      font-weight: 900;
+      display:flex;
+      align-items:center;
+      gap: 8px;
+    }
+    .lb-note{
+      margin: 0 0 12px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .lb-box{
+      border:1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px;
+      background:#fff;
+    }
+    .lb-section-title{
+      font-weight: 900;
+      margin: 0 0 6px;
+    }
+    ol{ margin: 8px 0 0 22px; padding: 0; }
+    li{ margin: 6px 0; font-size: 14px; }
+    .lb-err{ color:#b91c1c; font-weight: 900; }
+
+    /* Message */
+    .msg{
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background:#f9fafb;
+      font-weight: 900;
+    }
+    .msg.good{ border-color:#86efac; background:#f0fdf4; }
+    .msg.bad{ border-color:#fecaca; background:#fef2f2; }
+
+    /* Win dialog */
+    #nameDialog{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 3000;
+      padding: 16px;
+    }
+    #nameDialog .panel{
+      background: #fff;
+      border-radius: 14px;
+      padding: 18px 18px 14px;
+      max-width: 380px;
+      width: 100%;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      box-sizing: border-box;
+    }
+    #nameDialog input{
+      width: 100%;
+      box-sizing: border-box;
+      max-width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    #nameDialog .row{
+      display:flex;
+      gap:10px;
+      margin-top: 12px;
+      justify-content:flex-end;
+      flex-wrap: wrap;
+    }
+    #nameDialog button{
+      border:1px solid var(--border);
+      background:#fff;
+      padding: 9px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight: 900;
+      min-width: 90px;
+    }
+    #nameDialog button.primary{
+      background:var(--blue);
+      border-color:var(--blue);
+      color:#fff;
+      min-width: 110px;
+    }
+    #dialogStatus{
+      margin-top: 8px;
+      font-size: 13px;
+      color:#b91c1c;
+      min-height: 18px;
+    }
+
+    footer{
+      position: fixed;
+      left:0;
+      right:0;
+      bottom:0;
+      background:#fff;
+      border-top:1px solid #e5e7eb;
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+      text-align:center;
+      color:#6b7280;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="back-header">
+    <a href="/puzzle">← Back to Puzzle Home</a>
+  </div>
+
+  <div class="page">
+    <section class="card">
+      <h1 class="title">Fishing Net Game</h1>
+      <p class="sub">
+        Control the <b>arrow</b> + a moving <b>power bar</b> to throw a net and catch fish. You have <b>30 seconds</b>.
+        Higher score is better.
+        <br/><b>Desktop:</b> ←/→ aim, <b>Space</b> to cast. <b>Mobile:</b> use the buttons.
+      </p>
+
+      <div class="controls">
+        <div class="seg" role="group" aria-label="Difficulty">
+          <button id="btnEasy" class="active" type="button">Easy</button>
+          <button id="btnMedium" type="button">Medium</button>
+          <button id="btnHard" type="button">Hard</button>
+        </div>
+        <button id="btnStart" class="btn primary" type="button">Start (30s)</button>
+        <button id="btnReset" class="btn" type="button">Reset</button>
+      </div>
+
+      <div class="game-wrap">
+        <div class="game-stage" aria-label="Fishing game">
+          <canvas id="c" width="960" height="540"></canvas>
+        </div>
+      </div>
+
+      <div class="touch-controls">
+        <button id="btnLeft" class="btn" type="button">◀ Aim Left</button>
+        <button id="btnCast" class="btn primary" type="button">🎯 Cast</button>
+        <button id="btnRight" class="btn" type="button">Aim Right ▶</button>
+      </div>
+
+      <div class="hud">
+        <div>
+          <span class="pill" id="timePill">Time: 30.0s</span>
+          <span class="pill" id="scorePill">Score: 0</span>
+          <span class="pill" id="castsPill">Casts: 0</span>
+        </div>
+        <div class="pill" id="modePill">Mode: Easy</div>
+      </div>
+
+      <div id="msg" class="msg">Tap <b>Start</b> to play. Catch different fish for different points.</div>
+    </section>
+
+    <aside class="card">
+      <div class="lb-title">🏆 Leaderboard (Top 5)</div>
+      <div class="lb-note">Ranking: Highest score (high → low). Separate boards by difficulty.</div>
+
+      <div class="lb-box">
+        <div class="lb-section-title">Easy</div>
+        <ol id="lbEasy"><li>Loading…</li></ol>
+
+        <div style="height:12px;"></div>
+        <div class="lb-section-title">Medium</div>
+        <ol id="lbMedium"><li>Loading…</li></ol>
+
+        <div style="height:12px;"></div>
+        <div class="lb-section-title">Hard</div>
+        <ol id="lbHard"><li>Loading…</li></ol>
+
+        <div class="lb-note" id="lbStatus" style="margin-top:10px;"></div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Name dialog -->
+  <div id="nameDialog" aria-hidden="true">
+    <div class="panel" role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
+      <h3 id="dlgTitle" style="margin:0 0 8px;">🎉 Time's Up!</h3>
+      <p style="margin:0 0 12px;">Enter your name for the leaderboard:</p>
+      <input id="dialogNameInput" placeholder="Your name" inputmode="text" />
+      <div class="row">
+        <button id="dialogCancel" type="button">Cancel</button>
+        <button id="dialogSubmit" class="primary" type="button">Submit</button>
+      </div>
+      <div id="dialogStatus"></div>
+      <div class="lb-note" style="margin-top:6px;">Tip: Press <b>Enter</b> to submit, <b>Esc</b> to cancel.</div>
+    </div>
+  </div>
+
+  <footer>
+    © 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528.<br/>
+    The STEAM Teacher is Chao Yu. For educational purposes only. All rights reserved.
+  </footer>
+
+  <script>
+    // === Server endpoints (same as your other games) ===
+    // GET  /api/leaderboard?game=<id>&limit=5
+    // POST /api/score  { game, player_name, seconds, score }
+    //
+    // NOTE: If your backend only stores "seconds", we also send score via "seconds" so it still records.
+    // For correct ranking (high→low), backend should sort by score descending for these game IDs.
+
+    const GAME_IDS = {
+      easy:   "fishing_easy",
+      medium: "fishing_medium",
+      hard:   "fishing_hard",
+    };
+
+    // === UI refs ===
+    const c = document.getElementById("c");
+    const ctx = c.getContext("2d");
+    const timePill = document.getElementById("timePill");
+    const scorePill = document.getElementById("scorePill");
+    const castsPill = document.getElementById("castsPill");
+    const modePill = document.getElementById("modePill");
+    const msgEl = document.getElementById("msg");
+
+    const btnEasy = document.getElementById("btnEasy");
+    const btnMedium = document.getElementById("btnMedium");
+    const btnHard = document.getElementById("btnHard");
+    const btnStart = document.getElementById("btnStart");
+    const btnReset = document.getElementById("btnReset");
+
+    const btnLeft = document.getElementById("btnLeft");
+    const btnRight = document.getElementById("btnRight");
+    const btnCast = document.getElementById("btnCast");
+
+    // dialog
+    const nameDialog = document.getElementById("nameDialog");
+    const dialogNameInput = document.getElementById("dialogNameInput");
+    const dialogSubmit = document.getElementById("dialogSubmit");
+    const dialogCancel = document.getElementById("dialogCancel");
+    const dialogStatus = document.getElementById("dialogStatus");
+
+    // leaderboard
+    const lbEasy = document.getElementById("lbEasy");
+    const lbMedium = document.getElementById("lbMedium");
+    const lbHard = document.getElementById("lbHard");
+    const lbStatus = document.getElementById("lbStatus");
+
+    // === Game state ===
+    let mode = "easy";
+    let running = false;
+    let timeLeft = 30.0;
+    let score = 0;
+    let casts = 0;
+
+    // Aim/power
+    let aim = 0;              // radians, -0.9..0.9 (about +/-52°)
+    let aimVel = 0;
+    let power = 0;            // 0..1
+    let powerDir = 1;
+    let castCooldown = 0;
+
+    // Net effect
+    let nets = [];            // {x,y,r,life,maxR}
+    let spawnT = 0;
+
+    // Fish
+    let fish = [];            // {x,y,vx,vy,type,points,r,color,_caught}
+
+    // Difficulty tuning
+    const DIFF = {
+      easy:   { fishSpeed: 55,  spawnEvery: 0.55, maxFish: 10,  netRadius: 60 },
+      medium: { fishSpeed: 85,  spawnEvery: 0.42, maxFish: 12,  netRadius: 52 },
+      hard:   { fishSpeed: 120, spawnEvery: 0.32, maxFish: 14,  netRadius: 46 },
+    };
+
+    const FISH_TYPES = [
+      { name:"Gold",   points: 12, r: 14, color:"#f59e0b" },
+      { name:"Blue",   points:  8, r: 12, color:"#60a5fa" },
+      { name:"Green",  points:  5, r: 11, color:"#34d399" },
+      { name:"Shark",  points: 18, r: 16, color:"#9ca3af" },
+      { name:"Tiny",   points:  3, r:  9, color:"#fda4af" },
+    ];
+
+    function setMsg(text, kind="") {
+      msgEl.className = "msg" + (kind ? (" " + kind) : "");
+      msgEl.innerHTML = text;
+    }
+
+    function setMode(m){
+      mode = m;
+      btnEasy.classList.toggle("active", m==="easy");
+      btnMedium.classList.toggle("active", m==="medium");
+      btnHard.classList.toggle("active", m==="hard");
+      modePill.textContent = "Mode: " + m.charAt(0).toUpperCase() + m.slice(1);
+      loadAllLeaderboards();
+      resetGame(false);
+      draw();
+    }
+
+    // === Leaderboard ===
+    function sanitizeName(s){
+      return String(s||"").trim().replace(/\s+/g," ").slice(0,24);
+    }
+
+    async function loadOneLB(gameId, listEl){
+      listEl.innerHTML = "<li>Loading…</li>";
+      try{
+        const res = await fetch(`/api/leaderboard?game=${encodeURIComponent(gameId)}&limit=5`, { cache: "no-store" });
+        const data = await res.json();
+        const rows = Array.isArray(data) ? data : (data.rows || []);
+
+        listEl.innerHTML = "";
+        if (!rows.length){
+          listEl.innerHTML = "<li>No scores yet.</li>";
+          return;
+        }
+
+        rows.forEach((r,i)=>{
+          const name = r.player_name ?? r.playerName ?? "Unknown";
+          const sc =
+            r.score ?? r.best_score ?? r.bestScore ??
+            r.seconds ?? r.best_seconds ?? r.bestSeconds ??
+            r.points ?? null;
+
+          const li = document.createElement("li");
+          li.textContent = `#${i+1} ${name} — Score: ${sc != null ? Number(sc) : "—"}`;
+          listEl.appendChild(li);
+        });
+      } catch(e){
+        listEl.innerHTML = "<li class='lb-err'>Could not load leaderboard.</li>";
+      }
+    }
+
+    async function loadAllLeaderboards(){
+      lbStatus.textContent = "Loading…";
+      await Promise.all([
+        loadOneLB(GAME_IDS.easy, lbEasy),
+        loadOneLB(GAME_IDS.medium, lbMedium),
+        loadOneLB(GAME_IDS.hard, lbHard),
+      ]);
+      lbStatus.textContent = "Updated just now.";
+    }
+
+    async function submitScoreToDB(name, scoreValue){
+      const game = GAME_IDS[mode];
+      try{
+        const res = await fetch("/api/score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            game,
+            player_name: name,
+            seconds: scoreValue, // compatibility
+            score: scoreValue
+          })
+        });
+        return res.ok;
+      }catch{
+        return false;
+      }
+    }
+
+    // === Dialog ===
+    function openDialog(){
+      dialogStatus.textContent = "";
+      dialogNameInput.value = localStorage.getItem("studentName") || "";
+      nameDialog.style.display = "flex";
+      nameDialog.setAttribute("aria-hidden","false");
+      setTimeout(()=>dialogNameInput.focus(), 60);
+    }
+    function closeDialog(){
+      nameDialog.style.display = "none";
+      nameDialog.setAttribute("aria-hidden","true");
+    }
+    dialogCancel.onclick = closeDialog;
+    dialogSubmit.onclick = async ()=>{
+      const n = sanitizeName(dialogNameInput.value);
+      if (!n){ dialogStatus.textContent = "Name is required."; return; }
+
+      dialogSubmit.disabled = true;
+      dialogStatus.textContent = "Saving…";
+      const ok = await submitScoreToDB(n, score);
+
+      if (ok){
+        localStorage.setItem("studentName", n);
+        closeDialog();
+        loadAllLeaderboards();
+      }else{
+        dialogStatus.textContent = "Could not save. Try again.";
+      }
+      dialogSubmit.disabled = false;
+    };
+    document.addEventListener("keydown", (e)=>{
+      if (nameDialog.style.display !== "flex") return;
+      if (e.key === "Escape"){ e.preventDefault(); closeDialog(); }
+      if (e.key === "Enter"){ e.preventDefault(); dialogSubmit.click(); }
+    });
+
+    // === Gameplay ===
+    function resetGame(alsoMsg=true){
+      running = false;
+      timeLeft = 30.0;
+      score = 0;
+      casts = 0;
+      aim = -Math.PI/2;
+      aimVel = 0;
+      power = 0.05;
+      powerDir = 1;
+      castCooldown = 0;
+      nets = [];
+      fish = [];
+      spawnT = 0;
+
+      timePill.textContent = `Time: ${timeLeft.toFixed(1)}s`;
+      scorePill.textContent = `Score: ${score}`;
+      castsPill.textContent = `Casts: ${casts}`;
+
+      btnStart.disabled = false;
+      btnStart.textContent = "Start (30s)";
+      btnCast.disabled = true;
+
+      if (alsoMsg){
+        setMsg("Tap <b>Start</b> to play. Catch different fish for different points.");
+      }
+    }
+
+    function startGame(){
+      resetGame(false);
+      running = true;
+      btnStart.disabled = true;
+      btnCast.disabled = false;
+      setMsg("Go! Aim with ←/→, press <b>Space</b> (or Cast) when the power bar looks good.", "good");
+    }
+
+    function endGame(){
+      running = false;
+      btnStart.disabled = false;
+      btnStart.textContent = "Play Again";
+      btnCast.disabled = true;
+
+      setMsg(`Time's up! Your final score is <b>${score}</b>.`, "");
+      openDialog();
+    }
+
+    function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+    function rand(a,b){ return a + Math.random()*(b-a); }
+    function lerp(a,b,t){ return a + (b-a)*t; }
+    function easeOutCubic(t){ return 1 - Math.pow(1-t, 3); }
+    function easeInOutQuad(t){ return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2)/2; }
+
+    function spawnFish(){
+      const d = DIFF[mode];
+      if (fish.length >= d.maxFish) return;
+
+      let pool = FISH_TYPES;
+      if (mode === "easy") pool = [FISH_TYPES[0],FISH_TYPES[1],FISH_TYPES[2],FISH_TYPES[3]];
+      if (mode === "hard") pool = [FISH_TYPES[1],FISH_TYPES[2],FISH_TYPES[4],FISH_TYPES[4],FISH_TYPES[3]];
+
+      const t = pool[Math.floor(Math.random()*pool.length)];
+      const y = rand(120, 460);
+      const fromLeft = Math.random() < 0.5;
+      const x = fromLeft ? -30 : (c.width + 30);
+      const dir = fromLeft ? 1 : -1;
+
+      const speed = d.fishSpeed * rand(0.65, 1.2) * dir;
+      const vy = rand(-10, 10);
+
+      fish.push({
+        x, y,
+        vx: speed,
+        vy,
+        type: t.name,
+        points: t.points,
+        r: t.r,
+        color: t.color
+      });
+    }
+
+    function castNet(){
+      if (!running) return;
+      if (castCooldown > 0) return;
+
+      casts++;
+      castsPill.textContent = `Casts: ${casts}`;
+
+      const d = DIFF[mode];
+      const boatX = c.width * 0.5;
+      const boatY = c.height - 55;
+
+      const dist = 150 + power * 520;
+      const angle = aim;
+      const tx = boatX + Math.cos(angle) * dist;
+      const ty = boatY + Math.sin(angle) * dist;
+
+      const clampedX = clamp(tx, 30, c.width-30);
+      const clampedY = clamp(ty, 80, c.height-90);
+
+      // Animated net: fly from boat to target, then expand as a catching net
+      const travel = clamp(0.18 + dist/900, 0.25, 0.60); // seconds
+      nets.push({
+        state: "fly",
+        sx: boatX, sy: boatY - 6,
+        x: boatX,  y: boatY - 6,
+        tx: clampedX, ty: clampedY,
+        t: 0,
+        travel,
+        r: 8,
+        life: 0.55,
+        maxR: d.netRadius
+      });
+
+      castCooldown = 0.25;
+    }
+
+    function update(dt){
+      const d = DIFF[mode];
+
+      if (running){
+        power += powerDir * dt * 1.2;
+        if (power >= 1){ power = 1; powerDir = -1; }
+        if (power <= 0){ power = 0; powerDir = 1; }
+      }
+
+      aim += aimVel * dt;
+      // Allow full 180° sweep (upper half-plane): left (-π) to right (0)
+      aim = clamp(aim, -Math.PI, 0);
+
+      if (running){
+        timeLeft -= dt;
+        if (timeLeft <= 0){
+          timeLeft = 0;
+          timePill.textContent = "Time: 0.0s";
+          endGame();
+        } else {
+          timePill.textContent = `Time: ${timeLeft.toFixed(1)}s`;
+        }
+      }
+
+      if (castCooldown > 0) castCooldown = Math.max(0, castCooldown - dt);
+
+      if (running){
+        spawnT += dt;
+        if (spawnT >= d.spawnEvery){
+          spawnT = 0;
+          spawnFish();
+        }
+      }
+
+      // Move fish (normal swim OR drag-to-boat after caught)
+      const boatX = c.width * 0.5;
+      const boatY = c.height - 55;
+
+      for (const f of fish){
+        if (f.state === "drag"){
+          // Drag animation (fish pulled to the boat)
+          f.dragT = (f.dragT || 0) + dt / (f.dragDur || 0.38);
+          const tt = clamp(f.dragT, 0, 1);
+          const e = easeInOutQuad(tt);
+
+          f.x = lerp(f.dragSX, boatX, e);
+          f.y = lerp(f.dragSY, boatY - 12, e);
+
+          // shrink slightly as it approaches
+          f._drawScale = 1 - 0.25 * e;
+
+          if (tt >= 1){
+            f._remove = true; // remove once it reaches boat
+          }
+          continue;
+        }
+
+        // Normal swimming
+        f.x += f.vx * dt;
+        f.y += f.vy * dt;
+
+        if (f.y < 110){ f.y = 110; f.vy = Math.abs(f.vy); }
+        if (f.y > c.height - 90){ f.y = c.height - 90; f.vy = -Math.abs(f.vy); }
+      }
+      fish = fish.filter(f => f.x > -80 && f.x < c.width + 80);
+
+      for (const n of nets){
+        if (n.state === "fly"){
+          // fly progress
+          n.t += dt / n.travel;
+          const tt = clamp(n.t, 0, 1);
+          const e = easeOutCubic(tt);
+          n.x = lerp(n.sx, n.tx, e);
+          n.y = lerp(n.sy, n.ty, e);
+
+          // when arrived, switch to expanding net ("burst")
+          if (tt >= 1){
+            n.state = "burst";
+            n.x = n.tx; n.y = n.ty;
+            n.r = 6;
+            n.life = 0.55;
+          }
+        } else {
+          n.life -= dt;
+          n.r = Math.min(n.maxR, n.r + dt * 220);
+        }
+      }
+for (const n of nets){
+        if (n.state === "fly") continue; // only catch when net has landed
+        if (n.life <= 0) continue;
+        for (const f of fish){
+          if (f.state === "drag" || f.captured) continue;
+          const dx = f.x - n.x, dy = f.y - n.y;
+          const dist = Math.sqrt(dx*dx + dy*dy);
+          if (dist <= n.r + f.r * 0.4){
+            // Mark as caught: animate drag-to-boat (score counted once)
+            f.captured = true;
+            f.state = "drag";
+            f.dragSX = f.x;
+            f.dragSY = f.y;
+            f.dragT = 0;
+            f.dragDur = 0.38;
+            score += f.points;
+          }
+        }
+      }
+
+      fish = fish.filter(f => !f._remove);
+      nets = nets.filter(n => n.state === "fly" || n.life > 0);
+
+      scorePill.textContent = `Score: ${score}`;
+    }
+
+    function draw(){
+      ctx.clearRect(0,0,c.width,c.height);
+
+      // subtle waves
+      ctx.save();
+      ctx.globalAlpha = 0.18;
+      ctx.fillStyle = "#ffffff";
+      for (let i=0;i<7;i++){
+        const y = 160 + i*55;
+        ctx.beginPath();
+        for (let x=0;x<=c.width;x+=40){
+          const yy = y + Math.sin((x/70) + (performance.now()/800) + i)*6;
+          ctx.arc(x, yy, 2.3, 0, Math.PI*2);
+        }
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // Boat
+      const boatX = c.width * 0.5;
+      const boatY = c.height - 50;
+
+      ctx.save();
+      ctx.fillStyle = "rgba(17,24,39,0.9)";
+      roundRect(ctx, boatX-70, boatY, 140, 26, 12);
+      ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,0.9)";
+      ctx.font = "900 16px system-ui";
+      ctx.textAlign = "center";
+      ctx.fillText("BOAT", boatX, boatY+18);
+      ctx.restore();
+
+      // Aim arrow
+      const angle = aim;
+      ctx.save();
+      ctx.translate(boatX, boatY);
+      ctx.rotate(angle);
+      ctx.strokeStyle = "rgba(255,255,255,0.95)";
+      ctx.lineWidth = 6;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(0, -6);
+      ctx.lineTo(60, -6);
+      ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255,0.95)";
+      ctx.beginPath();
+      ctx.moveTo(60, -16);
+      ctx.lineTo(75, -6);
+      ctx.lineTo(60, 4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      // Power bar
+      const barX = 24, barY = 24, barW = 220, barH = 18;
+      ctx.save();
+      ctx.fillStyle = "rgba(255,255,255,0.75)";
+      ctx.strokeStyle = "rgba(17,24,39,0.25)";
+      ctx.lineWidth = 2;
+      roundRect(ctx, barX, barY, barW, barH, 10);
+      ctx.fill(); ctx.stroke();
+
+      const pW = Math.max(0, Math.min(barW, barW * power));
+      ctx.fillStyle = "rgba(37,99,235,0.85)";
+      roundRect(ctx, barX, barY, pW, barH, 10);
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(17,24,39,0.85)";
+      ctx.font = "900 13px system-ui";
+      ctx.textAlign = "left";
+      ctx.fillText("Power", barX, barY + barH + 16);
+      ctx.restore();
+
+      // Fish (3D style, always faces swimming direction)
+      const boatXFD = c.width * 0.5;
+      const boatYFD = c.height - 55;
+
+      for (const f of fish){
+        ctx.save();
+        ctx.translate(f.x, f.y);
+
+        // Size scaling (used during drag)
+        const sc = (f._drawScale != null) ? f._drawScale : 1;
+
+        // Facing: head points to movement direction (right = +1, left = -1)
+        let vxFace = 1;
+        if (f.state === "drag"){
+          vxFace = (boatXFD - f.x) >= 0 ? 1 : -1;
+        } else {
+          vxFace = (f.vx || 0) >= 0 ? 1 : -1;
+        }
+
+        // Flip horizontally when moving left, keep Y upright
+        ctx.scale(vxFace * sc, sc);
+
+        // Soft shadow (depth)
+        ctx.save();
+        ctx.globalAlpha = 0.22;
+        ctx.fillStyle = "rgba(17,24,39,0.9)";
+        ctx.beginPath();
+        ctx.ellipse(2, 6, f.r*1.12, f.r*0.58, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+
+        // Body gradient (3D)
+        const bodyGrad = ctx.createLinearGradient(f.r*1.35, -f.r*0.9, -f.r*2.2, f.r*0.9);
+        bodyGrad.addColorStop(0.00, "rgba(255,255,255,0.65)");
+        bodyGrad.addColorStop(0.18, f.color);
+        bodyGrad.addColorStop(1.00, "rgba(0,0,0,0.18)");
+
+        // Body
+        ctx.fillStyle = bodyGrad;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, f.r*1.25, f.r, 0, 0, Math.PI*2);
+        ctx.fill();
+
+        // Belly highlight
+        ctx.save();
+        ctx.globalAlpha = 0.45;
+        ctx.fillStyle = "rgba(255,255,255,0.85)";
+        ctx.beginPath();
+        ctx.ellipse(f.r*0.25, f.r*0.25, f.r*0.75, f.r*0.45, 0.2, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+
+        // Tail (slightly darker, with gradient)
+        const tailGrad = ctx.createLinearGradient(-f.r*2.2, 0, -f.r*0.8, 0);
+        tailGrad.addColorStop(0.0, "rgba(0,0,0,0.22)");
+        tailGrad.addColorStop(0.45, f.color);
+        tailGrad.addColorStop(1.0, "rgba(255,255,255,0.35)");
+
+        ctx.fillStyle = tailGrad;
+        ctx.beginPath();
+        ctx.moveTo(-f.r*1.05, 0);
+        ctx.lineTo(-f.r*2.15, -f.r*0.85);
+        ctx.lineTo(-f.r*1.85, 0);
+        ctx.lineTo(-f.r*2.15,  f.r*0.85);
+        ctx.closePath();
+        ctx.fill();
+
+        // Dorsal fin
+        ctx.save();
+        ctx.globalAlpha = 0.55;
+        ctx.fillStyle = "rgba(255,255,255,0.35)";
+        ctx.beginPath();
+        ctx.moveTo(-f.r*0.2, -f.r*0.95);
+        ctx.quadraticCurveTo(f.r*0.15, -f.r*1.55, f.r*0.55, -f.r*0.85);
+        ctx.quadraticCurveTo(f.r*0.05, -f.r*0.9, -f.r*0.2, -f.r*0.95);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+
+        // Pectoral fin
+        ctx.save();
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = "rgba(17,24,39,0.35)";
+        ctx.beginPath();
+        ctx.moveTo(f.r*0.15, f.r*0.1);
+        ctx.quadraticCurveTo(f.r*0.65, f.r*0.45, f.r*0.15, f.r*0.85);
+        ctx.quadraticCurveTo(f.r*0.05, f.r*0.45, f.r*0.15, f.r*0.1);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+
+        // Gill line
+        ctx.save();
+        ctx.globalAlpha = 0.35;
+        ctx.strokeStyle = "rgba(17,24,39,0.6)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(f.r*0.55, 0, f.r*0.55, Math.PI*0.65, Math.PI*1.35);
+        ctx.stroke();
+        ctx.restore();
+
+        // Eye (with shine)
+        ctx.fillStyle = "rgba(17,24,39,0.95)";
+        ctx.beginPath();
+        ctx.arc(f.r*0.8, -f.r*0.22, Math.max(2.1, f.r*0.16), 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,0.9)";
+        ctx.beginPath();
+        ctx.arc(f.r*0.88, -f.r*0.30, Math.max(1.0, f.r*0.07), 0, Math.PI*2);
+        ctx.fill();
+
+        // Subtle outline
+        ctx.save();
+        ctx.globalAlpha = 0.18;
+        ctx.strokeStyle = "rgba(17,24,39,0.9)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, f.r*1.25, f.r, 0, 0, Math.PI*2);
+        ctx.stroke();
+        ctx.restore();
+
+        // Points label
+        ctx.fillStyle = "rgba(255,255,255,0.97)";
+        ctx.font = "900 12px system-ui";
+        ctx.textAlign = "center";
+        ctx.fillText("+" + f.points, 0, f.r + 16);
+
+        ctx.restore();
+      }
+
+      // Drag lines (fish being pulled to the boat)
+      const boatXDL = c.width * 0.5;
+      const boatYDL = c.height - 50;
+      for (const f of fish){
+        if (f.state !== "drag") continue;
+        ctx.save();
+        ctx.globalAlpha = 0.25;
+        ctx.strokeStyle = "rgba(255,255,255,0.9)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(f.x, f.y);
+        ctx.lineTo(boatXDL, boatYDL);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Nets (animated throw + expand)
+      for (const n of nets){
+        ctx.save();
+
+        if (n.state === "fly"){
+          // Rope line from boat to net while flying
+          const boatX2 = c.width * 0.5;
+          const boatY2 = c.height - 50;
+          ctx.globalAlpha = 0.35;
+          ctx.strokeStyle = "rgba(255,255,255,0.9)";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(boatX2, boatY2);
+          ctx.lineTo(n.x, n.y);
+          ctx.stroke();
+
+          // Small moving net icon
+          ctx.globalAlpha = 0.8;
+          ctx.strokeStyle = "rgba(255,255,255,0.98)";
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, n.r, 0, Math.PI*2);
+          ctx.stroke();
+
+          ctx.globalAlpha = 0.35;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, n.r*0.55, 0, Math.PI*2);
+          ctx.stroke();
+        } else {
+          // Expanding catch net
+          ctx.globalAlpha = 0.55;
+          ctx.strokeStyle = "rgba(255,255,255,0.95)";
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, n.r, 0, Math.PI*2);
+          ctx.stroke();
+
+          ctx.globalAlpha = 0.25;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, n.r*0.55, 0, Math.PI*2);
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+if (!running){
+        ctx.save();
+        ctx.globalAlpha = 0.45;
+        ctx.fillStyle = "#111827";
+        ctx.fillRect(0,0,c.width,c.height);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = "#fff";
+        ctx.textAlign = "center";
+        ctx.font = "900 30px system-ui";
+        ctx.fillText("Tap Start to Play", c.width/2, c.height/2 - 10);
+        ctx.font = "700 16px system-ui";
+        ctx.fillText("Aim with arrow keys. Press Space / Cast to throw the net.", c.width/2, c.height/2 + 22);
+        ctx.restore();
+      }
+    }
+
+    // roundRect helper (works in Safari)
+    function roundRect(ctx,x,y,w,h,r){
+      r = Math.min(r, w/2, h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+r, y);
+      ctx.arcTo(x+w, y, x+w, y+h, r);
+      ctx.arcTo(x+w, y+h, x, y+h, r);
+      ctx.arcTo(x, y+h, x, y, r);
+      ctx.arcTo(x, y, x+w, y, r);
+      ctx.closePath();
+    }
+
+    // Main loop
+    let last = performance.now();
+    function loop(now){
+      const dt = Math.min(0.05, (now - last)/1000);
+      last = now;
+      if (running) update(dt);
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    // Input
+    function setAimVel(v){ aimVel = v; }
+
+    document.addEventListener("keydown", (e)=>{
+      if (nameDialog.style.display === "flex") return;
+      if (e.key === "ArrowLeft"){ e.preventDefault(); setAimVel(-2.1); }
+      if (e.key === "ArrowRight"){ e.preventDefault(); setAimVel(2.1); }
+      if (e.key === " "){ e.preventDefault(); castNet(); }
+    });
+    document.addEventListener("keyup", (e)=>{
+      if (e.key === "ArrowLeft" && aimVel < 0) setAimVel(0);
+      if (e.key === "ArrowRight" && aimVel > 0) setAimVel(0);
+    });
+
+    // Mobile buttons (press-and-hold)
+    let leftHold = null, rightHold = null;
+    function startHold(dir){
+      stopHold();
+      if (dir === "left"){
+        setAimVel(-2.1);
+        leftHold = setInterval(()=>{}, 50);
+      } else {
+        setAimVel(2.1);
+        rightHold = setInterval(()=>{}, 50);
+      }
+    }
+    function stopHold(){
+      if (leftHold){ clearInterval(leftHold); leftHold = null; }
+      if (rightHold){ clearInterval(rightHold); rightHold = null; }
+      setAimVel(0);
+    }
+
+    btnLeft.addEventListener("pointerdown", ()=>startHold("left"));
+    btnRight.addEventListener("pointerdown", ()=>startHold("right"));
+    btnLeft.addEventListener("pointerup", stopHold);
+    btnRight.addEventListener("pointerup", stopHold);
+    btnLeft.addEventListener("pointercancel", stopHold);
+    btnRight.addEventListener("pointercancel", stopHold);
+
+    btnCast.addEventListener("click", castNet);
+
+    // Buttons
+    btnEasy.onclick = ()=>setMode("easy");
+    btnMedium.onclick = ()=>setMode("medium");
+    btnHard.onclick = ()=>setMode("hard");
+    btnStart.onclick = startGame;
+    btnReset.onclick = ()=>{ resetGame(true); };
+
+    // Init
+    setMode("easy");
+    loadAllLeaderboards();
+    resetGame(true);
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

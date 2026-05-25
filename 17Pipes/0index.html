@@ -1,0 +1,917 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Pipes · FreeNet Puzzle</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700;800;900&display=swap');
+
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface2: #21262d;
+  --border: #30363d;
+  --pipe-bg: #1c2128;
+  --pipe-idle: #58a6ff;
+  --pipe-lit: #39d353;
+  --pipe-end: #f78166;
+  --pipe-width: 6px;
+  --accent: #58a6ff;
+  --accent2: #39d353;
+  --text: #e6edf3;
+  --muted: #7d8590;
+  --win: #39d353;
+  --radius: 6px;
+  --tile: 64px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+body {
+  font-family:'Space Mono',monospace;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  padding-bottom:56px;
+}
+
+/* ── Back header ── */
+.back-header {
+  position:sticky;top:0;left:0;z-index:100;
+  background:rgba(13,17,23,0.95);
+  border-bottom:1px solid var(--border);
+  padding:8px 16px;
+  backdrop-filter:blur(8px);
+}
+.back-link{text-decoration:none;color:var(--text);font-weight:700;font-size:14px;}
+.back-link:hover{color:var(--accent);}
+
+/* ── Layout ── */
+.page{max-width:1200px;margin:0 auto;padding:16px 12px 0;}
+.layout{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 300px;
+  gap:20px;
+  align-items:start;
+}
+
+/* ── Card ── */
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:18px;
+}
+
+/* ── Title ── */
+.game-header{
+  display:flex;align-items:center;gap:12px;
+  border-bottom:1px solid var(--border);
+  padding-bottom:14px;margin-bottom:14px;
+}
+.logo{
+  width:42px;height:42px;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#1f6feb,#58a6ff);
+  border-radius:8px;
+  font-size:22px;flex-shrink:0;
+}
+.game-header h1{font-family:'Syne',sans-serif;font-size:22px;font-weight:900;letter-spacing:-0.02em;}
+.game-header p{font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* ── Controls ── */
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
+select,button{
+  font-family:'Space Mono',monospace;
+  font-size:12px;font-weight:700;
+  padding:7px 12px;
+  border-radius:6px;
+  border:1px solid var(--border);
+  background:var(--surface2);
+  color:var(--text);
+  cursor:pointer;
+  transition:border-color .15s,background .15s;
+}
+select:hover,button:hover{border-color:var(--accent);background:#2d333b;}
+button.primary{
+  background:var(--accent);color:#000;border-color:var(--accent);
+}
+button.primary:hover{background:#79b8ff;border-color:#79b8ff;}
+.lbl{font-size:12px;color:var(--muted);font-weight:700;}
+
+/* ── Stats ── */
+.stats{
+  display:flex;gap:20px;align-items:center;
+  padding:8px 12px;
+  background:var(--pipe-bg);
+  border:1px solid var(--border);
+  border-radius:6px;
+  margin-bottom:14px;
+  font-size:12px;font-weight:700;
+  color:var(--muted);
+}
+.stat-val{color:var(--text);margin-left:4px;}
+.win-banner{
+  color:var(--win);font-weight:700;font-size:13px;
+  animation:glow .8s ease-in-out infinite alternate;
+}
+@keyframes glow{from{text-shadow:0 0 4px #39d35380;}to{text-shadow:0 0 12px #39d353cc;}}
+
+/* ── Board ── */
+#boardWrap{
+  display:flex;justify-content:center;align-items:center;
+  width:100%;overflow:auto;
+}
+#board{
+  display:grid;
+  gap:2px;
+  background:var(--border);
+  border:2px solid var(--border);
+  border-radius:8px;
+  overflow:hidden;
+}
+
+/* ── Tile ── */
+.tile{
+  width:var(--tile);height:var(--tile);
+  background:var(--pipe-bg);
+  cursor:pointer;
+  position:relative;
+  user-select:none;
+  transition:background .12s;
+  -webkit-tap-highlight-color:transparent;
+}
+.tile:hover{background:#212830;}
+.tile.connected .pipe-seg{stroke:var(--pipe-lit);}
+.tile.connected .pipe-end-dot{fill:var(--pipe-lit);}
+.tile svg{
+  width:100%;height:100%;
+  display:block;
+  pointer-events:none;
+}
+/* pipe stroke color via CSS */
+.pipe-seg{
+  stroke:var(--pipe-idle);
+  stroke-width:var(--pipe-width);
+  stroke-linecap:round;
+  fill:none;
+  transition:stroke .2s;
+}
+.pipe-end-dot{
+  fill:var(--pipe-idle);
+  transition:fill .2s;
+}
+.tile.connected .pipe-seg{stroke:var(--pipe-lit);}
+.tile.connected .pipe-end-dot{fill:var(--pipe-lit);}
+/* Spin animation on click */
+.tile.spinning{animation:spin90 .18s ease-out;}
+@keyframes spin90{from{transform:rotate(-20deg);}to{transform:rotate(0deg);}}
+
+/* ── Sidebar ── */
+.rank-sidebar{position:sticky;top:56px;}
+.rank-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:14px;
+}
+.rank-card h3{font-family:'Syne',sans-serif;font-size:16px;font-weight:900;margin-bottom:4px;}
+.rank-note{font-size:11px;color:var(--muted);margin-bottom:12px;}
+.rank-sub{
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:10px 12px;
+  margin-bottom:8px;
+  background:var(--surface2);
+}
+.rank-sub-title{font-size:11px;font-weight:700;color:var(--accent);margin-bottom:6px;letter-spacing:0.05em;text-transform:uppercase;}
+.rank-sub ol{padding-left:18px;margin:0;}
+.rank-sub li{font-size:11px;margin:4px 0;color:var(--muted);}
+.rank-sub li:first-child{color:var(--text);}
+.rank-err{color:#f78166;}
+#rankStatus{font-size:11px;color:var(--muted);margin-top:8px;}
+
+/* ── Win Dialog ── */
+#nameDialog{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.6);
+  display:none;align-items:center;justify-content:center;
+  z-index:3000;backdrop-filter:blur(4px);
+}
+.dialog-box{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:24px 22px 20px;
+  max-width:380px;width:90%;
+  box-shadow:0 24px 64px rgba(0,0,0,0.5);
+}
+.dialog-box h3{font-family:'Syne',sans-serif;font-size:20px;font-weight:900;margin-bottom:8px;color:var(--win);}
+.dialog-box p{font-size:13px;color:var(--muted);margin-bottom:14px;}
+.dialog-box input{
+  width:100%;padding:10px 12px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:var(--surface2);
+  color:var(--text);
+  font-family:'Space Mono',monospace;
+  font-size:14px;
+}
+.dialog-box input:focus{outline:none;border-color:var(--accent);}
+.dialog-actions{display:flex;gap:10px;margin-top:12px;justify-content:flex-end;}
+#dialogStatus{margin-top:8px;font-size:12px;color:#f78166;font-weight:700;}
+
+/* ── Promo Code Dialog ── */
+#promoTrigger{
+  position:fixed;bottom:64px;right:16px;z-index:200;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:8px;padding:6px 10px;
+  display:flex;align-items:center;gap:8px;
+  box-shadow:0 4px 16px rgba(0,0,0,0.4);
+  opacity:0;pointer-events:none;
+  transition:opacity .2s;
+}
+#promoTrigger.visible{opacity:1;pointer-events:auto;}
+#promoInput{
+  background:transparent;border:none;outline:none;
+  color:var(--text);font-family:'Space Mono',monospace;
+  font-size:12px;width:120px;letter-spacing:0.08em;
+}
+#promoInput::placeholder{color:var(--muted);}
+#promoBtn{padding:5px 10px;font-size:11px;}
+
+#promoDialog{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.75);
+  display:none;align-items:center;justify-content:center;
+  z-index:4000;backdrop-filter:blur(6px);
+}
+.promo-box{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:20px;
+  max-width:480px;width:92%;
+  box-shadow:0 32px 80px rgba(0,0,0,0.6);
+  text-align:center;
+}
+.promo-box h3{
+  font-family:'Syne',sans-serif;font-size:18px;font-weight:900;
+  color:#f78166;margin-bottom:4px;
+}
+.promo-box p{font-size:11px;color:var(--muted);margin-bottom:14px;}
+#solvedCanvas{
+  border-radius:10px;border:2px solid var(--border);
+  max-width:100%;display:block;margin:0 auto 14px;
+  image-rendering:pixelated;
+}
+.promo-close{width:100%;}
+
+/* ── Hint key glow ── */
+@keyframes hint-pulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(88,166,255,0);}
+  50%{box-shadow:0 0 0 6px rgba(88,166,255,0.25);}
+}
+
+/* ── Footer ── */
+footer{
+  position:fixed;bottom:0;left:0;width:100%;
+  background:rgba(13,17,23,0.95);
+  border-top:1px solid var(--border);
+  text-align:center;padding:8px 0;
+  font-size:12px;color:var(--muted);z-index:50;
+  backdrop-filter:blur(6px);
+}
+
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr;}
+  .rank-sidebar{position:static;}
+}
+@media(max-width:540px){
+  :root{--tile:52px;--pipe-width:5px;}
+}
+@media(max-width:400px){
+  :root{--tile:42px;--pipe-width:4px;}
+}
+</style>
+</head>
+<body>
+
+<header class="back-header">
+  <a class="back-link" href="/puzzle">← Back to Puzzle Home</a>
+</header>
+
+<div class="page">
+<div class="layout">
+
+  <!-- ═══ LEFT: GAME ═══ -->
+  <div>
+  <div class="card">
+    <div class="game-header">
+      <div class="logo">🔌</div>
+      <div>
+        <h1>Pipes · FreeNet</h1>
+        <p>Rotate tiles so all pipes form one connected tree. No loops allowed.</p>
+      </div>
+    </div>
+
+    <div class="controls">
+      <span class="lbl">Grid:</span>
+      <select id="sizeSelect">
+        <option value="3">3 × 3</option>
+        <option value="4">4 × 4</option>
+        <option value="5" selected>5 × 5</option>
+        <option value="6">6 × 6</option>
+        <option value="7">7 × 7</option>
+        <option value="8">8 × 8</option>
+      </select>
+      <button class="primary" id="newBtn">New Game</button>
+    </div>
+
+    <div class="stats">
+      <div>⏱ <span class="stat-val" id="timeEl">0</span>s</div>
+      <div>🔄 <span class="stat-val" id="rotEl">0</span> rotations</div>
+      <div id="winBanner"></div>
+    </div>
+
+    <div id="boardWrap"><div id="board"></div></div>
+  </div>
+  </div>
+
+  <!-- ═══ RIGHT: LEADERBOARD ═══ -->
+  <aside class="rank-sidebar">
+    <div class="rank-card">
+      <h3>🏆 Leaderboard</h3>
+      <div class="rank-note">Ranking: Wins ↓ then Best Time ↑. Separate boards by grid size.</div>
+      <div id="rankBoards" style="display:grid;gap:8px;">
+        <div class="rank-sub"><div class="rank-sub-title">3 × 3</div><ol id="rankList3"><li>Loading…</li></ol></div>
+        <div class="rank-sub"><div class="rank-sub-title">4 × 4</div><ol id="rankList4"><li>Loading…</li></ol></div>
+        <div class="rank-sub"><div class="rank-sub-title">5 × 5</div><ol id="rankList5"><li>Loading…</li></ol></div>
+        <div class="rank-sub"><div class="rank-sub-title">6 × 6</div><ol id="rankList6"><li>Loading…</li></ol></div>
+        <div class="rank-sub"><div class="rank-sub-title">7 × 7</div><ol id="rankList7"><li>Loading…</li></ol></div>
+        <div class="rank-sub"><div class="rank-sub-title">8 × 8</div><ol id="rankList8"><li>Loading…</li></ol></div>
+      </div>
+      <div id="rankStatus">Loading…</div>
+    </div>
+  </aside>
+
+</div>
+</div>
+
+<!-- ═══ WIN DIALOG ═══ -->
+<div id="nameDialog">
+  <div class="dialog-box">
+    <h3>🎉 Pipes Connected!</h3>
+    <p id="dialogPrompt">Enter your name for the leaderboard:</p>
+    <input id="dialogNameInput" placeholder="Your name" maxlength="40"/>
+    <div class="dialog-actions">
+      <button id="dialogCancel">Cancel</button>
+      <button class="primary" id="dialogSubmit">Submit</button>
+    </div>
+    <div id="dialogStatus"></div>
+  </div>
+</div>
+
+<!-- ═══ PROMO CODE BAR (hidden until activated) ═══ -->
+<div id="promoTrigger">
+  <span style="font-size:11px;color:var(--muted);white-space:nowrap;">🔑 Code:</span>
+  <input id="promoInput" placeholder="enter code…" maxlength="20" autocomplete="off" spellcheck="false"/>
+  <button class="primary" id="promoBtn">Go</button>
+</div>
+
+<!-- ═══ PROMO / ANSWER DIALOG ═══ -->
+<div id="promoDialog">
+  <div class="promo-box">
+    <h3>🗺️ Solution Preview</h3>
+    <p>Promo code accepted — here's the solved board for the current puzzle.</p>
+    <canvas id="solvedCanvas"></canvas>
+    <button class="primary promo-close" id="promoClose">Close</button>
+  </div>
+</div>
+
+<footer>
+  © 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528.
+  The STEAM Teacher is Chao Yu. For educational purposes only.
+</footer>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  PIPES / FREENET PUZZLE
+//
+//  Direction encoding (bitmask):
+//    N=1  E=2  S=4  W=8
+//
+//  Tile types by open-side count & pattern:
+//    End-cap  (1 side): e.g. {N}
+//    Elbow    (2 sides, corner): e.g. {N,E}
+//    Straight (2 sides, opposite): e.g. {N,S}
+//    T-shape  (3 sides): e.g. {N,E,S}
+//    Cross    (4 sides): {N,E,S,W}
+// ═══════════════════════════════════════════════════════════
+
+const DIR = { N:1, E:2, S:4, W:8 };
+const OPP = { 1:4, 4:1, 2:8, 8:2 };  // opposite direction
+const DR  = { 1:-1, 4:1, 2:0, 8:0 }; // row delta
+const DC  = { 1:0,  4:0, 2:1, 8:-1 };// col delta
+const ALL_DIRS = [1,2,4,8];
+
+const BASE_GAME_ID = "pipes";
+let N = 5;
+let grid = []; // grid[r][c] = { connections: bitmask }
+let seconds = 0, rotations = 0;
+let timer = null, started = false, solved = false;
+let _submittedThisRound = false;
+
+// ── Rotate a bitmask 90° clockwise ──
+function rotateMask(mask) {
+  let out = 0;
+  if (mask & DIR.N) out |= DIR.E;
+  if (mask & DIR.E) out |= DIR.S;
+  if (mask & DIR.S) out |= DIR.W;
+  if (mask & DIR.W) out |= DIR.N;
+  return out;
+}
+
+// ── Generate a puzzle using random spanning tree (iterative DFS, no stack overflow) ──
+function generatePuzzle(n) {
+  // 1. Build a random spanning tree via iterative randomised DFS
+  const inTree = Array.from({length:n}, () => new Array(n).fill(false));
+  const edges  = Array.from({length:n}, () => new Array(n).fill(0));
+
+  // Iterative DFS using an explicit stack of [r, c, shuffled_dirs, dir_index]
+  inTree[0][0] = true;
+  const stack = [[0, 0, shuffle4([1,2,4,8]), 0]];
+  while (stack.length) {
+    const frame = stack[stack.length - 1];
+    const [r, c, dirs] = frame;
+    let advanced = false;
+    while (frame[3] < dirs.length) {
+      const d  = dirs[frame[3]++];
+      const nr = r + DR[d], nc = c + DC[d];
+      if (nr < 0 || nr >= n || nc < 0 || nc >= n || inTree[nr][nc]) continue;
+      inTree[nr][nc] = true;
+      edges[r][c]   |= d;
+      edges[nr][nc] |= OPP[d];
+      stack.push([nr, nc, shuffle4([1,2,4,8]), 0]);
+      advanced = true;
+      break;
+    }
+    if (!advanced) stack.pop();
+  }
+
+  // 2. Build solved state from tree edges
+  const solvedConn = Array.from({length:n}, (_, r) =>
+    Array.from({length:n}, (_, c) => edges[r][c])
+  );
+
+  // 3. Randomly rotate each tile — but guarantee at least one tile is NOT
+  //    in its solved orientation so the puzzle is never pre-solved at start.
+  //    We track whether any tile actually changed, and if not we force one.
+  let anyRotated = false;
+  const puzzle = Array.from({length:n}, (_, r) =>
+    Array.from({length:n}, (_, c) => {
+      // Choose k in 1..3 for a random non-trivial rotation on some tiles,
+      // and 0 (no rotation) on others — but we need at least one k>0.
+      const k = Math.floor(Math.random() * 4); // 0,1,2,3
+      if (k !== 0) anyRotated = true;
+      let m = solvedConn[r][c];
+      for (let i = 0; i < k; i++) m = rotateMask(m);
+      return { conn: m, solvedConn: solvedConn[r][c] };
+    })
+  );
+
+  // Guarantee the puzzle isn't already solved: if every tile got k=0,
+  // force a rotation on the first tile that has a non-symmetric shape
+  // (i.e. rotating it actually changes something — not a cross or empty).
+  if (!anyRotated) {
+    for (let r = 0; r < n; r++) {
+      for (let c = 0; c < n; c++) {
+        const orig = puzzle[r][c].conn;
+        const rot1 = rotateMask(orig);
+        if (rot1 !== orig) {          // rotating this tile actually changes it
+          puzzle[r][c].conn = rot1;
+          r = n; break;               // break both loops
+        }
+      }
+    }
+  }
+
+  return puzzle;
+}
+
+function shuffle4(arr) {
+  for (let i=arr.length-1;i>0;i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
+
+// ── Check win: all tiles connected in one spanning tree, no loops ──
+// Win requires ALL of:
+//   1. Every adjacent pair agrees on the shared edge (mutual connection).
+//   2. The graph of mutually-agreed edges is connected (BFS reaches all N² tiles).
+//   3. That graph has exactly N²-1 edges (spanning tree → no loops possible).
+function checkWin() {
+  // Helper: can we travel from (r,c) in direction d?
+  // Both tiles must have the pipe on the shared edge.
+  function canGo(r, c, d) {
+    if (!(grid[r][c].conn & d)) return false;
+    const nr = r + DR[d], nc = c + DC[d];
+    if (nr < 0 || nr >= N || nc < 0 || nc >= N) return false;
+    return !!(grid[nr][nc].conn & OPP[d]);
+  }
+
+  // Count mutually-agreed edges and verify no one-sided connections exist
+  let edgeCount = 0;
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      // Check each outward direction; if a tile opens toward the border → fail
+      for (const d of ALL_DIRS) {
+        if (!(grid[r][c].conn & d)) continue;
+        const nr = r + DR[d], nc = c + DC[d];
+        if (nr < 0 || nr >= N || nc < 0 || nc >= N) return false; // pipe exits the grid
+        if (!(grid[nr][nc].conn & OPP[d])) return false;          // neighbour doesn't reciprocate
+      }
+      // Count south and east edges once each (avoid double-counting)
+      if (r + 1 < N && canGo(r, c, DIR.S)) edgeCount++;
+      if (c + 1 < N && canGo(r, c, DIR.E)) edgeCount++;
+    }
+  }
+
+  // A spanning tree on N² nodes has exactly N²-1 edges
+  if (edgeCount !== N * N - 1) return false;
+
+  // BFS using only mutually-agreed edges to confirm full connectivity
+  const vis = Array.from({length: N}, () => new Array(N).fill(false));
+  const q = [[0, 0]];
+  vis[0][0] = true;
+  let cnt = 1;
+  while (q.length) {
+    const [r, c] = q.shift();
+    for (const d of ALL_DIRS) {
+      if (!canGo(r, c, d)) continue;
+      const nr = r + DR[d], nc = c + DC[d];
+      if (vis[nr][nc]) continue;
+      vis[nr][nc] = true;
+      cnt++;
+      q.push([nr, nc]);
+    }
+  }
+  return cnt === N * N;
+}
+
+// ── Flood-fill to find which tiles are in the connected component ──
+function connectedSet() {
+  const vis = Array.from({length:N}, ()=>new Array(N).fill(false));
+
+  // Check local consistency for each edge before traversal
+  function canGo(r,c,d) {
+    if (!(grid[r][c].conn & d)) return false;
+    const nr=r+DR[d], nc=c+DC[d];
+    if (nr<0||nr>=N||nc<0||nc>=N) return false;
+    return !!(grid[nr][nc].conn & OPP[d]);
+  }
+
+  const q=[[0,0]]; vis[0][0]=true;
+  while (q.length) {
+    const [r,c]=q.shift();
+    for (const d of ALL_DIRS) {
+      if (!canGo(r,c,d)) continue;
+      const nr=r+DR[d],nc=c+DC[d];
+      if (vis[nr][nc]) continue;
+      vis[nr][nc]=true;
+      q.push([nr,nc]);
+    }
+  }
+  return vis;
+}
+
+// ── Render ──
+function computeTileSize() {
+  const wrap = document.getElementById('boardWrap');
+  const gap   = 2;
+  const avW   = Math.max(200, wrap.clientWidth - 4);
+  const avH   = Math.max(200, window.innerHeight - wrap.getBoundingClientRect().top - 80);
+  const sz    = Math.floor((Math.min(avW, avH) - gap*(N-1)) / N);
+  return Math.max(32, Math.min(80, sz));
+}
+
+function renderBoard() {
+  const board = document.getElementById('board');
+  const ts    = computeTileSize();
+  const gap   = 2;
+  board.style.gridTemplateColumns = `repeat(${N},${ts}px)`;
+  board.style.gridTemplateRows    = `repeat(${N},${ts}px)`;
+  board.style.gap = `${gap}px`;
+  document.documentElement.style.setProperty('--tile', ts+'px');
+
+  const connected = connectedSet();
+  board.innerHTML = '';
+
+  for (let r=0;r<N;r++) {
+    for (let c=0;c<N;c++) {
+      const tile = document.createElement('div');
+      tile.className = 'tile' + (connected[r][c] ? ' connected' : '');
+      tile.dataset.r = r; tile.dataset.c = c;
+      tile.innerHTML = buildSVG(grid[r][c].conn, ts);
+      tile.addEventListener('click', onTileClick);
+      board.appendChild(tile);
+    }
+  }
+}
+
+// ── Build SVG for a tile ──
+// Center = (50,50) in a 100×100 viewBox.
+// Each open direction draws a line from center to edge midpoint.
+function buildSVG(mask, tileSize) {
+  const mid = 50, edge = 100;
+  const pts = {
+    [DIR.N]: [mid, 0],
+    [DIR.S]: [mid, edge],
+    [DIR.E]: [edge, mid],
+    [DIR.W]: [0,   mid],
+  };
+  const bits = ALL_DIRS.filter(d => mask & d);
+
+  let paths = '';
+  for (const d of bits) {
+    const [x2,y2] = pts[d];
+    paths += `<line class="pipe-seg" x1="${mid}" y1="${mid}" x2="${x2}" y2="${y2}"/>`;
+  }
+
+  // Center dot
+  const dotR = bits.length === 1 ? 9 : 6;
+  paths += `<circle class="pipe-end-dot" cx="${mid}" cy="${mid}" r="${dotR}"/>`;
+
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${paths}</svg>`;
+}
+
+// ── Tile click ──
+function onTileClick(e) {
+  if (solved) return;
+  const tile = e.currentTarget;
+  const r = +tile.dataset.r, c = +tile.dataset.c;
+
+  if (!started) { started=true; startTimer(); }
+
+  grid[r][c].conn = rotateMask(grid[r][c].conn);
+  rotations++;
+  document.getElementById('rotEl').textContent = rotations;
+
+  // Spin animation
+  tile.classList.remove('spinning');
+  void tile.offsetWidth;
+  tile.classList.add('spinning');
+
+  // Re-render board
+  renderBoard();
+
+  if (checkWin()) {
+    solved = true;
+    stopTimer();
+    document.getElementById('winBanner').innerHTML = `<span class="win-banner">🎉 Solved in ${seconds}s!</span>`;
+    if (!_submittedThisRound) { _submittedThisRound=true; openWinDialog(); }
+  }
+}
+
+// ── New game ──
+function newGame() {
+  N = +document.getElementById('sizeSelect').value;
+  solved = false; seconds=0; rotations=0; started=false; _submittedThisRound=false;
+  stopTimer();
+  document.getElementById('timeEl').textContent='0';
+  document.getElementById('rotEl').textContent='0';
+  document.getElementById('winBanner').innerHTML='';
+  grid = generatePuzzle(N);
+  renderBoard();
+  startTimer(); // timer starts immediately
+  started = true;
+}
+
+// ── Timer ──
+function startTimer() {
+  if (timer) return;
+  timer = setInterval(()=>{ seconds++; document.getElementById('timeEl').textContent=seconds; },1000);
+}
+function stopTimer() { clearInterval(timer); timer=null; }
+
+// ── Leaderboard ──
+function gameId() { return `${BASE_GAME_ID}_${N}x${N}`; }
+
+async function submitScore(name) {
+  try {
+    const res = await fetch('/api/score',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({game:gameId(),player_name:name.trim().slice(0,40),seconds})
+    });
+    if(!res.ok) return false;
+    return (await res.json().catch(()=>({}))).ok === true;
+  } catch { return false; }
+}
+
+async function loadOneBoard(size) {
+  const list = document.getElementById(`rankList${size}`);
+  if (!list) return;
+  const game = `${BASE_GAME_ID}_${size}x${size}`;
+  try {
+    const res = await fetch(`/api/leaderboard?game=${encodeURIComponent(game)}&limit=5`,{cache:'no-store'});
+    const data = await res.json();
+    const rows = Array.isArray(data)?data:(data.rows||[]);
+    list.innerHTML='';
+    if(!rows.length){list.innerHTML='<li>No scores yet.</li>';return;}
+    rows.forEach((r,i)=>{
+      const name = r.player_name??r.playerName??"Unknown";
+      const wins = r.win_count??r.wins??r.winCount??0;
+      const best = r.best_seconds??r.bestSeconds??null;
+      const li=document.createElement('li');
+      li.textContent=`#${i+1} ${name} — ${wins}W`+(best!=null?` — Best: ${best}s`:'');
+      list.appendChild(li);
+    });
+  } catch {
+    list.innerHTML="<li class='rank-err'>Could not load.</li>";
+  }
+}
+
+async function loadAllRanks() {
+  const st=document.getElementById('rankStatus');
+  if(st) st.textContent='Loading…';
+  await Promise.all([3,4,5,6,7,8].map(loadOneBoard));
+  if(st) st.textContent='Updated just now.';
+}
+
+// ── Win Dialog ──
+function openWinDialog() {
+  const d = document.getElementById('nameDialog');
+  const inp = document.getElementById('dialogNameInput');
+  document.getElementById('dialogPrompt').textContent=`Time: ${seconds}s · Rotations: ${rotations}. Enter your name:`;
+  document.getElementById('dialogStatus').textContent='';
+  document.getElementById('dialogSubmit').style.display='inline-block';
+  inp.value='';
+  d.style.display='flex';
+  setTimeout(()=>inp.focus(),50);
+}
+function closeWinDialog(){document.getElementById('nameDialog').style.display='none';}
+
+document.getElementById('dialogCancel').onclick=closeWinDialog;
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&document.getElementById('nameDialog').style.display==='flex') closeWinDialog();
+});
+document.getElementById('dialogNameInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault();document.getElementById('dialogSubmit').click();}
+});
+document.getElementById('dialogSubmit').onclick=async()=>{
+  const inp=document.getElementById('dialogNameInput');
+  const st=document.getElementById('dialogStatus');
+  const btn=document.getElementById('dialogSubmit');
+  const name=inp.value.trim();
+  if(!name){st.textContent='Name is required.';return;}
+  btn.disabled=true; st.textContent='Saving…';
+  const ok=await submitScore(name);
+  if(ok){closeWinDialog();loadAllRanks();}
+  else{st.textContent='Could not save. Try again.';}
+  btn.disabled=false;
+};
+
+// ── Promo Code System ──
+// Activate the input bar: triple-click anywhere on the page header logo,
+// OR press Ctrl+Shift+K (teacher shortcut).
+const PROMO_CODE = 'cmd';
+const promoTrigger = document.getElementById('promoTrigger');
+const promoInput   = document.getElementById('promoInput');
+const promoBtn     = document.getElementById('promoBtn');
+const promoDialog  = document.getElementById('promoDialog');
+const promoClose   = document.getElementById('promoClose');
+const solvedCanvas = document.getElementById('solvedCanvas');
+
+// Show the promo input bar
+function showPromoBar() {
+  promoTrigger.classList.add('visible');
+  promoInput.value = '';
+  setTimeout(() => promoInput.focus(), 80);
+}
+function hidePromoBar() {
+  promoTrigger.classList.remove('visible');
+  promoInput.value = '';
+}
+
+// Triple-click on the logo reveals the bar
+let logoClickCount = 0, logoClickTimer = null;
+document.querySelector('.logo').addEventListener('click', () => {
+  logoClickCount++;
+  clearTimeout(logoClickTimer);
+  logoClickTimer = setTimeout(() => { logoClickCount = 0; }, 600);
+  if (logoClickCount >= 3) {
+    logoClickCount = 0;
+    showPromoBar();
+  }
+});
+
+// Keyboard shortcut: Ctrl+Shift+K
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey && e.shiftKey && e.key === 'K') { e.preventDefault(); showPromoBar(); }
+  if (e.key === 'Escape' && promoTrigger.classList.contains('visible')) hidePromoBar();
+});
+
+// Enter in the promo input = submit
+promoInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); promoBtn.click(); }
+});
+
+// Check the code and render solved board
+promoBtn.addEventListener('click', () => {
+  const entered = promoInput.value.trim().toLowerCase();
+  if (entered !== PROMO_CODE) {
+    promoInput.style.color = '#f78166';
+    setTimeout(() => { promoInput.style.color = ''; promoInput.value = ''; }, 800);
+    return;
+  }
+  hidePromoBar();
+  renderSolvedCanvas();
+  promoDialog.style.display = 'flex';
+});
+
+promoClose.addEventListener('click', () => { promoDialog.style.display = 'none'; });
+promoDialog.addEventListener('click', e => { if (e.target === promoDialog) promoDialog.style.display = 'none'; });
+
+// Draw the solved board onto a canvas
+function renderSolvedCanvas() {
+  const TILE  = 56;       // px per tile in the canvas
+  const GAP   = 2;
+  const PAD   = 8;
+  const size  = N * TILE + (N - 1) * GAP + PAD * 2;
+
+  solvedCanvas.width  = size;
+  solvedCanvas.height = size;
+
+  const ctx = solvedCanvas.getContext('2d');
+
+  // Background
+  ctx.fillStyle = '#1c2128';
+  ctx.roundRect ? ctx.roundRect(0, 0, size, size, 10) : ctx.fillRect(0, 0, size, size);
+  ctx.fill();
+
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      const mask = grid[r][c].solvedConn;  // the correct solved orientation
+      const x0   = PAD + c * (TILE + GAP);
+      const y0   = PAD + r * (TILE + GAP);
+
+      // Tile background
+      ctx.fillStyle = '#21262d';
+      ctx.beginPath();
+      ctx.roundRect ? ctx.roundRect(x0, y0, TILE, TILE, 4) : ctx.fillRect(x0, y0, TILE, TILE);
+      ctx.fill();
+
+      const cx = x0 + TILE / 2;
+      const cy = y0 + TILE / 2;
+
+      ctx.strokeStyle = '#39d353';
+      ctx.lineWidth   = 5;
+      ctx.lineCap     = 'round';
+
+      // Draw pipe arms for each open direction
+      const armPts = {
+        1: [cx, y0],           // N
+        2: [x0 + TILE, cy],    // E
+        4: [cx, y0 + TILE],    // S
+        8: [x0, cy],           // W
+      };
+
+      const bits = [1,2,4,8].filter(d => mask & d);
+      for (const d of bits) {
+        const [ex, ey] = armPts[d];
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(ex, ey);
+        ctx.stroke();
+      }
+
+      // Center dot
+      ctx.fillStyle = '#39d353';
+      ctx.beginPath();
+      ctx.arc(cx, cy, bits.length === 1 ? 7 : 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // Label
+  ctx.fillStyle = 'rgba(125,133,144,0.9)';
+  ctx.font = 'bold 10px monospace';
+  ctx.textAlign = 'center';
+  // No label text needed — the image speaks for itself
+}
+
+// ── Controls ──
+document.getElementById('newBtn').onclick=newGame;
+document.getElementById('sizeSelect').onchange=newGame;
+window.addEventListener('resize',()=>{ if(!solved) renderBoard(); });
+
+// ── Init ──
+newGame();
+loadAllRanks();
+</script>
+</body>
+</html>

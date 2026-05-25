@@ -1,0 +1,706 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Number Puzzle Game (3x3 to 10x10)</title>
+
+<style>
+  body {
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    margin: 24px;
+  }
+  .card {
+    border: 1px solid #ddd;
+    border-radius: 14px;
+    padding: 16px;
+    max-width: 820px;
+    margin: 0 auto; /* centers the content block (card) */
+  }
+  .row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  #boardWrap { margin-top: 16px; display: flex; justify-content: center; align-items: center; width: 100%; }
+  #board {
+    display: grid;
+    gap: 10px;
+    user-select: none;
+    margin: 0 auto; /* centers the grid itself */
+  }
+  .tile {
+    position: relative;
+    display: flex;              /* centers number inside tile */
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    border: 1px solid #cfcfcf;
+    font-weight: 800;
+    font-size: 22px;
+    cursor: pointer;
+    background: #f7f7f7;
+  }
+  .empty {
+    background: transparent;
+    border: 1px dashed #d7d7d7;
+    cursor: default;
+  }
+  .meta {
+    position: absolute;
+    bottom: 6px;
+    left: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(0,0,0,.55);
+    display: none;
+  }
+  
+  button, select, input {
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    font-weight: 600;
+  }
+  .status { margin-top: 10px; font-size: 14px; }
+  .win { color: #0a7a2f; font-weight: 900; }
+
+  /* Back link (top-left) */
+    .back-header{
+      position: sticky;
+      top: 0;
+      left: 0;
+      z-index: 1000;
+      background: #fff;
+      padding: 2px 8px;
+      border-bottom: 1px solid #eee;
+    }
+    .back-link{
+      text-decoration:none;
+      color:#000000;
+      font-weight:700;
+      font-size:16px;
+    }
+
+  /* ===== Page layout: centered game + right leaderboard ===== */
+  .page {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 12px;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 24px;
+    align-items: start;
+  }
+  .left-col {
+    display: flex;
+    justify-content: center;
+  }
+  /* Keep the game card centered with a nice fixed width */
+  .card {
+    max-width: 820px; /* keep your original intent */
+    width: 100%;
+    margin: 0;       /* override margin auto so flex centering works */
+  }
+  .rank-sidebar {
+    position: sticky;
+    top: 72px;
+    max-height: calc(100vh - 96px);
+    overflow: auto;
+  }
+  .rank-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 14px 14px 12px;
+    background: #fafafa;
+  }
+  .rank-card h3 {
+    margin: 0 0 8px;
+    font-size: 18px;
+  }
+  .rank-card ol { padding-left: 22px; margin: 0; }
+  .rank-card li { margin: 8px 0; }
+  .rank-note { margin-top: 10px; font-size: 13px; opacity: 0.85; }
+  .rank-err { color: #b91c1c; }
+
+  @media (max-width: 980px) {
+    .layout { grid-template-columns: 1fr; }
+    .rank-sidebar { position: static; max-height: none; }
+    .left-col { justify-content: stretch; }
+    .card { max-width: 820px; margin: 0 auto; }
+  }
+
+
+  .rank-sub {
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 10px 12px;
+  }
+  .rank-sub-title{
+    font-weight: 800;
+    margin: 0 0 6px;
+  }
+  .rank-sub ol { padding-left: 22px; margin: 0; }
+  .rank-sub li { margin: 6px 0; }
+
+
+  /* Responsive board: fill available center area */
+  #boardWrap{
+    margin-top: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+  }
+  #board{
+    margin: 0;
+  }
+  .tile{
+    touch-action: manipulation; /* smoother on iOS */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Mobile / tablet friendly spacing */
+  @media (max-width: 900px){
+    body{ margin: 12px; }
+    .rank-sidebar{ position: static; max-height: none; }
+  }
+
+
+  /* iPhone / small screens: prevent back link overlapping content */
+  @media (max-width: 520px){
+    body{
+      padding-top: env(safe-area-inset-top);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+    a.back-link, #backLink, .back-link{
+      display: inline-block;
+      position: static !important;
+      margin: 6px 0 10px !important;
+      padding: 6px 2px;
+      line-height: 1.2;
+      z-index: 1;
+    }
+    /* Ensure top controls sit below the back link */
+    .topbar, #controlsRow, .controls, .row{
+      margin-top: 6px;
+    }
+    /* Give the card some breathing room on mobile */
+    .card{
+      padding-top: 14px;
+    }
+  }
+
+</style>
+</head>
+
+<body>
+<header class="back-header">
+  <a class="back-link" href="/puzzle">← Back to Puzzle Home</a>
+</header>
+
+
+<div class="page">
+  <div class="layout">
+    <div class="left-col">
+<div class="card" id="app">
+
+  <div class="row">
+<label><strong>Board:</strong></label>
+    <select id="size">
+      <option value="3">3 × 3</option>
+      <option value="4">4 × 4</option>
+      <option value="5">5 × 5</option>
+      <option value="6">6 × 6</option>
+      <option value="7">7 × 7</option>
+      <option value="8">8 × 8</option>
+      <option value="9">9 × 9</option>
+      <option value="10">10 × 10</option>
+    </select>
+<button id="shuffleBtn">Shuffle</button>
+</div>
+
+  <div id="boardWrap">
+    <div id="board"></div>
+  </div>
+
+  <div class="status">    Moves: <span id="moves">0</span> |
+    Time: <span id="time">0</span>s
+    <span id="winMsg"></span>
+  </div>
+
+</div>
+
+
+    </div>
+
+<aside class="rank-sidebar">
+  <div class="rank-card">
+    <h3>🏆 Leaderboard</h3>
+    <div style="font-size:13px; opacity:0.85; margin-bottom:10px;">
+      Ranking: Wins (high → low), then Best Time (low → high). Separate boards by puzzle size.
+    </div>
+
+    <div id="rankBoards" style="display:grid; gap:14px;">
+      <div class="rank-sub">
+        <div class="rank-sub-title">3 × 3</div>
+        <ol id="rankList3"><li>Loading…</li></ol>
+      </div>
+      <div class="rank-sub">
+        <div class="rank-sub-title">4 × 4</div>
+        <ol id="rankList4"><li>Loading…</li></ol>
+      </div>
+      <div class="rank-sub">
+        <div class="rank-sub-title">5 × 5</div>
+        <ol id="rankList5"><li>Loading…</li></ol>
+      </div>
+      <div class="rank-sub">
+        <div class="rank-sub-title">6 × 6</div>
+        <ol id="rankList6"><li>Loading…</li></ol>
+      </div>
+      <div class="rank-sub">
+        <div class="rank-sub-title">7 × 7</div>
+        <ol id="rankList7"><li>Loading…</li></ol>
+      </div>
+      <div class="rank-sub">
+        <div class="rank-sub-title">8 × 8</div>
+        <ol id="rankList8"><li>Loading…</li></ol>
+      </div>
+      <div class="rank-sub">
+        <div class="rank-sub-title">9 × 9</div>
+        <ol id="rankList9"><li>Loading…</li></ol>
+      </div>
+      <div class="rank-sub">
+        <div class="rank-sub-title">10 × 10</div>
+        <ol id="rankList10"><li>Loading…</li></ol>
+      </div>
+    </div>
+
+    <div id="rankStatus" class="rank-note"></div>
+</div>
+</aside>
+
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+/* ---------- DOM ---------- */
+const app = document.getElementById("app");
+const boardEl = document.getElementById("board");
+const sizeEl = document.getElementById("size");
+const movesEl = document.getElementById("moves");
+const timeEl = document.getElementById("time");
+const winMsgEl = document.getElementById("winMsg");
+const shuffleBtn = document.getElementById("shuffleBtn");
+
+
+/* ---------- Leaderboard / DB ---------- */
+const BASE_GAME_ID = "slidingpuzzle";
+let _submittedThisRound = false;
+
+function sanitizeName(name) {
+  return (name || "").trim().slice(0, 40);
+}
+
+async function submitWinToDB(playerName, seconds) {
+  try {
+    const res = await fetch("/api/score", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        game: currentGameId(),
+        player_name: playerName,
+        seconds: seconds
+      })
+    });
+    if (!res.ok) return false;
+    const data = await res.json().catch(() => ({}));
+    return data.ok === true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function currentGameId() {
+  return `${BASE_GAME_ID}_${N}x${N}`;
+}
+
+async function loadOneBoard(size) {
+  const list = document.getElementById(`rankList${size}`);
+  if (!list) return;
+
+  const game = `${BASE_GAME_ID}_${size}x${size}`;
+
+  try {
+    const res = await fetch(`/api/leaderboard?game=${encodeURIComponent(game)}&limit=5`, { cache: "no-store" });
+    const data = await res.json();
+    const rows = Array.isArray(data) ? data : (data.rows || []);
+
+    list.innerHTML = "";
+
+    if (!rows.length) {
+      list.innerHTML = "<li>No scores yet.</li>";
+      return;
+    }
+
+    rows.forEach((r, i) => {
+      const name = r.player_name ?? r.playerName ?? "Unknown";
+      const wins = r.win_count ?? r.wins ?? r.winCount ?? 0;
+      const best = r.best_seconds ?? r.bestSeconds ?? null;
+
+      const li = document.createElement("li");
+      li.textContent = `#${i + 1} ${name} — Wins: ${wins}` + (best != null ? ` — Best: ${best}s` : "");
+      list.appendChild(li);
+    });
+  } catch (e) {
+    list.innerHTML = "<li class='rank-err'>Could not load leaderboard.</li>";
+  }
+}
+
+async function loadRankPreview() {
+  const status = document.getElementById("rankStatus");
+  if (status) {
+    status.textContent = "Loading…";
+    status.classList.remove("rank-err");
+  }
+
+  const sizes = [3,4,5,6,7,8,9,10];
+  await Promise.all(sizes.map(loadOneBoard));
+
+  if (status) status.textContent = "Updated just now.";
+}
+
+
+
+/* ---------- Win Dialog ---------- */
+const nameDialog = document.getElementById("nameDialog");
+const dialogNameInput = document.getElementById("dialogNameInput");
+const dialogSubmit = document.getElementById("dialogSubmit");
+const dialogCancel = document.getElementById("dialogCancel");
+const dialogStatus = document.getElementById("dialogStatus");
+
+// Press Enter in the name input = click Submit
+if (dialogNameInput) {
+  dialogNameInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      dialogSubmit?.click();
+    }
+  });
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && nameDialog?.style.display === "flex") {
+    closeWinDialog();
+  }
+});
+
+function openWinDialog(defaultName = "") {
+  if (!nameDialog) return;
+  dialogStatus.textContent = "";
+  dialogNameInput.value = defaultName || "";
+  nameDialog.style.display = "flex";
+  setTimeout(() => dialogNameInput.focus(), 50);
+}
+
+function closeWinDialog() {
+  if (!nameDialog) return;
+  nameDialog.style.display = "none";
+}
+
+if (dialogCancel) dialogCancel.onclick = closeWinDialog;
+
+if (dialogSubmit) dialogSubmit.onclick = async () => {
+  const n = sanitizeName(dialogNameInput.value);
+  if (!n) {
+    dialogStatus.textContent = "Name is required.";
+    return;
+  }
+
+  dialogSubmit.disabled = true;
+  dialogStatus.textContent = "Saving...";
+
+  const ok = await submitWinToDB(n, seconds);
+  if (ok) {
+
+    closeWinDialog();
+    loadRankPreview();
+  } else {
+    dialogStatus.textContent = "Could not save score. Try again.";
+  }
+  dialogSubmit.disabled = false;
+};
+
+
+/* ---------- State ---------- */
+let N = 3;
+let tiles = [];
+let moves = 0;
+let seconds = 0;
+let timer = null;
+let started = false;
+
+/* ---------- Utilities ---------- */
+const idxToRC = i => ({ r: Math.floor(i / N), c: i % N });
+const rcToIdx = (r, c) => r * N + c;
+
+function solvedTiles() {
+  const a = [];
+  for (let i = 1; i <= N * N - 1; i++) a.push(i);
+  a.push(0);
+  return a;
+}
+
+function isAdjacent(a, b) {
+  const A = idxToRC(a), B = idxToRC(b);
+  return Math.abs(A.r - B.r) + Math.abs(A.c - B.c) === 1;
+}
+
+function isSolved() {
+  return tiles.every((v, i) => v === (i === tiles.length - 1 ? 0 : i + 1));
+}
+
+/* ---------- Timer ---------- */
+function startTimer() {
+  if (timer) return;
+  timer = setInterval(() => {
+    seconds++;
+    timeEl.textContent = seconds;
+  }, 1000);
+}
+
+function stopTimer() {
+  if (timer) {
+    clearInterval(timer);
+    timer = null;
+  }
+}
+
+function resetStats() {
+  _submittedThisRound = false;
+
+  moves = 0;
+  seconds = 0;
+  started = false;
+  stopTimer();
+  updateStatus();
+}
+
+/* ---------- Render ---------- */
+function setGridSize() {
+  // Compute a responsive tile size so the board fills the center area.
+  // We aim to use as much of the card area as possible without overflow.
+  const wrap = document.getElementById("boardWrap");
+  if (!wrap) return;
+
+  const gap = (N >= 8) ? 6 : 10;         // tighter gap for large boards
+  boardEl.style.gap = gap + "px";
+
+  const rect = wrap.getBoundingClientRect();
+
+  // Available width inside the left card area
+  const availableW = Math.max(260, wrap.clientWidth);
+
+  // Available height: viewport bottom minus wrap top (reserve some space for footer/status)
+  const footer = document.querySelector("footer");
+  const footerH = footer ? footer.getBoundingClientRect().height : 0;
+  const reserve = 110 + footerH; // controls + status + footer buffer
+  const availableH = Math.max(260, window.innerHeight - rect.top - reserve);
+
+  // Use the smaller of width/height so the board is square and fits
+  const boardSize = Math.floor(Math.min(availableW, availableH));
+
+  // Tile size from boardSize and gaps
+  const tileSize = Math.floor((boardSize - gap * (N - 1)) / N);
+
+  boardEl.style.gridTemplateColumns = `repeat(${N}, ${tileSize}px)`;
+  boardEl.style.gridTemplateRows = `repeat(${N}, ${tileSize}px)`;
+
+  // Typography scales with tile size; clamp for readability
+  const fontSize = Math.max(12, Math.min(28, Math.floor(tileSize * 0.38)));
+  document.documentElement.style.setProperty("--tile-font-size", fontSize + "px");
+
+  // Slightly scale radius with tile size
+  const radius = Math.max(8, Math.min(14, Math.floor(tileSize * 0.18)));
+  document.documentElement.style.setProperty("--tile-radius", radius + "px");
+}
+
+// Override tile font size using the CSS variable set above
+// (This does not change your original style rules; it just updates the value.)
+const styleEl = document.createElement("style");
+styleEl.textContent = `.tile{ font-size: var(--tile-font-size, 22px); border-radius: var(--tile-radius, 12px); }`;
+document.head.appendChild(styleEl);
+
+function render() {
+  setGridSize();
+  boardEl.innerHTML = "";
+
+  tiles.forEach((v, i) => {
+    const { r, c } = idxToRC(i);
+    const tile = document.createElement("div");
+    tile.className = "tile" + (v === 0 ? " empty" : "");
+    tile.innerHTML = `
+      <div>${v === 0 ? "" : v}</div>
+      <div class="meta">(${r},${c}) i:${i}</div>
+    `;
+    if (v !== 0) tile.onclick = () => move(i);
+    boardEl.appendChild(tile);
+  });
+
+  updateStatus();
+}
+
+// Recompute tile size on viewport changes (iPad/iPhone rotation, split view)
+window.addEventListener("resize", () => {
+  // Avoid doing too much work; render() calls setGridSize()
+  setGridSize();
+});
+window.addEventListener("orientationchange", () => {
+  setTimeout(() => setGridSize(), 150);
+});
+
+
+/* ---------- Game Logic ---------- */
+function move(i) {
+  const empty = tiles.indexOf(0);
+  if (!isAdjacent(i, empty)) return;
+
+  if (!started) {
+    started = true;
+    startTimer();
+  }
+
+  [tiles[i], tiles[empty]] = [tiles[empty], tiles[i]];
+  moves++;
+  render();
+}
+
+function shuffle() {
+  tiles = solvedTiles();
+  resetStats();
+
+  // Increase base shuffle steps for larger boards
+  const baseMap = { 3: 60, 4: 140, 5: 220, 6: 320, 7: 420, 8: 520, 9: 640, 10: 780 };
+  const base = baseMap[N] || 220;
+  let steps = base;
+  let empty = tiles.indexOf(0), prev = -1;
+  while (steps--) {
+    const { r, c } = idxToRC(empty);
+    const n = [];
+    if (r > 0) n.push(rcToIdx(r - 1, c));
+    if (r < N - 1) n.push(rcToIdx(r + 1, c));
+    if (c > 0) n.push(rcToIdx(r, c - 1));
+    if (c < N - 1) n.push(rcToIdx(r, c + 1));
+
+    const opts = n.filter(x => x !== prev);
+    const pool = opts.length ? opts : n;
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+
+    prev = empty;
+    [tiles[pick], tiles[empty]] = [tiles[empty], tiles[pick]];
+    empty = pick;
+  }
+  render();
+}
+
+/* ---------- Status ---------- */
+function updateStatus() {
+  movesEl.textContent = moves;
+  timeEl.textContent = seconds;
+
+  if (isSolved() && started) {
+    stopTimer(); // stops timer immediately when solved
+    const name = "";
+    winMsgEl.innerHTML =
+      ` | <span class="win">You solved it!</span>`;
+// Ask for name and submit (once per round)
+    if (!_submittedThisRound) {
+      _submittedThisRound = true;
+      openWinDialog("");
+    }
+
+} else {
+    winMsgEl.textContent = "";
+  }
+}
+
+/* ---------- UI ---------- */
+sizeEl.onchange = () => {
+  N = Number(sizeEl.value);
+  shuffle();
+  loadRankPreview();
+};
+shuffleBtn.onclick = shuffle;
+
+/* ---------- Init ---------- */
+shuffle(); // ✅ always start shuffled
+loadRankPreview();
+});
+
+</script>
+
+
+<!-- Winner Name Dialog -->
+<div id="nameDialog" style="
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+">
+  <div style="
+    background: #fff;
+    border-radius: 14px;
+    padding: 20px 22px;
+    max-width: 380px;
+    width: 90%;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+  ">
+    <h3 style="margin:0 0 8px;">🎉 You solved it!</h3>
+    <p style="margin:0 0 12px;">Enter your name for the leaderboard:</p>
+    <input id="dialogNameInput" placeholder="Your name" style="
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      box-sizing: border-box;
+    "/>
+    <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; justify-content:flex-end;">
+      <button id="dialogCancel" style="min-width:90px;">Cancel</button>
+      <button id="dialogSubmit" style="min-width:110px;background:#2563eb;color:#fff;border:1px solid #2563eb;">
+        Submit
+      </button>
+    </div>
+    <div id="dialogStatus" style="margin-top:8px;font-size:13px;color:#b91c1c;"></div>
+  </div>
+</div>
+
+
+<footer style="
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          background: #fafafa;
+          text-align: center;
+          padding: 8px 0;
+          font-size: 14px;
+          color: #555;
+          border-top: 1px solid #ccc;
+        ">
+          © 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528. <br>
+          The STEAM Teacher is Chao Yu. For educational purposes only. All rights reserved.
+      </footer>
+
+</body>
+</html>

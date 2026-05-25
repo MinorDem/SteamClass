@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Science Crossword · Ranked</title>
+<style>
+:root{
+  --bg:#f6f7fb;--card:#fff;--ink:#1f2937;--muted:#6b7280;--line:#e5e7eb;
+  --accent:#2563eb;--ok:#16a34a;--bad:#dc2626;--soft:#f8fafc;--gold:#f59e0b;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+  background:linear-gradient(180deg,#f8fafc,#eef2ff);
+  color:var(--ink);min-height:100vh;padding-bottom:56px;
+}
+.back-header{
+  position:sticky;top:0;z-index:10;background:rgba(255,255,255,.92);
+  border-bottom:1px solid var(--line);padding:9px 16px;backdrop-filter:blur(8px)
+}
+.back-link{text-decoration:none;color:var(--ink);font-weight:800;font-size:14px}
+.page{max-width:1180px;margin:0 auto;padding:18px 12px}
+.layout{display:grid;grid-template-columns:minmax(0,1fr)310px;gap:18px;align-items:start}
+.card,.rank-card{
+  background:var(--card);border:1px solid var(--line);border-radius:18px;
+  padding:18px;box-shadow:0 12px 30px rgba(15,23,42,.08)
+}
+h1{font-size:28px;margin-bottom:4px}.sub{color:var(--muted);font-size:13px;margin-bottom:14px}
+.controls,.stats{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+button,select,input{
+  font:700 13px system-ui;padding:9px 12px;border-radius:10px;
+  border:1px solid var(--line);background:#f8fafc;color:var(--ink)
+}
+button{cursor:pointer}.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.stats{
+  background:#f8fafc;border:1px solid var(--line);border-radius:12px;
+  padding:10px;color:var(--muted);font-weight:700
+}
+.val{color:var(--ink)}.msg.ok{color:var(--ok);font-weight:900}.msg.bad{color:var(--bad);font-weight:900}
+.play-wrap{display:grid;grid-template-columns:minmax(0,1fr)310px;gap:16px;align-items:start}
+.board-shell{
+  border:1px solid var(--line);border-radius:16px;background:#fff;padding:14px;
+  display:flex;align-items:center;justify-content:center;overflow:auto;min-height:430px;
+}
+.crossword{
+  display:grid;gap:2px;background:#cbd5e1;padding:2px;border-radius:12px;
+  max-width:100%;
+}
+.cell{
+  width:42px;height:42px;background:#fff;position:relative;border:0;
+  display:flex;align-items:center;justify-content:center;
+}
+.cell.block{background:#1f2937}
+.cell input{
+  width:100%;height:100%;border:0;border-radius:0;background:#fff;text-align:center;
+  text-transform:uppercase;font-size:22px;font-weight:900;padding:0;color:var(--ink);
+}
+.cell input:focus{outline:3px solid rgba(37,99,235,.35);z-index:2}
+.cell.wrong input{background:#fee2e2}.cell.correct input{background:#dcfce7}
+.num{position:absolute;top:2px;left:3px;font-size:10px;font-weight:900;color:#475569;z-index:3}
+.side-panel{display:flex;flex-direction:column;gap:12px}
+.clues,.hint-box{
+  border:1px solid var(--line);border-radius:14px;background:#f8fafc;padding:14px;text-align:left
+}
+.clues h3,.hint-box h3{font-size:15px;margin-bottom:8px;color:var(--ink)}
+.clues h4{font-size:13px;color:var(--accent);margin:9px 0 5px}
+.clues ol{padding-left:22px}.clues li{font-size:13px;margin:5px 0;line-height:1.35}
+.hint-list{display:flex;flex-wrap:wrap;gap:8px}
+.hint-chip{
+  background:#e0f2fe;color:#075985;border:1px solid #bae6fd;border-radius:999px;
+  padding:6px 9px;font-weight:900;font-size:12px
+}
+.nohint{font-size:13px;color:var(--muted);line-height:1.4}
+.rank-sidebar{position:sticky;top:58px}.rank-card h3{font-size:18px;margin-bottom:4px}
+.rank-note{font-size:12px;color:var(--muted);margin-bottom:12px}
+.rank-sub{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px}
+.rank-sub-title{font-weight:900;color:var(--accent);font-size:12px;margin-bottom:6px}
+.rank-sub ol{padding-left:20px}.rank-sub li{font-size:12px;margin:4px 0;color:var(--muted)}
+#nameDialog{
+  position:fixed;inset:0;background:rgba(15,23,42,.35);display:none;
+  align-items:center;justify-content:center;z-index:99
+}
+.dialog{
+  background:#fff;border-radius:16px;padding:22px;max-width:380px;width:92%;
+  box-shadow:0 20px 60px rgba(0,0,0,.22)
+}
+.dialog h3{margin-bottom:8px}.dialog input{width:100%;margin:10px 0}
+.dialog-actions{display:flex;gap:10px;justify-content:flex-end}
+footer{
+  position:fixed;bottom:0;left:0;width:100%;background:rgba(255,255,255,.95);
+  border-top:1px solid var(--line);text-align:center;padding:7px;font-size:12px;color:var(--muted)
+}
+@media(max-width:980px){
+  .layout,.play-wrap{grid-template-columns:1fr}.rank-sidebar{position:static}.side-panel{order:2}
+}
+@media(max-width:560px){
+  .cell{width:31px;height:31px}.cell input{font-size:17px}.num{font-size:8px}
+  .card{padding:12px}.board-shell{padding:8px}
+}
+</style>
+</head>
+<body>
+<header class="back-header"><a class="back-link" href="/puzzle">← Back to Puzzle Home</a></header>
+
+<div class="page">
+  <div class="layout">
+    <main>
+      <section class="card">
+        <h1>🔬 Science Crossword</h1>
+        <div class="sub">Complete the crossword. Easy level includes a vocabulary hint bank. Medium and Hard have clues only.</div>
+
+        <div class="controls">
+          <span>Level:</span>
+          <select id="diffSelect">
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+          <button class="primary" id="newBtn">New Game</button>
+          <button id="checkBtn">Check</button>
+          <button id="revealBtn">Reveal</button>
+        </div>
+
+        <div class="stats">
+          <div>⏱ Time <span class="val" id="timeEl">0</span>s</div>
+          <div id="extraStat"></div>
+          <div id="msg" class="msg"></div>
+        </div>
+
+        <div class="play-wrap">
+          <div class="board-shell"><div id="crossword" class="crossword"></div></div>
+          <div class="side-panel">
+            <div id="hintBox" class="hint-box"></div>
+            <div id="clues" class="clues"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <aside class="rank-sidebar">
+      <section class="rank-card">
+        <h3>🏆 Leaderboard</h3>
+        <div class="rank-note">Ranking: wins first, then best time.</div>
+        <div class="rank-sub"><div class="rank-sub-title">Easy</div><ol id="rankEasy"><li>Loading…</li></ol></div>
+        <div class="rank-sub"><div class="rank-sub-title">Medium</div><ol id="rankMedium"><li>Loading…</li></ol></div>
+        <div class="rank-sub"><div class="rank-sub-title">Hard</div><ol id="rankHard"><li>Loading…</li></ol></div>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<div id="nameDialog">
+  <div class="dialog">
+    <h3>🎉 You solved it!</h3>
+    <p id="dialogPrompt"></p>
+    <input id="dialogName" placeholder="Your name" maxlength="40"/>
+    <div class="dialog-actions">
+      <button id="cancelName">Cancel</button>
+      <button class="primary" id="submitName">Submit</button>
+    </div>
+    <div id="dialogStatus" class="msg bad"></div>
+  </div>
+</div>
+
+<footer>© 2026 Yinghua International School. Made by Science and STEAM Teacher Chao Yu. For educational purposes only.</footer>
+
+<script>
+const TITLE="Science Crossword";
+const BASE_GAME_ID="science_crossword";
+const el=id=>document.getElementById(id);
+
+let difficulty='easy',seconds=0,timer=null,gameOver=false,submitted=false;
+let current=null,cellMap={},inputs=[],inputByKey={},cellEntries={},activeEntry=null;
+
+function gameId(diff=difficulty){return `${BASE_GAME_ID}_${diff}`;}
+function startTimer(){if(timer)return;timer=setInterval(()=>{seconds++;el('timeEl').textContent=seconds},1000)}
+function stopTimer(){clearInterval(timer);timer=null}
+function resetBase(){
+  difficulty=el('diffSelect').value;
+  seconds=0;gameOver=false;submitted=false;stopTimer();startTimer();
+  el('timeEl').textContent='0';el('msg').textContent='';el('msg').className='msg';
+  loadAllRanks();
+}
+function winGame(){
+  if(gameOver)return;
+  gameOver=true;stopTimer();
+  el('msg').textContent=`Completed in ${seconds}s!`;
+  el('msg').className='msg ok';
+  colorCells(true);
+  if(!submitted){submitted=true;openWinDialog();}
+}
+async function submitScore(name){
+  try{
+    const res=await fetch('/api/score',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({game:gameId(),player_name:name.trim().slice(0,40),seconds})
+    });
+    if(!res.ok)return false;
+    const data=await res.json().catch(()=>({}));
+    return data.ok===true;
+  }catch{return false}
+}
+async function loadRankList(diff){
+  const list=el(`rank${diff[0].toUpperCase()+diff.slice(1)}`);
+  try{
+    const res=await fetch(`/api/leaderboard?game=${encodeURIComponent(gameId(diff))}&limit=5`,{cache:'no-store'});
+    const data=await res.json();
+    const rows=Array.isArray(data)?data:(data.rows||[]);
+    list.innerHTML='';
+    if(!rows.length){list.innerHTML='<li>No scores yet.</li>';return}
+    rows.forEach((r,i)=>{
+      const name=r.player_name??r.playerName??'Unknown';
+      const wins=r.win_count??r.wins??r.winCount??0;
+      const best=r.best_seconds??r.bestSeconds??null;
+      const li=document.createElement('li');
+      li.textContent=`#${i+1} ${name} — ${wins}W`+(best!=null?` — Best: ${best}s`:'');
+      list.appendChild(li);
+    })
+  }catch{list.innerHTML='<li>Could not load.</li>'}
+}
+async function loadAllRanks(){await Promise.all(['easy','medium','hard'].map(loadRankList))}
+function openWinDialog(){
+  el('dialogPrompt').textContent=`${TITLE} · ${difficulty.toUpperCase()} · ${seconds}s. Enter your name:`;
+  el('dialogName').value='';el('dialogStatus').textContent='';el('nameDialog').style.display='flex';
+  setTimeout(()=>el('dialogName').focus(),50)
+}
+function closeWinDialog(){el('nameDialog').style.display='none'}
+function wireDialog(){
+  el('cancelName').onclick=closeWinDialog;
+  el('submitName').onclick=async()=>{
+    const name=el('dialogName').value.trim();
+    if(!name){el('dialogStatus').textContent='Name is required.';return}
+    el('submitName').disabled=true;el('dialogStatus').textContent='Saving…';
+    const ok=await submitScore(name);
+    if(ok){closeWinDialog();loadAllRanks()}
+    else el('dialogStatus').textContent='Could not save.';
+    el('submitName').disabled=false;
+  }
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')closeWinDialog();
+  if(e.key==='Enter'&&el('nameDialog').style.display==='flex')el('submitName').click();
+});
+
+const PUZZLE_SETTINGS={
+  easy:{size:10,count:8},
+  medium:{size:12,count:9},
+  hard:{size:15,count:10}
+};
+
+const WORD_BANKS={
+  easy:[
+    {answer:'WATER',clue:'A liquid that plants, animals, and people need.'},
+    {answer:'WAVE',clue:'A repeating movement that carries energy.'},
+    {answer:'ATOM',clue:'A tiny particle that makes up matter.'},
+    {answer:'ROOT',clue:'The plant part that takes in water from soil.'},
+    {answer:'FORCE',clue:'A push or a pull.'},
+    {answer:'CELL',clue:'The basic unit of living things.'},
+    {answer:'PLANT',clue:'A living thing that usually makes its own food.'},
+    {answer:'SUN',clue:'The star that gives Earth light and heat.'},
+    {answer:'MOON',clue:'Earth\'s natural satellite.'},
+    {answer:'SOIL',clue:'The loose top layer of Earth where many plants grow.'},
+    {answer:'LIGHT',clue:'Energy that lets us see.'},
+    {answer:'HEAT',clue:'Thermal energy that makes things warmer.'},
+    {answer:'GAS',clue:'Matter that spreads out to fill its container.'},
+    {answer:'ROCK',clue:'A naturally occurring solid made of minerals.'},
+    {answer:'SEED',clue:'A plant part that can grow into a new plant.'}
+  ],
+  medium:[
+    {answer:'ENERGY',clue:'The ability to do work or cause change.'},
+    {answer:'NUCLEUS',clue:'The control center of many cells.'},
+    {answer:'CIRCUIT',clue:'A closed path through which electric current can flow.'},
+    {answer:'ORBIT',clue:'The path one object follows around another in space.'},
+    {answer:'GRAVITY',clue:'The force that pulls objects toward each other.'},
+    {answer:'VIRUS',clue:'A tiny infectious agent that needs a host cell.'},
+    {answer:'MINERAL',clue:'A naturally occurring solid with a definite structure.'},
+    {answer:'TIDE',clue:'The regular rise and fall of ocean water.'},
+    {answer:'MAGNET',clue:'An object that attracts certain metals.'},
+    {answer:'CURRENT',clue:'The flow of electric charge.'},
+    {answer:'MOTION',clue:'A change in position over time.'},
+    {answer:'MATTER',clue:'Anything that has mass and takes up space.'},
+    {answer:'FOSSIL',clue:'The preserved remains or traces of an ancient living thing.'},
+    {answer:'HABITAT',clue:'The place where an organism lives.'},
+    {answer:'WEATHER',clue:'The condition of the air at a certain time and place.'}
+  ],
+  hard:[
+    {answer:'PHOTOSYNTHESIS',clue:'Process plants use to make sugar from light, carbon dioxide, and water.'},
+    {answer:'THERMAL',clue:'Related to heat energy.'},
+    {answer:'SYSTEM',clue:'A group of parts that interact as a whole.'},
+    {answer:'ECOSYSTEM',clue:'A community of organisms and the environment they interact with.'},
+    {answer:'MANTLE',clue:'The thick layer of Earth between the crust and core.'},
+    {answer:'EVAPORATION',clue:'Liquid water changing into water vapor.'},
+    {answer:'FRICTION',clue:'A force that opposes motion between touching surfaces.'},
+    {answer:'BIODIVERSITY',clue:'The variety of living things in an ecosystem.'},
+    {answer:'DENSITY',clue:'Mass per unit volume.'},
+    {answer:'CONDENSATION',clue:'Water vapor changing into liquid water.'},
+    {answer:'RESPIRATION',clue:'A process cells use to release energy from food.'},
+    {answer:'CONDUCTION',clue:'Heat transfer through direct contact.'},
+    {answer:'INSULATOR',clue:'A material that slows the flow of heat or electricity.'},
+    {answer:'ADAPTATION',clue:'A trait that helps an organism survive.'},
+    {answer:'PRECIPITATION',clue:'Water falling from clouds as rain, snow, sleet, or hail.'}
+  ]
+};
+
+function shuffle(items){
+  const copy=items.slice();
+  for(let i=copy.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [copy[i],copy[j]]=[copy[j],copy[i]];
+  }
+  return copy;
+}
+
+function generatePuzzle(diff){
+  const setting=PUZZLE_SETTINGS[diff];
+  let best=null;
+  for(let attempt=0;attempt<120;attempt++){
+    const candidates=selectScienceWords(diff,setting.count);
+    const puzzle=placeWords(setting.size,setting.count,candidates);
+    if(puzzle.entries.length===setting.count)return puzzle;
+    if(!best || puzzle.entries.length>best.entries.length)best=puzzle;
+  }
+  return best;
+}
+
+function selectScienceWords(diff,count){
+  return shuffle(WORD_BANKS[diff])
+    .sort((a,b)=>b.answer.length-a.answer.length)
+    .slice(0,Math.min(count+5,WORD_BANKS[diff].length));
+}
+
+function placeWords(size,targetCount,words){
+  const grid={},cellDirs={},entries=[];
+  const first=words[0];
+  const firstDir='across';
+  const firstRow=Math.floor(size/2);
+  const firstCol=Math.max(0,Math.floor((size-first.answer.length)/2));
+  addEntry(grid,cellDirs,entries,first,firstDir,firstRow,firstCol);
+
+  for(const word of words.slice(1)){
+    if(entries.length>=targetCount)break;
+    const placement=findBestPlacement(size,grid,cellDirs,word);
+    if(placement)addEntry(grid,cellDirs,entries,word,placement.dir,placement.row,placement.col);
+  }
+
+  return numberAndTrimPuzzle(size,entries);
+}
+
+function findBestPlacement(size,grid,cellDirs,word){
+  const options=[];
+  for(const dir of ['across','down']){
+    for(let i=0;i<word.answer.length;i++){
+      const ch=word.answer[i];
+      for(const key of Object.keys(grid)){
+        if(grid[key]!==ch)continue;
+        const [r,c]=key.split(',').map(Number);
+        const row=dir==='down'?r-i:r;
+        const col=dir==='across'?c-i:c;
+        const score=scorePlacement(size,grid,cellDirs,word.answer,dir,row,col);
+        if(score>0)options.push({dir,row,col,score});
+      }
+    }
+  }
+  options.sort((a,b)=>b.score-a.score || Math.abs(a.row-a.col)-Math.abs(b.row-b.col));
+  return options[0]||null;
+}
+
+function scorePlacement(size,grid,cellDirs,answer,dir,row,col){
+  let overlaps=0;
+  for(let i=0;i<answer.length;i++){
+    const r=row+(dir==='down'?i:0);
+    const c=col+(dir==='across'?i:0);
+    const key=`${r},${c}`;
+    if(r<0 || c<0 || r>=size || c>=size)return -1;
+    if(grid[key]){
+      if(grid[key]!==answer[i])return -1;
+      if(cellDirs[key] && cellDirs[key].includes(dir))return -1;
+      overlaps++;
+    }else{
+      const before=dir==='across'?`${r},${c-1}`:`${r-1},${c}`;
+      const after=dir==='across'?`${r},${c+1}`:`${r+1},${c}`;
+      const sideA=dir==='across'?`${r-1},${c}`:`${r},${c-1}`;
+      const sideB=dir==='across'?`${r+1},${c}`:`${r},${c+1}`;
+      if((i===0 && grid[before]) || (i===answer.length-1 && grid[after]))return -1;
+      if(grid[sideA] || grid[sideB])return -1;
+    }
+  }
+  return overlaps;
+}
+
+function addEntry(grid,cellDirs,entries,word,dir,row,col){
+  const entry={n:entries.length+1,dir,row,col,answer:word.answer,clue:word.clue};
+  for(let i=0;i<word.answer.length;i++){
+    const r=row+(dir==='down'?i:0);
+    const c=col+(dir==='across'?i:0);
+    const key=`${r},${c}`;
+    grid[key]=word.answer[i];
+    cellDirs[key]=(cellDirs[key]||[]).concat(dir);
+  }
+  entries.push(entry);
+}
+
+function numberAndTrimPuzzle(size,entries){
+  const minRow=Math.min(...entries.map(e=>e.row));
+  const minCol=Math.min(...entries.map(e=>e.col));
+  const trimmed=entries.map((e,i)=>({
+    ...e,
+    n:i+1,
+    row:e.row-minRow,
+    col:e.col-minCol
+  }));
+  let maxRow=0,maxCol=0;
+  for(const e of trimmed){
+    maxRow=Math.max(maxRow,e.row+(e.dir==='down'?e.answer.length-1:0));
+    maxCol=Math.max(maxCol,e.col+(e.dir==='across'?e.answer.length-1:0));
+  }
+  return {size:Math.max(maxRow,maxCol)+1,entries:trimmed};
+}
+
+function buildCells(puzzle){
+  const cells={};
+  let starts={};
+  for(const e of puzzle.entries){
+    for(let i=0;i<e.answer.length;i++){
+      const r=e.row+(e.dir==='down'?i:0);
+      const c=e.col+(e.dir==='across'?i:0);
+      const key=`${r},${c}`;
+      if(cells[key] && cells[key]!==e.answer[i]){
+        console.warn('Crossword conflict',key,cells[key],e.answer[i],e);
+      }
+      cells[key]=e.answer[i];
+    }
+    starts[`${e.row},${e.col}`]=(starts[`${e.row},${e.col}`]||[]).concat(e.n);
+  }
+  return {cells,starts};
+}
+
+function newGame(){
+  resetBase();
+  current=generatePuzzle(difficulty);
+  const made=buildCells(current);
+  cellMap=made.cells;
+  inputs=[];inputByKey={};cellEntries={};activeEntry=null;
+  renderBoard(made.starts);
+  renderClues();
+  renderHintBox();
+  el('extraStat').textContent=`Words: ${current.entries.length} · Letters: ${Object.keys(cellMap).length}`;
+}
+
+function renderBoard(starts){
+  const board=el('crossword');
+  board.innerHTML='';
+  board.style.gridTemplateColumns=`repeat(${current.size}, 42px)`;
+  board.style.gridTemplateRows=`repeat(${current.size}, 42px)`;
+  mapEntriesToCells();
+
+  for(let r=0;r<current.size;r++){
+    for(let c=0;c<current.size;c++){
+      const key=`${r},${c}`;
+      const cell=document.createElement('div');
+      cell.className='cell'+(cellMap[key]?'':' block');
+      if(cellMap[key]){
+        if(starts[key]){
+          const n=document.createElement('span');
+          n.className='num';
+          n.textContent=starts[key].join('/');
+          cell.appendChild(n);
+        }
+        const input=document.createElement('input');
+        input.maxLength=1;
+        input.dataset.key=key;
+        input.dataset.answer=cellMap[key];
+        input.autocomplete='off';
+        input.spellcheck=false;
+        input.inputMode='text';
+        input.addEventListener('focus',()=>setActiveEntry(input));
+        input.addEventListener('input',()=>{
+          input.value=input.value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,1);
+          cell.classList.remove('wrong','correct');
+          if(input.value) moveNext(input);
+          maybeWin();
+        });
+        input.addEventListener('keydown',e=>handleKeys(e,input));
+        cell.appendChild(input);
+        inputs.push(input);
+        inputByKey[key]=input;
+      }
+      board.appendChild(cell);
+    }
+  }
+}
+
+function mapEntriesToCells(){
+  for(const e of current.entries){
+    for(let i=0;i<e.answer.length;i++){
+      const r=e.row+(e.dir==='down'?i:0);
+      const c=e.col+(e.dir==='across'?i:0);
+      const key=`${r},${c}`;
+      cellEntries[key]=(cellEntries[key]||[]).concat(e);
+    }
+  }
+}
+function setActiveEntry(input,dir=null){
+  const entries=cellEntries[input.dataset.key]||[];
+  if(dir) activeEntry=entries.find(e=>e.dir===dir)||activeEntry;
+  else if(!activeEntry || !entries.includes(activeEntry)) activeEntry=entries[0]||null;
+}
+function entryKeyAt(entry,input,offset){
+  if(!entry)return null;
+  const [row,col]=input.dataset.key.split(',').map(Number);
+  const idx=entry.dir==='down'?row-entry.row:col-entry.col;
+  if(idx<0 || idx>=entry.answer.length)return null;
+  const next=idx+offset;
+  if(next<0 || next>=entry.answer.length)return null;
+  const r=entry.row+(entry.dir==='down'?next:0);
+  const c=entry.col+(entry.dir==='across'?next:0);
+  return `${r},${c}`;
+}
+function crossingEntryWithNext(input,offset){
+  return (cellEntries[input.dataset.key]||[])
+    .find(e=>e!==activeEntry && entryKeyAt(e,input,offset) && inputByKey[entryKeyAt(e,input,offset)]);
+}
+function moveInEntry(input,offset){
+  setActiveEntry(input);
+  let nextKey=entryKeyAt(activeEntry,input,offset);
+  if(!nextKey || !inputByKey[nextKey]){
+    const crossing=crossingEntryWithNext(input,offset);
+    if(crossing){
+      activeEntry=crossing;
+      nextKey=entryKeyAt(activeEntry,input,offset);
+    }
+  }
+  if(nextKey && inputByKey[nextKey]) inputByKey[nextKey].focus();
+}
+function moveInDirection(input,dir,offset){
+  const entry=(cellEntries[input.dataset.key]||[]).find(e=>e.dir===dir);
+  if(!entry)return;
+  activeEntry=entry;
+  const nextKey=entryKeyAt(activeEntry,input,offset);
+  if(nextKey && inputByKey[nextKey]) inputByKey[nextKey].focus();
+}
+function moveNext(input){
+  moveInEntry(input,1);
+}
+function handleKeys(e,input){
+  if(e.key==='Backspace' && !input.value){
+    setActiveEntry(input);
+    let prevKey=entryKeyAt(activeEntry,input,-1);
+    if(!prevKey || !inputByKey[prevKey]){
+      const crossing=crossingEntryWithNext(input,-1);
+      if(crossing){
+        activeEntry=crossing;
+        prevKey=entryKeyAt(activeEntry,input,-1);
+      }
+    }
+    if(prevKey && inputByKey[prevKey]){inputByKey[prevKey].focus();inputByKey[prevKey].value='';e.preventDefault();}
+  }
+  if(e.key==='ArrowRight'){moveInDirection(input,'across',1);e.preventDefault();}
+  if(e.key==='ArrowLeft'){moveInDirection(input,'across',-1);e.preventDefault();}
+  if(e.key==='ArrowDown'){moveInDirection(input,'down',1);e.preventDefault();}
+  if(e.key==='ArrowUp'){moveInDirection(input,'down',-1);e.preventDefault();}
+}
+
+function renderClues(){
+  const across=current.entries.filter(e=>e.dir==='across');
+  const down=current.entries.filter(e=>e.dir==='down');
+  el('clues').innerHTML=`
+    <h3>Clues</h3>
+    <h4>Across</h4>
+    <ol>${across.map(e=>`<li value="${e.n}">${e.clue}</li>`).join('')}</ol>
+    <h4>Down</h4>
+    <ol>${down.map(e=>`<li value="${e.n}">${e.clue}</li>`).join('')}</ol>
+  `;
+}
+function renderHintBox(){
+  if(difficulty==='easy'){
+    const words=current.entries.map(e=>e.answer).sort();
+    el('hintBox').innerHTML=`<h3>Hint Vocabulary</h3><div class="hint-list">${words.map(w=>`<span class="hint-chip">${w}</span>`).join('')}</div>`;
+  }else{
+    el('hintBox').innerHTML=`<h3>No Hint Vocabulary</h3><div class="nohint">Use only the clues. Medium and Hard levels do not show the answer word bank.</div>`;
+  }
+}
+
+function colorCells(showCorrect=false){
+  inputs.forEach(inp=>{
+    const cell=inp.parentElement;
+    cell.classList.remove('wrong','correct');
+    if(!inp.value)return;
+    if(inp.value===inp.dataset.answer && showCorrect) cell.classList.add('correct');
+    if(inp.value!==inp.dataset.answer) cell.classList.add('wrong');
+  });
+}
+function checkAnswers(){
+  if(gameOver)return;
+  let filled=inputs.filter(i=>i.value).length;
+  let wrong=inputs.filter(i=>i.value && i.value!==i.dataset.answer).length;
+  colorCells(true);
+  if(wrong===0 && filled===inputs.length) winGame();
+  else{
+    el('msg').textContent=wrong?`${wrong} letter(s) need correction.`:`Keep going. ${inputs.length-filled} empty letter(s).`;
+    el('msg').className=wrong?'msg bad':'msg';
+  }
+}
+function maybeWin(){
+  if(gameOver)return;
+  if(inputs.length && inputs.every(i=>i.value===i.dataset.answer)) winGame();
+}
+function revealAnswers(){
+  inputs.forEach(i=>i.value=i.dataset.answer);
+  colorCells(true);
+  gameOver=true;stopTimer();
+  el('msg').textContent='Answers revealed. Start a new game to submit a score.';
+  el('msg').className='msg bad';
+}
+
+wireDialog();
+el('newBtn').onclick=newGame;
+el('checkBtn').onclick=checkAnswers;
+el('revealBtn').onclick=revealAnswers;
+el('diffSelect').onchange=newGame;
+newGame();
+</script>
+</body>
+</html>

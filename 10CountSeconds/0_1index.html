@@ -1,0 +1,644 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Seconds Challenge (10 / 20 / 30) — Leaderboards</title>
+  <style>
+    :root{
+      --bg:#ffffff; --card:#ffffff; --muted:#4b5563; --text:#111827;
+      --accent:#2563eb; --danger:#dc2626; --ok:#16a34a;
+      --border:rgba(17,24,39,.12);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+      background: var(--bg);
+      color:var(--text);
+    }
+    
+    .back-header{ margin-bottom: 20px; padding: 20px 20px 0 20px; }
+    .back-link{ text-decoration:none; color:#4b5563; font-weight:700; }
+
+    .wrap{max-width:1100px; margin:0 auto; padding:20px;}
+    .challenge{ margin-bottom:18px; }
+    .challenge:last-child{ margin-bottom:0; }
+    .grid{display:grid; grid-template-columns:1fr; gap:16px;}
+    @media (max-width: 860px){ .grid{grid-template-columns:1fr;} }
+    .card{
+      background: #ffffff;
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:16px;
+      box-shadow:0 10px 22px rgba(0,0,0,.10);
+    }
+    h1{font-size:20px; margin:0 0 10px 0;}
+    .sub{color:var(--muted); font-size:13px; line-height:1.4; margin-bottom:14px;}
+    .timer{
+      font-variant-numeric: tabular-nums;
+      font-size:64px; letter-spacing:.5px;
+      margin:10px 0 4px 0;
+    }
+    .meta{display:flex; gap:12px; flex-wrap:wrap; color:var(--muted); font-size:13px;}
+    .meta b{color:var(--text); font-weight:700}
+    .row{display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;}
+    button{
+      appearance:none; border:none; cursor:pointer;
+      background:rgba(255,255,255,.09);
+      color:var(--text);
+      padding:10px 14px;
+      border-radius:12px;
+      font-weight:700;
+      border:1px solid var(--border);
+      transition:.12s transform, .12s background;
+      min-width:120px;
+    }
+    button:hover{transform:translateY(-1px); background:rgba(255,255,255,.14);}
+    button:active{transform:translateY(0px);}
+    button.primary{background:rgba(37,99,235,.10); border-color:rgba(37,99,235,.22);}
+    button.primary:hover{background:rgba(37,99,235,.16);}
+    button.danger{background:rgba(220,38,38,.10); border-color:rgba(220,38,38,.22);}
+    button.danger:hover{background:rgba(220,38,38,.16);}
+    button:disabled{opacity:.45; cursor:not-allowed; transform:none;}
+    .status{margin-top:10px; min-height:22px; color:var(--muted); font-size:13px;}
+    .status .ok{color:var(--ok); font-weight:700;}
+    .status .bad{color:var(--danger); font-weight:700;}
+
+    /* leaderboard */
+    .lbHeader{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+    .pill{
+      font-size:12px; color:var(--muted);
+      border:1px solid var(--border);
+      border-radius:999px;
+      padding:6px 10px;
+      background:rgba(17,24,39,.03);
+      white-space:nowrap;
+    }
+    ol{margin:10px 0 0 0; padding-left:22px;}
+    li{margin:6px 0; color:var(--text); font-size:14px;}
+    .lbErr{color:var(--danger);}
+
+    .pageGrid{display:grid; grid-template-columns: 1fr 420px; gap:16px; align-items:start;}
+    @media (max-width: 980px){
+      .pageGrid{grid-template-columns:1fr;}
+    }
+    .rightCol .card{position:sticky; top:16px;}
+    @media (max-width: 980px){
+      .rightCol .card{position:static;}
+    }
+    .lbCard{margin-bottom:16px;}
+    .lbCard:last-child{margin-bottom:0;}
+
+    .site-footer{
+      margin-top:auto;             /* push to bottom when page is short */
+      background:#fafafa;
+      text-align:center;
+      padding:10px 12px;
+      font-size:14px;
+      color:#555;
+      border-top:1px solid #e5e7eb;
+      border-radius:12px;
+    }
+    .site-footer br{ line-height: 1.6; }
+
+  </style>
+</head>
+<body>
+
+  <header class="back-header">
+    <a class="back-link" href="../index.html">← Back to Puzzle Home</a>
+  </header>
+  
+  
+  <div class="wrap">
+
+    <div class="pageGrid">
+      <div class="leftCol">
+        <!-- 10 seconds -->
+            <section class="challenge" data-target="10000" data-game="second_10">
+              <div class="grid">
+                <div class="card">
+                  <h1>10‑Second Challenge</h1>
+                  <div class="sub">
+                    Press <b>Start</b>, then try to press <b>Stop</b> as close to <b>10.0 seconds</b> as possible.
+                    The timer shows <b>three decimals</b>. Your score is higher when you are closer.
+                  </div>
+
+                  <div class="timer" data-role="timer">0.000</div>
+        <div class="row">
+                    <button class="primary" data-action="start">Start</button>
+                    <button class="danger" data-action="stop" disabled>Stop</button>
+                    <button data-action="reset">Reset</button>
+                  </div>
+
+                  <div class="status" data-role="status"></div>
+                </div>
+
+        
+              </div>
+            </section>
+
+            <!-- 20 seconds -->
+            <section class="challenge" data-target="20000" data-game="second_20">
+              <div class="grid">
+                <div class="card">
+                  <h1>20‑Second Challenge</h1>
+                  <div class="sub">
+                    Press <b>Start</b>, then try to press <b>Stop</b> as close to <b>20.0 seconds</b> as possible.
+                    The timer shows <b>three decimals</b>. Your score is higher when you are closer.
+                  </div>
+
+                  <div class="timer" data-role="timer">0.000</div>
+        <div class="row">
+                    <button class="primary" data-action="start">Start</button>
+                    <button class="danger" data-action="stop" disabled>Stop</button>
+                    <button data-action="reset">Reset</button>
+                  </div>
+
+                  <div class="status" data-role="status"></div>
+                </div>
+
+        
+              </div>
+            </section>
+
+            <!-- 30 seconds -->
+            <section class="challenge" data-target="30000" data-game="second_30">
+              <div class="grid">
+                <div class="card">
+                  <h1>30‑Second Challenge</h1>
+                  <div class="sub">
+                    Press <b>Start</b>, then try to press <b>Stop</b> as close to <b>30.0 seconds</b> as possible.
+                    The timer shows <b>three decimals</b>. Your score is higher when you are closer.
+                  </div>
+
+                  <div class="timer" data-role="timer">0.000</div>
+        <div class="row">
+                    <button class="primary" data-action="start">Start</button>
+                    <button class="danger" data-action="stop" disabled>Stop</button>
+                    <button data-action="reset">Reset</button>
+                  </div>
+
+                  <div class="status" data-role="status"></div>
+                </div>
+
+        
+              </div>
+            </section>
+        </div>
+<aside class="rightCol">
+        <div class="card">
+          <div class="lbHeader">
+            <h1 style="margin:0;">Leaderboards</h1>
+            <div class="pill">Wins ↓, Best Score ↓</div>
+          </div>
+          <div class="sub" style="margin-top:10px; margin-bottom:0;">
+            <b>Best Score</b> uses column <code>best_scores</code> (positive integer).
+            <br/>Score formula: <code>score = max(0, target_ms - error_ms)</code>.
+          </div>
+
+          <div class="lbCard" style="margin-top:12px;">
+            <div class="lbHeader">
+              <h1 style="margin:0;">10 seconds</h1>
+              <button id="lbRefresh10" style="min-width:120px;">Refresh</button>
+            </div>
+            <ol id="lbList10"><li>Loading…</li></ol>
+          </div>
+
+          <div class="lbCard">
+            <div class="lbHeader">
+              <h1 style="margin:0;">20 seconds</h1>
+              <button id="lbRefresh20" style="min-width:120px;">Refresh</button>
+            </div>
+            <ol id="lbList20"><li>Loading…</li></ol>
+          </div>
+
+          <div class="lbCard">
+            <div class="lbHeader">
+              <h1 style="margin:0;">30 seconds</h1>
+              <button id="lbRefresh30" style="min-width:120px;">Refresh</button>
+            </div>
+            <ol id="lbList30"><li>Loading…</li></ol>
+          </div>
+        </div>
+      </aside>
+    </div>
+<!-- Winner / Submit Dialog (Unified Style) -->
+<div id="nameDialog" style="
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+">
+  <div style="
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 20px 22px;
+    max-width: 380px;
+    width: 90%;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+  ">
+    <h3 id="dlgTitle" style="margin:0 0 8px;">Submit your score</h3>
+
+    <p id="dlgText" style="margin:0 0 12px;">
+      Enter your name to submit. (Enter = submit, Esc = cancel)
+    </p>
+
+    <input
+      id="dialogNameInput"
+      maxlength="24"
+      placeholder="Your name"
+      autocomplete="name"
+      style="
+        width:100%;
+        padding:10px 12px;
+        border-radius:10px;
+        border:1px solid #ccc;
+        font-size:16px;
+        box-sizing:border-box;
+      "
+    />
+
+    <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:12px;">
+      <button id="dialogCancel">Cancel</button>
+      <button id="dialogSubmit" style="
+        background:#2563eb;
+        color:white;
+        border:1px solid #2563eb;
+      ">
+        Submit
+      </button>
+    </div>
+
+    <div id="dlgStatus" style="margin-top:8px; font-size:13px; color:#dc2626;"></div>
+
+    <div style="margin-top:8px; font-size:12px; color:#4b5563;">
+      Tip: Submit is allowed only if you stop within <b>±0.200s</b> of the target and you do <b>not</b> press any letter key during the run.
+    </div>
+  </div>
+</div>
+
+
+
+
+
+<script>
+(() => {
+  "use strict";
+
+  // === DB protocol ===
+  // GET  /api/leaderboard?game=<id>&limit=20
+  // POST /api/score { game, player_name, best_scores }
+
+  const WINDOW_MS = 200; // ±0.200s acceptance + trick window
+
+  // Shared dialog elements
+  const nameDialog = document.getElementById("nameDialog");
+  const nameInput  = document.getElementById("dialogNameInput");
+  const submitBtn  = document.getElementById("dialogSubmit");
+  const cancelBtn  = document.getElementById("dialogCancel");
+  const dlgTitle   = document.getElementById("dlgTitle");
+  const dlgText    = document.getElementById("dlgText");
+  const dlgStatus  = document.getElementById("dlgStatus");
+
+  // Leaderboard elements (stacked, right side)
+  const lb10 = document.getElementById("lbList10");
+  const lb20 = document.getElementById("lbList20");
+  const lb30 = document.getElementById("lbList30");
+
+  const btn10 = document.getElementById("lbRefresh10");
+  const btn20 = document.getElementById("lbRefresh20");
+  const btn30 = document.getElementById("lbRefresh30");
+
+  const TARGETS = {
+    second_10: 10000,
+    second_20: 20000,
+    second_30: 30000
+  };
+
+  const LB_MAP = {
+    second_10: { el: lb10, btn: btn10 },
+    second_20: { el: lb20, btn: btn20 },
+    second_30: { el: lb30, btn: btn30 }
+  };
+
+  function fmtSeconds(ms){ return (ms / 1000).toFixed(3); }
+
+  function withinWindow(ms, targetMs){
+    return ms >= (targetMs - WINDOW_MS) && ms <= (targetMs + WINDOW_MS);
+  }
+
+  function computeScore(elapsedMs, targetMs){
+    const errMs = Math.abs(targetMs - elapsedMs);
+    const score = Math.max(0, Math.round(targetMs - errMs));
+    return { errMs, score };
+  }
+
+  function sanitizeName(s){
+    return String(s || "").trim().replace(/\s+/g, " ").slice(0, 24);
+  }
+
+  let activeCtx = null; // { gameId, targetMs, lastScore, cheated, canSubmit }
+
+  function openDialog(ctx){
+    activeCtx = ctx;
+    dlgStatus.textContent = "";
+    dlgTitle.textContent = "Submit — Score: " + (ctx.lastScore ?? 0);
+    if(dlgText){
+      dlgText.textContent = "Enter your name to submit. (Enter = submit, Esc = cancel)";
+    }
+
+    const saved = localStorage.getItem("studentName") || "";
+    nameInput.value = saved;
+
+    nameDialog.style.display = "flex";
+    setTimeout(() => nameInput.focus(), 0);
+  }
+
+  function closeDialog(){
+    nameDialog.style.display = "none";
+    dlgStatus.textContent = "";
+    activeCtx = null;
+  }
+
+  async function postScore(gameId, name, score){
+    const res = await fetch("/api/score", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        game: gameId,
+        player_name: name,
+        best_scores: Math.max(0, Math.floor(Number(score || 0)))
+      })
+    });
+    if(!res.ok) return { ok:false };
+    await res.json().catch(() => null);
+    return { ok:true };
+  }
+
+  async function loadLeaderboard(gameId){
+    const targetMs = TARGETS[gameId] ?? 10000;
+    const slot = LB_MAP[gameId];
+    if(!slot || !slot.el) return;
+
+    const lbEl = slot.el;
+    lbEl.innerHTML = "<li>Loading…</li>";
+
+    try{
+      const res = await fetch("/api/leaderboard?game=" + encodeURIComponent(gameId) + "&limit=20", { cache: "no-store" });
+      const data = await res.json();
+      const rows = Array.isArray(data) ? data : (data.rows || []);
+
+      if(!rows.length){
+        lbEl.innerHTML = "<li>No scores yet.</li>";
+        return;
+      }
+
+      const norm = rows.map(r => ({
+        name: (r.player_name ?? r.playerName ?? "Unknown").toString(),
+        wins: Number(r.win_count ?? r.wins ?? r.winCount ?? 0) || 0,
+        best: Number(r.best_scores ?? r.bestScores ?? r.bestScore ?? r.score ?? 0) || 0
+      })).sort((a,b) => (b.wins - a.wins) || (b.best - a.best));
+
+      lbEl.innerHTML = "";
+      norm.forEach((r, i) => {
+        const li = document.createElement("li");
+        const err = Math.max(0, (targetMs - r.best)); // score = target - err
+        li.textContent =
+          "#" + (i+1) + " " + r.name +
+          " — Wins: " + r.wins +
+          " — Best Score: " + r.best +
+          " (≈ best error " + fmtSeconds(err) + " s)";
+        lbEl.appendChild(li);
+      });
+    }catch{
+      lbEl.innerHTML = "<li class='lbErr'>Could not load leaderboard.</li>";
+    }
+  }
+
+  function refreshAll(){
+    loadLeaderboard("second_10");
+    loadLeaderboard("second_20");
+    loadLeaderboard("second_30");
+  }
+
+  // Build challenges
+  const sections = Array.from(document.querySelectorAll("section.challenge"));
+
+  let activeRunIndex = -1;
+
+  const challenges = sections.map((sec, idx) => {
+    const targetMs = Number(sec.dataset.target || 10000);
+    const gameId   = String(sec.dataset.game || "second_10");
+
+    const timerEl  = sec.querySelector('[data-role="timer"]');
+    const statusEl = sec.querySelector('[data-role="status"]');
+
+    const startBtn = sec.querySelector('[data-action="start"]');
+    const stopBtn  = sec.querySelector('[data-action="stop"]');
+    const resetBtn = sec.querySelector('[data-action="reset"]');
+
+    let running = false;
+    let cheated = false;
+    let startT = 0;
+    let rafId = 0;
+    let elapsedMs = 0;
+
+    function setStatus(msg, kind){
+      statusEl.innerHTML = "";
+      if(!msg) return;
+      const span = document.createElement("span");
+      span.textContent = msg;
+      if(kind) span.className = kind;
+      statusEl.appendChild(span);
+    }
+
+    function render(){ timerEl.textContent = fmtSeconds(elapsedMs); }
+
+    function tick(){
+      if(!running) return;
+      elapsedMs = performance.now() - startT;
+      render();
+      rafId = requestAnimationFrame(tick);
+    }
+
+    function start(){
+      if(running) return;
+      running = true;
+      cheated = false;
+      startT = performance.now();
+      elapsedMs = 0;
+      render();
+      setStatus("Running… try to stop near " + fmtSeconds(targetMs) + " seconds.", "");
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+      resetBtn.disabled = true;
+      rafId = requestAnimationFrame(tick);
+      activeRunIndex = idx;
+    }
+
+    function stop(){
+      if(!running) return;
+      running = false;
+      cancelAnimationFrame(rafId);
+
+      elapsedMs = performance.now() - startT;
+
+      if(cheated && withinWindow(elapsedMs, targetMs)){
+        elapsedMs = targetMs;
+        render();
+        setStatus("Displayed " + fmtSeconds(targetMs) + " s (practice mode). No submission because a letter key was pressed.", "bad");
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+        resetBtn.disabled = false;
+        return;
+      }
+
+      render();
+
+      const result = computeScore(elapsedMs, targetMs);
+      const kind = (result.errMs <= 50) ? "ok" : ((result.errMs >= 500) ? "bad" : "");
+      setStatus("Stopped at " + fmtSeconds(elapsedMs) + " s. Error " + fmtSeconds(result.errMs) + " s. Score " + result.score + ".", kind);
+
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      resetBtn.disabled = false;
+
+      if(withinWindow(elapsedMs, targetMs) && !cheated){
+        openDialog({
+          gameId,
+          targetMs,
+          lastScore: result.score,
+          cheated,
+          canSubmit: true
+        });
+      }else{
+        if(cheated){
+          setStatus("No submission: a letter key was pressed during the run.", "bad");
+        }else{
+          setStatus("Thank you for your time.", "");
+        }
+      }
+    }
+
+    function reset(){
+      running = false;
+      cancelAnimationFrame(rafId);
+      elapsedMs = 0;
+      render();
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      resetBtn.disabled = false;
+      setStatus("", "");
+    }
+
+    startBtn.addEventListener("click", start);
+    stopBtn.addEventListener("click", stop);
+    resetBtn.addEventListener("click", reset);
+
+    reset();
+
+    return {
+      isRunning: () => running,
+      start,
+      stop,
+      markCheat: () => { if(running) cheated = true; }
+    };
+  });
+
+  // Global keyboard shortcuts & anti-cheat
+  document.addEventListener("keydown", (e) => {
+    if(nameDialog.style.display === "flex") return;
+
+    if(e.key && /^[a-zA-Z]$/.test(e.key)){
+      challenges.forEach(ch => ch.markCheat());
+    }
+
+    if(e.code === "Space"){
+      e.preventDefault();
+      let idx = activeRunIndex;
+      if(idx < 0) idx = 0;
+      const ch = challenges[idx];
+      if(ch.isRunning()) ch.stop();
+      else { ch.start(); activeRunIndex = idx; }
+    }
+  });
+
+  // Dialog keyboard shortcuts
+  document.addEventListener("keydown", (e) => {
+    if(nameDialog.style.display !== "flex") return;
+    if(e.key === "Enter"){ e.preventDefault(); submitBtn.click(); }
+    if(e.key === "Escape"){ e.preventDefault(); closeDialog(); }
+  });
+
+  nameDialog.addEventListener("click", (e) => {
+    if(e.target === nameDialog) closeDialog();
+  });
+  cancelBtn.addEventListener("click", closeDialog);
+
+  submitBtn.addEventListener("click", async () => {
+    if(!activeCtx){
+      dlgStatus.textContent = "No active submission.";
+      return;
+    }
+
+    const n = sanitizeName(nameInput.value);
+    if(!n){
+      dlgStatus.textContent = "Please enter a name.";
+      nameInput.focus();
+      return;
+    }
+
+    if(activeCtx.lastScore == null){
+      dlgStatus.textContent = "No score to submit. Play first.";
+      return;
+    }
+
+    if(!activeCtx.canSubmit || activeCtx.cheated){
+      dlgStatus.textContent = "Not eligible: stop within ±0.200s and do not press letters.";
+      return;
+    }
+
+    submitBtn.disabled = true;
+    cancelBtn.disabled = true;
+    dlgStatus.textContent = "Submitting…";
+
+    const result = await postScore(activeCtx.gameId, n, activeCtx.lastScore);
+    if(result.ok){
+      localStorage.setItem("studentName", n);
+      dlgStatus.textContent = "Saved!";
+      // Refresh only the leaderboard that matches the submitted game
+      loadLeaderboard(activeCtx.gameId);
+      setTimeout(() => closeDialog(), 450);
+    }else{
+      dlgStatus.textContent = "Could not save. Try again.";
+      submitBtn.disabled = false;
+      cancelBtn.disabled = false;
+      return;
+    }
+
+    submitBtn.disabled = false;
+    cancelBtn.disabled = false;
+  });
+
+  // Refresh buttons
+  if(btn10) btn10.addEventListener("click", () => loadLeaderboard("second_10"));
+  if(btn20) btn20.addEventListener("click", () => loadLeaderboard("second_20"));
+  if(btn30) btn30.addEventListener("click", () => loadLeaderboard("second_30"));
+
+  // Initial load
+  refreshAll();
+})();
+</script>
+
+<footer class="site-footer">
+      © 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528. <br>
+      The STEAM Teacher is Chao Yu. For educational purposes only. All rights reserved.
+</footer>
+
+</body>
+
+</html>

@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hit the Target (Difficulty + Name + Win)</title>
+  <style>
+    body{
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:#ffffff;
+      margin:0;
+      padding:16px;
+      color:#111827;
+    }
+    .container{
+      max-width: 980px;
+      margin: 0 auto;
+    }
+    h1{ margin: 8px 0 6px; }
+
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      padding: 8px 0 4px;
+    }
+    .controls input[type="text"]{
+      padding:6px 8px;
+      font-size:14px;
+      border:1px solid #d1d5db;
+      border-radius:6px;
+      outline:none;
+      width: 220px;
+    }
+    .controls button{
+      padding:6px 12px;
+      font-size:14px;
+      border-radius:6px;
+      border:1px solid #2563eb;
+      background:#2563eb;
+      color:#fff;
+      cursor:pointer;
+    }
+    .controls button.secondary{
+      background:#fff;
+      color:#2563eb;
+    }
+
+    .difficulty{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      padding: 6px 0;
+    }
+    .difficulty label{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 10px;
+      border:1px solid #d1d5db;
+      border-radius:6px;
+      cursor:pointer;
+      user-select:none;
+    }
+
+    .stats{
+      margin-left:auto;
+      font-weight:600;
+      white-space:nowrap;
+    }
+
+    .game-area{
+      position:relative;
+      width:100%;
+      height:62vh;
+      min-height:340px;
+      border:2px dashed #e5e7eb;
+      border-radius:10px;
+      overflow:hidden;
+      cursor:crosshair;
+      margin-top: 8px;
+    }
+
+    .target{
+      position:absolute;
+      border-radius:50%;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      color:#fff;
+      font-weight:800;
+      user-select:none;
+      box-shadow:0 6px 14px rgba(0,0,0,.2);
+      background: radial-gradient(circle at 30% 30%, #ffb703, #fb8500);
+    }
+
+    .message{
+      margin-top:10px;
+      min-height:22px;
+      font-weight:700;
+    }
+    .sub{
+      margin-top: 4px;
+      color:#374151;
+      font-size:14px;
+      min-height:18px;
+    }
+
+    .win-badge{
+      display:inline-block;
+      padding: 4px 10px;
+      border: 1px solid #10b981;
+      border-radius: 999px;
+      color:#065f46;
+      background:#ecfdf5;
+      font-weight:800;
+      margin-left: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Hit the Target</h1>
+
+    <div class="controls">
+      <input id="nameInput" type="text" placeholder="Student name" />
+      <button id="startBtn">Start</button>
+      <button id="resetBtn" class="secondary">Reset</button>
+
+      <div class="stats">
+        Time: <span id="timeLeft">30</span>s ·
+        Score: <span id="score">0</span> ·
+        Goal: <span id="goal">12</span>
+      </div>
+    </div>
+
+    <div class="difficulty" role="radiogroup" aria-label="Difficulty">
+      <strong>Difficulty:</strong>
+      <label>
+        <input type="radio" name="difficulty" value="easy" checked />
+        Easy
+      </label>
+      <label>
+        <input type="radio" name="difficulty" value="medium" />
+        Medium
+      </label>
+      <label>
+        <input type="radio" name="difficulty" value="hard" />
+        Hard
+      </label>
+    </div>
+
+    <div class="game-area" id="gameArea">
+      <div class="target" id="target">+</div>
+    </div>
+
+    <div class="message" id="message"></div>
+    <div class="sub" id="sub"></div>
+  </div>
+
+  <script>
+    // --- Difficulty settings: target size + move speed + goal ---
+    const DIFFICULTIES = {
+      easy:   { targetSize: 70, moveIntervalMs: 1000, durationSec: 30, goal: 12 },
+      medium: { targetSize: 52, moveIntervalMs: 800,  durationSec: 30, goal: 18 },
+      hard:   { targetSize: 40, moveIntervalMs: 600,  durationSec: 30, goal: 25 }
+    };
+
+    // State
+    let difficultyKey = "easy";
+    let score = 0;
+    let timeLeft = DIFFICULTIES[difficultyKey].durationSec;
+    let goal = DIFFICULTIES[difficultyKey].goal;
+
+    let playing = false;
+    let won = false;
+
+    let timerId = null;
+    let moveId = null;
+
+    // Elements
+    const gameArea = document.getElementById("gameArea");
+    const target = document.getElementById("target");
+    const timeLeftEl = document.getElementById("timeLeft");
+    const scoreEl = document.getElementById("score");
+    const goalEl = document.getElementById("goal");
+    const messageEl = document.getElementById("message");
+    const subEl = document.getElementById("sub");
+    const nameInput = document.getElementById("nameInput");
+
+    const startBtn = document.getElementById("startBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    function formatName() {
+      const n = nameInput.value.trim();
+      return n.length ? n : "Student";
+    }
+
+    function applyDifficulty(key) {
+      difficultyKey = key;
+      const cfg = DIFFICULTIES[difficultyKey];
+
+      // Update current goal/time defaults (without starting)
+      timeLeft = cfg.durationSec;
+      goal = cfg.goal;
+
+      // Update target size (CSS)
+      target.style.width = cfg.targetSize + "px";
+      target.style.height = cfg.targetSize + "px";
+
+      // Update UI
+      goalEl.textContent = goal;
+      timeLeftEl.textContent = timeLeft;
+
+      // If game is running, restart cleanly (avoids mixed intervals)
+      if (playing) resetGame();
+    }
+
+    function randomPos() {
+      const rect = gameArea.getBoundingClientRect();
+      const size = DIFFICULTIES[difficultyKey].targetSize;
+
+      const maxX = Math.max(0, rect.width - size);
+      const maxY = Math.max(0, rect.height - size);
+
+      const x = Math.random() * maxX;
+      const y = Math.random() * maxY;
+      return { x, y };
+    }
+
+    function moveTarget() {
+      const { x, y } = randomPos();
+      target.style.left = x + "px";
+      target.style.top = y + "px";
+      target.style.display = "flex";
+    }
+
+    function updateUI() {
+      timeLeftEl.textContent = timeLeft;
+      scoreEl.textContent = score;
+      goalEl.textContent = goal;
+    }
+
+    function startGame() {
+      if (playing) return;
+
+      playing = true;
+      won = false;
+      score = 0;
+
+      const cfg = DIFFICULTIES[difficultyKey];
+      timeLeft = cfg.durationSec;
+      goal = cfg.goal;
+
+      updateUI();
+
+      messageEl.textContent = "Click the target to score points.";
+      subEl.textContent = `Reach ${goal} points before time runs out to WIN.`;
+
+      moveTarget();
+
+      moveId = setInterval(moveTarget, cfg.moveIntervalMs);
+
+      timerId = setInterval(() => {
+        timeLeft--;
+        updateUI();
+        if (timeLeft <= 0) {
+          endGame(false);
+        }
+      }, 1000);
+    }
+
+    function endGame(isWin) {
+      playing = false;
+      clearInterval(timerId);
+      clearInterval(moveId);
+      target.style.display = "none";
+
+      const name = formatName();
+
+      if (isWin) {
+        won = true;
+        messageEl.innerHTML = `🎉 You WIN! <span class="win-badge">${name}</span>`;
+        subEl.textContent = `Great job, ${name}! Final score: ${score}.`;
+      } else {
+        messageEl.textContent = `Time's up! ${name} scored ${score}.`;
+        subEl.textContent = `Goal was ${goal}. Click Start to try again.`;
+      }
+    }
+
+    function resetGame() {
+      playing = false;
+      won = false;
+      clearInterval(timerId);
+      clearInterval(moveId);
+
+      score = 0;
+      const cfg = DIFFICULTIES[difficultyKey];
+      timeLeft = cfg.durationSec;
+      goal = cfg.goal;
+
+      target.style.display = "none";
+      updateUI();
+
+      messageEl.textContent = "Click Start to play.";
+      subEl.textContent = `Goal: ${goal} points in ${timeLeft} seconds.`;
+    }
+
+    // --- Events ---
+    target.addEventListener("click", (e) => {
+      if (!playing || won) return;
+      e.stopPropagation(); // don't count as a miss
+
+      score++;
+      updateUI();
+
+      // Move immediately on hit (feels responsive)
+      moveTarget();
+
+      // Win condition
+      if (score >= goal) {
+        endGame(true);
+      }
+    });
+
+    // Optional: miss tracking could be added here.
+    // gameArea.addEventListener("click", () => { ... });
+
+    startBtn.addEventListener("click", startGame);
+    resetBtn.addEventListener("click", resetGame);
+
+    // Difficulty change
+    document.querySelectorAll('input[name="difficulty"]').forEach(r => {
+      r.addEventListener("change", (e) => applyDifficulty(e.target.value));
+    });
+
+    // Initialize
+    applyDifficulty("easy");
+    resetGame();
+  </script>
+
+  <footer style="
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          background: #fafafa;
+          text-align: center;
+          padding: 8px 0;
+          font-size: 14px;
+          color: #555;
+          border-top: 1px solid #ccc;
+        ">
+          © 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528. <br>
+          The STEAM Teacher is Chao Yu. For educational purposes only. All rights reserved.
+      </footer>
+      
+</body>
+</html>

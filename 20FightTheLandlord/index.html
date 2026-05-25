@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Fight the Landlord</title>
+<style>
+:root{--bg:#fff8f0;--card:#ffffff;--ink:#4e342e;--muted:#8d6e63;--panel:#fff3e0;--panel2:#ffe0b2;--line:#ffcc80;--accent:#58a6ff;--good:#39d353;--bad:#f78166;--blue:#58a6ff}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding-bottom:42px}.back{position:sticky;top:0;z-index:10;background:rgba(255,243,224,.97);border-bottom:1px solid var(--line);padding:10px 16px}.back a{color:var(--ink);text-decoration:none;font-weight:700}.wrap{max-width:1180px;margin:0 auto;padding:14px}.top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}.title h1{margin:0;font-size:26px}.title p{margin:3px 0 0;color:var(--muted);font-size:13px}.btn{border:1px solid var(--line);background:var(--panel2);color:var(--ink);border-radius:10px;padding:9px 13px;font-weight:700;cursor:pointer}.btn:hover{border-color:var(--blue);background:#ffd699}.primary{background:var(--accent);color:#4e342e;border-color:var(--accent)}.green{background:var(--good);color:#06210f;border-color:var(--good)}.red{background:var(--bad);color:#fff;border-color:var(--bad)}.game-layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}.table{margin-top:14px;display:grid;grid-template-rows:auto 1fr auto;gap:12px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(141,110,99,.18)}.players{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}.player{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center}.player.active{outline:3px solid var(--accent)}.name{font-weight:900}.role{font-size:12px;color:var(--accent);min-height:18px}.count{font-size:13px;color:var(--muted)}.landlordCards,.lastPlay,.hand{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;align-items:center;min-height:76px}.lastArea{text-align:center}.label{font-size:12px;color:var(--muted);margin-bottom:6px}.card{width:46px;height:64px;border-radius:9px;background:var(--card);color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900;border:2px solid #ffcc80;box-shadow:0 3px 8px rgba(141,110,99,.22);user-select:none;position:relative}.card.redSuit{color:#dc2626}.card.backCard{background:linear-gradient(135deg,#58a6ff,#d2a8ff);color:#fff;border-color:#ffcc80}.card.small{width:36px;height:50px;font-size:13px}.card.selectable{cursor:pointer;transition:.12s}.card.selectable:hover{transform:translateY(-5px);box-shadow:0 8px 16px rgba(141,110,99,.28)}.card.selected{transform:translateY(-14px);border-color:#58a6ff;box-shadow:0 0 0 3px rgba(88,166,255,.25)}.suit{font-size:15px}.rank{font-size:18px}.controls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px}.status{margin-top:10px;text-align:center;color:#4e342e;font-weight:700;min-height:24px}.hint{font-size:12px;color:var(--muted);line-height:1.5;margin-top:8px}.score{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;font-size:13px;color:var(--muted)}.win{color:#39d353;font-size:20px;font-weight:900}.lose{color:#f78166;font-size:20px;font-weight:900}.rank-sidebar{position:sticky;top:58px}.rank-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(141,110,99,.18)}.rank-card h3{margin:0 0 6px;font-size:18px}.rank-note{font-size:12px;color:var(--muted);line-height:1.45;margin-bottom:12px}.rank-card ol{padding-left:22px;margin:0}.rank-card li{font-size:13px;color:var(--muted);margin:7px 0}.rank-card li:first-child{color:var(--ink);font-weight:800}.rank-err{color:#f78166!important}#rankStatus{font-size:12px;color:var(--muted);margin-top:12px}.stat-val{color:var(--ink);font-weight:900}#nameDialog{position:fixed;inset:0;background:rgba(78,52,46,.32);display:none;align-items:center;justify-content:center;z-index:3000;backdrop-filter:blur(4px)}.dialog-box{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;max-width:390px;width:90%;box-shadow:0 24px 64px rgba(141,110,99,.28)}.dialog-box h3{margin:0 0 8px;color:#39d353;font-size:22px}.dialog-box p{font-size:13px;color:var(--muted);line-height:1.45;margin:0 0 14px}.dialog-box input{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-size:14px}.dialog-box input:focus{outline:none;border-color:var(--blue)}.dialog-actions{display:flex;gap:10px;margin-top:12px;justify-content:flex-end}#dialogStatus{margin-top:8px;font-size:12px;color:#f78166;font-weight:800}footer{position:fixed;bottom:0;left:0;width:100%;text-align:center;background:rgba(255,243,224,.97);border-top:1px solid var(--line);padding:8px;color:var(--muted);font-size:12px}@media(max-width:900px){.game-layout{grid-template-columns:1fr}.rank-sidebar{position:static}}@media(max-width:720px){.players{grid-template-columns:1fr}.card{width:39px;height:56px}.rank{font-size:16px}.wrap{padding:10px}}
+</style>
+</head>
+<body>
+<header class="back"><a href="/puzzle">← Back to Puzzle Home</a></header>
+<div class="wrap">
+  <div class="top">
+    <div class="title"><h1>Fight the Landlord</h1><p>Play against two computer players.</p></div>
+    <button class="btn primary" id="newBtn">New</button>
+  </div>
+  <div class="game-layout">
+  <main>
+  <div class="table">
+    <section class="players">
+      <div class="player" id="p1"><div class="name">Computer A</div><div class="role" id="role1"></div><div class="count" id="count1">17 cards</div><div class="hand" id="bot1"></div></div>
+      <div class="player" id="p0"><div class="name">You</div><div class="role" id="role0"></div><div class="count" id="count0">17 cards</div></div>
+      <div class="player" id="p2"><div class="name">Computer B</div><div class="role" id="role2"></div><div class="count" id="count2">17 cards</div><div class="hand" id="bot2"></div></div>
+    </section>
+    <section class="panel lastArea">
+      <div class="score"><span>Landlord cards:</span><span id="scoreText">Wins: 0 · Losses: 0</span></div>
+      <div class="landlordCards" id="landlordCards"></div>
+      <div class="label">Last play</div>
+      <div class="lastPlay" id="lastPlay"></div>
+      <div class="status" id="status">Click New to start.</div>
+    </section>
+    <section class="panel">
+      <div class="label">Your hand</div>
+      <div class="hand" id="yourHand"></div>
+      <div class="controls">
+        <button class="btn green" id="playBtn">Play Selected</button>
+        <button class="btn" id="passBtn">Pass</button>
+        <button class="btn" id="sortBtn">Sort</button>
+      </div>
+      <div class="hint"><b>Allowed hands in this classroom version:</b> single, pair, triple, triple + one, triple + double (full house), straight of 5+ cards, bomb, and rocket. You must beat the previous play unless the table has been cleared.</div>
+    </section>
+  </div>
+  </main>
+  <aside class="rank-sidebar">
+    <div class="rank-card">
+      <h3>🏆 Leaderboard</h3>
+      <div class="rank-note">Ranking uses: Wins ↓, then Best Time ↑.</div>
+      <ol id="rankList"><li>Loading…</li></ol>
+      <div id="rankStatus">Loading…</div>
+    </div>
+  </aside>
+  </div>
+</div>
+<div id="nameDialog"><div class="dialog-box"><h3>🎉 You Win!</h3><p id="dialogPrompt">Enter your name for the leaderboard:</p><input id="dialogNameInput" placeholder="Your name" maxlength="40"/><div class="dialog-actions"><button class="btn" id="dialogCancel">Cancel</button><button class="btn primary" id="dialogSubmit">Submit</button></div><div id="dialogStatus"></div></div></div>
+<footer>© 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528. <br>
+      Made by the science and STEAM teacher Chao Yu. For educational purposes only. All rights reserved.</footer>
+<script>
+const BASE_GAME_ID='fight_landlord';
+const RANKS=['3','4','5','6','7','8','9','10','J','Q','K','A','2','SJ','BJ'];
+const VALUE=Object.fromEntries(RANKS.map((r,i)=>[r,i+3]));
+const SUITS=['♠','♥','♣','♦'];
+let hands=[[],[],[]],landlord=0,turn=0,lastPlay=null,passCount=0,selected=new Set(),gameOver=false,wins=+localStorage.ftlWins||0,losses=+localStorage.ftlLosses||0,seconds=0,timer=null,_submittedThisRound=false;
+const el=id=>document.getElementById(id);
+function startTimer(){if(timer)return;timer=setInterval(()=>{seconds++;renderScoreLine();},1000)}
+function stopTimer(){clearInterval(timer);timer=null}
+function renderScoreLine(){const scoreEl=el('scoreText');if(scoreEl)scoreEl.textContent=`Wins: ${wins} · Losses: ${losses} · Time: ${seconds}s`;}
+function makeDeck(){let d=[];for(const r of RANKS.slice(0,13)){for(const s of SUITS)d.push({r,s,v:VALUE[r],id:r+s});}d.push({r:'SJ',s:'☆',v:VALUE.SJ,id:'SJ'});d.push({r:'BJ',s:'★',v:VALUE.BJ,id:'BJ'});return d;}
+function shuffle(a){for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function sortHand(h){h.sort((a,b)=>a.v-b.v || a.s.localeCompare(b.s));}
+function deal(){stopTimer();seconds=0;_submittedThisRound=false;startTimer();let d=shuffle(makeDeck());hands=[d.slice(0,17),d.slice(17,34),d.slice(34,51)];const bottom=d.slice(51);landlord=Math.floor(Math.random()*3);hands[landlord].push(...bottom);hands.forEach(sortHand);turn=landlord;lastPlay=null;passCount=0;selected.clear();gameOver=false;render();msg((landlord===0?'You are':'Computer '+(landlord===1?'A':'B')+' is')+' the Landlord. Landlord starts.');if(turn!==0)setTimeout(botTurn,900);}
+function cardHTML(c,cls=''){const red=(c.s==='♥'||c.s==='♦')?' redSuit':'';let rank=c.r==='SJ'?'Joker':c.r==='BJ'?'JOKER':c.r;let suit=c.r.includes('J')?'':c.s;return `<div class="card ${cls}${red}" data-id="${c.id}"><div class="rank">${rank}</div><div class="suit">${suit}</div></div>`}
+function render(){[0,1,2].forEach(i=>{el('p'+i).classList.toggle('active',i===turn&&!gameOver);el('role'+i).textContent=i===landlord?'LANDLORD':'Farmer';el('count'+i).textContent=hands[i].length+' cards';});
+ renderScoreLine();
+ el('bot1').innerHTML=Array.from({length:Math.min(hands[1].length,10)},()=>'<div class="card small backCard">★</div>').join('');
+ el('bot2').innerHTML=Array.from({length:Math.min(hands[2].length,10)},()=>'<div class="card small backCard">★</div>').join('');
+ el('landlordCards').innerHTML= landlord===0 ? '' : '<span style="color:var(--muted);font-size:12px">Hidden after deal</span>';
+ el('yourHand').innerHTML=hands[0].map(c=>cardHTML(c,'selectable '+(selected.has(c.id)?'selected':''))).join('');
+ document.querySelectorAll('#yourHand .card').forEach(node=>node.onclick=()=>{if(turn!==0||gameOver)return;let id=node.dataset.id;if(selected.has(id))selected.delete(id);else selected.add(id);render();});
+ el('lastPlay').innerHTML=lastPlay? lastPlay.cards.map(c=>cardHTML(c,'small')).join('') : '<span style="color:var(--muted)">None</span>';
+}
+function msg(t){el('status').innerHTML=t;}
+function analyze(cards){cards=[...cards].sort((a,b)=>a.v-b.v);let n=cards.length, vals=cards.map(c=>c.v), counts={};vals.forEach(v=>counts[v]=(counts[v]||0)+1);let groups=Object.entries(counts).map(([v,c])=>({v:+v,c})).sort((a,b)=>a.v-b.v);
+ if(n===1)return{type:'single',main:vals[0],len:1};
+ if(n===2&&cards.some(c=>c.r==='SJ')&&cards.some(c=>c.r==='BJ'))return{type:'rocket',main:99,len:2};
+ if(n===2&&groups.length===1)return{type:'pair',main:vals[0],len:2};
+ if(n===3&&groups.length===1)return{type:'triple',main:vals[0],len:3};
+ if(n===4&&groups.length===1)return{type:'bomb',main:vals[0],len:4};
+ if(n===4&&groups.some(g=>g.c===3))return{type:'triple1',main:groups.find(g=>g.c===3).v,len:4};
+ if(n===5&&groups.length===2&&groups.some(g=>g.c===3)&&groups.some(g=>g.c===2))return{type:'triple2',main:groups.find(g=>g.c===3).v,len:5};
+ if(n>=5&&groups.every(g=>g.c===1)&&vals.every(v=>v<VALUE['2'])){let ok=true;for(let i=1;i<vals.length;i++)if(vals[i]!==vals[i-1]+1)ok=false;if(ok)return{type:'straight',main:vals.at(-1),len:n};}
+ return null;
+}
+function canBeat(play,prev){if(!play)return false;if(!prev)return true;if(play.type==='rocket')return true;if(prev.type==='rocket')return false;if(play.type==='bomb'&&prev.type!=='bomb')return true;if(play.type!==prev.type||play.len!==prev.len)return false;return play.main>prev.main;}
+function playCards(player,cards){let info=analyze(cards);if(!canBeat(info,lastPlay?.info||null))return false;hands[player]=hands[player].filter(c=>!cards.some(x=>x.id===c.id));lastPlay={player,cards:[...cards],info};passCount=0;selected.clear();if(hands[player].length===0){endGame(player);return true;}turn=(turn+1)%3;render();return true;}
+function pass(){if(!lastPlay){msg('You cannot pass. You start this round.');return}passCount++;selected.clear();if(passCount>=2){lastPlay=null;passCount=0;msg('Table cleared. You start a new play.');}turn=(turn+1)%3;render();if(turn!==0)setTimeout(botTurn,800);}
+function endGame(winner){gameOver=true;stopTimer();let youWin=(winner===0)||(winner!==landlord&&landlord!==0);if(youWin){wins++;localStorage.ftlWins=wins;msg(`<span class="win">🎉 You win in ${seconds}s!</span>`);}else{losses++;localStorage.ftlLosses=losses;msg('<span class="lose">Computer wins. Try again!</span>');}render();if(youWin&&!_submittedThisRound){_submittedThisRound=true;openWinDialog();}}
+function playerName(i){return i===0?'You':i===1?'Computer A':'Computer B'}
+function allCombos(h){let combos=[];for(const c of h)combos.push([c]);let by={};h.forEach(c=>(by[c.v]??=[]).push(c));for(const v in by){let a=by[v];if(a.length>=2)combos.push(a.slice(0,2));if(a.length>=3){combos.push(a.slice(0,3));for(const x of h)if(x.v!=v)combos.push([...a.slice(0,3),x]);
+        let pairVals=Object.entries(by).filter(([pv,pa])=>+pv!=v&&pa.length>=2);for(const[pv,pa]of pairVals)combos.push([...a.slice(0,3),...pa.slice(0,2)]);}if(a.length===4)combos.push(a.slice(0,4));}
+ if(h.some(c=>c.r==='SJ')&&h.some(c=>c.r==='BJ'))combos.push([h.find(c=>c.r==='SJ'),h.find(c=>c.r==='BJ')]);
+ let vals=[...new Set(h.filter(c=>c.v<VALUE['2']).map(c=>c.v))].sort((a,b)=>a-b);for(let i=0;i<vals.length;i++){for(let j=i+4;j<vals.length;j++){let seq=vals.slice(i,j+1);if(seq.every((v,k)=>k===0||v===seq[k-1]+1))combos.push(seq.map(v=>h.find(c=>c.v===v)));else break;}}
+ return combos.filter(cs=>analyze(cs)).sort((a,b)=>a.length-b.length||analyze(a).main-analyze(b).main);
+}
+function botTurn(){if(gameOver||turn===0)return;let h=hands[turn],prev=lastPlay?.info||null;let choices=allCombos(h).filter(cs=>canBeat(analyze(cs),prev));let choice=choices.find(cs=>analyze(cs).type!=='bomb'&&analyze(cs).type!=='rocket')||choices[0];
+ if(!choice&&lastPlay){msg(playerName(turn)+' passes.');passCount++;if(passCount>=2){lastPlay=null;passCount=0;msg('Table cleared. '+playerName((turn+1)%3)+' starts.');}turn=(turn+1)%3;render();if(turn!==0)setTimeout(botTurn,850);return;}
+ if(!choice)choice=[h[0]];let ok=playCards(turn,choice);if(ok&&!gameOver){msg(playerName((turn+2)%3)+' played '+choice.length+' card(s).');if(turn!==0)setTimeout(botTurn,900);else msg('Your turn. Beat the last play or pass.');}}
+
+async function submitScore(name){
+  try{
+    const res=await fetch('/api/score',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({game:BASE_GAME_ID,player_name:name.trim().slice(0,40),seconds})
+    });
+    if(!res.ok)return false;
+    const data=await res.json().catch(()=>({}));
+    return data.ok===true || res.ok;
+  }catch{return false;}
+}
+async function loadLeaderboard(){
+  const list=el('rankList'),st=el('rankStatus');
+  if(st)st.textContent='Loading…';
+  try{
+    const res=await fetch(`/api/leaderboard?game=${encodeURIComponent(BASE_GAME_ID)}&limit=10`,{cache:'no-store'});
+    const data=await res.json();
+    const rows=Array.isArray(data)?data:(data.rows||[]);
+    list.innerHTML='';
+    if(!rows.length){list.innerHTML='<li>No scores yet.</li>';if(st)st.textContent='No saved wins yet.';return;}
+    rows.forEach((r,i)=>{
+      const name=r.player_name??r.playerName??'Unknown';
+      const winsCount=r.win_count??r.wins??r.winCount??1;
+      const best=r.best_seconds??r.bestSeconds??null;
+      const li=document.createElement('li');
+      li.textContent=`#${i+1} ${name} — ${winsCount} Wins`+(best!=null?` — Best: ${best}s`:'');
+      list.appendChild(li);
+    });
+    if(st)st.textContent='Updated just now.';
+  }catch{
+    list.innerHTML="<li class='rank-err'>Could not load leaderboard.</li>";
+    if(st)st.textContent='Check /api/leaderboard.';
+  }
+}
+function openWinDialog(){
+  const d=el('nameDialog'),inp=el('dialogNameInput');
+  el('dialogPrompt').textContent=`Time: ${seconds}s. Enter your name for the leaderboard:`;
+  el('dialogStatus').textContent='';
+  inp.value='';
+  d.style.display='flex';
+  setTimeout(()=>inp.focus(),50);
+}
+function closeWinDialog(){el('nameDialog').style.display='none';}
+el('dialogCancel').onclick=closeWinDialog;
+el('dialogNameInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();el('dialogSubmit').click();}});
+el('dialogSubmit').onclick=async()=>{
+  const inp=el('dialogNameInput'),st=el('dialogStatus'),btn=el('dialogSubmit'),name=inp.value.trim();
+  if(!name){st.textContent='Name is required.';return;}
+  btn.disabled=true;st.textContent='Saving…';
+  const ok=await submitScore(name);
+  if(ok){closeWinDialog();loadLeaderboard();}
+  else st.textContent='Could not save. Try again.';
+  btn.disabled=false;
+};
+
+el('newBtn').onclick=deal;el('sortBtn').onclick=()=>{sortHand(hands[0]);render();};el('passBtn').onclick=()=>{if(turn!==0||gameOver)return;pass();};el('playBtn').onclick=()=>{if(turn!==0||gameOver)return;let cards=hands[0].filter(c=>selected.has(c.id));if(!cards.length){msg('Select one or more cards first.');return;}let info=analyze(cards);if(!info){msg('That card group is not valid in this classroom version.');return;}if(!canBeat(info,lastPlay?.info||null)){msg('Your play must beat the previous play.');return;}playCards(0,cards);if(!gameOver&&turn!==0){msg('Good play. Computer turn.');setTimeout(botTurn,850);}};
+render();
+loadLeaderboard();
+</script>
+</body>
+</html>

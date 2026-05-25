@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Seconds Challenge (10 / 20 / 30) — Leaderboards</title>
+  <style>
+    :root{
+      --bg:#ffffff; --card:#ffffff; --muted:#4b5563; --text:#111827;
+      --accent:#2563eb; --danger:#dc2626; --ok:#16a34a;
+      --border:rgba(17,24,39,.12);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+      background: var(--bg);
+      color:var(--text);
+    }
+    
+    .back-header{ margin-bottom: 20px; }
+    .back-link{ text-decoration:none; color:#4b5563; font-weight:700; }
+
+    .wrap{max-width:1100px; margin:0 auto; padding:20px;}
+    .challenge{ margin-bottom:18px; }
+    .challenge:last-child{ margin-bottom:0; }
+    .grid{display:grid; grid-template-columns: 1.4fr 1fr; gap:16px;}
+    @media (max-width: 860px){ .grid{grid-template-columns:1fr;} }
+    .card{
+      background: #ffffff;
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:16px;
+      box-shadow:0 10px 22px rgba(0,0,0,.10);
+    }
+    h1{font-size:20px; margin:0 0 10px 0;}
+    .sub{color:var(--muted); font-size:13px; line-height:1.4; margin-bottom:14px;}
+    .timer{
+      font-variant-numeric: tabular-nums;
+      font-size:64px; letter-spacing:.5px;
+      margin:10px 0 4px 0;
+    }
+    .meta{display:flex; gap:12px; flex-wrap:wrap; color:var(--muted); font-size:13px;}
+    .meta b{color:var(--text); font-weight:700}
+    .row{display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;}
+    button{
+      appearance:none; border:none; cursor:pointer;
+      background:rgba(255,255,255,.09);
+      color:var(--text);
+      padding:10px 14px;
+      border-radius:12px;
+      font-weight:700;
+      border:1px solid var(--border);
+      transition:.12s transform, .12s background;
+      min-width:120px;
+    }
+    button:hover{transform:translateY(-1px); background:rgba(255,255,255,.14);}
+    button:active{transform:translateY(0px);}
+    button.primary{background:rgba(37,99,235,.10); border-color:rgba(37,99,235,.22);}
+    button.primary:hover{background:rgba(37,99,235,.16);}
+    button.danger{background:rgba(220,38,38,.10); border-color:rgba(220,38,38,.22);}
+    button.danger:hover{background:rgba(220,38,38,.16);}
+    button:disabled{opacity:.45; cursor:not-allowed; transform:none;}
+    .status{margin-top:10px; min-height:22px; color:var(--muted); font-size:13px;}
+    .status .ok{color:var(--ok); font-weight:700;}
+    .status .bad{color:var(--danger); font-weight:700;}
+
+    /* leaderboard */
+    .lbHeader{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+    .pill{
+      font-size:12px; color:var(--muted);
+      border:1px solid var(--border);
+      border-radius:999px;
+      padding:6px 10px;
+      background:rgba(17,24,39,.03);
+      white-space:nowrap;
+    }
+    ol{margin:10px 0 0 0; padding-left:22px;}
+    li{margin:6px 0; color:var(--text); font-size:14px;}
+    .lbErr{color:var(--danger);}
+
+  </style>
+</head>
+<body>
+
+  <header class="back-header">
+    <a class="back-link" href="../index.html">← Back to Puzzle Home</a>
+  </header>
+  
+  
+  <div class="wrap">
+    <!-- 10 seconds -->
+    <section class="challenge" data-target="10000" data-game="second_10">
+      <div class="grid">
+        <div class="card">
+          <h1>10‑Second Challenge</h1>
+          <div class="sub">
+            Press <b>Start</b>, then try to press <b>Stop</b> as close to <b>10.0 seconds</b> as possible.
+            The timer shows <b>three decimals</b>. Your score is higher when you are closer.
+          </div>
+
+          <div class="timer" data-role="timer">0.000</div>
+
+          <div class="meta">
+            <div>Target: <b data-role="targetLabel">10.000 s</b></div>
+            <div>Last error: <b data-role="err">—</b></div>
+            <div>Last score: <b data-role="lastScore">—</b></div>
+            <div>Wins (session): <b data-role="winCount">0</b></div>
+          </div>
+
+          <div class="row">
+            <button class="primary" data-action="start">Start</button>
+            <button class="danger" data-action="stop" disabled>Stop</button>
+            <button data-action="reset">Reset</button>
+          </div>
+
+          <div class="status" data-role="status"></div>
+        </div>
+
+        <div class="card">
+          <div class="lbHeader">
+            <h1 style="margin:0;">Leaderboard (10s)</h1>
+            <div class="pill">Sorted by Wins, then Best Score</div>
+          </div>
+          <div class="sub" style="margin-top:8px; margin-bottom:0;">
+            <b>Best Score</b> is stored in the database column <code>best_scores</code> (positive integer).
+            <br/>Score formula: <code>score = max(0, target_ms - error_ms)</code>.
+          </div>
+          <ol data-role="lb"><li>Loading…</li></ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- 20 seconds -->
+    <section class="challenge" data-target="20000" data-game="second_20">
+      <div class="grid">
+        <div class="card">
+          <h1>20‑Second Challenge</h1>
+          <div class="sub">
+            Press <b>Start</b>, then try to press <b>Stop</b> as close to <b>20.0 seconds</b> as possible.
+            The timer shows <b>three decimals</b>. Your score is higher when you are closer.
+          </div>
+
+          <div class="timer" data-role="timer">0.000</div>
+
+          <div class="meta">
+            <div>Target: <b data-role="targetLabel">20.000 s</b></div>
+            <div>Last error: <b data-role="err">—</b></div>
+            <div>Last score: <b data-role="lastScore">—</b></div>
+            <div>Wins (session): <b data-role="winCount">0</b></div>
+          </div>
+
+          <div class="row">
+            <button class="primary" data-action="start">Start</button>
+            <button class="danger" data-action="stop" disabled>Stop</button>
+            <button data-action="reset">Reset</button>
+          </div>
+
+          <div class="status" data-role="status"></div>
+        </div>
+
+        <div class="card">
+          <div class="lbHeader">
+            <h1 style="margin:0;">Leaderboard (20s)</h1>
+            <div class="pill">Sorted by Wins, then Best Score</div>
+          </div>
+          <div class="sub" style="margin-top:8px; margin-bottom:0;">
+            <b>Best Score</b> is stored in the database column <code>best_scores</code> (positive integer).
+            <br/>Score formula: <code>score = max(0, target_ms - error_ms)</code>.
+          </div>
+          <ol data-role="lb"><li>Loading…</li></ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- 30 seconds -->
+    <section class="challenge" data-target="30000" data-game="second_30">
+      <div class="grid">
+        <div class="card">
+          <h1>30‑Second Challenge</h1>
+          <div class="sub">
+            Press <b>Start</b>, then try to press <b>Stop</b> as close to <b>30.0 seconds</b> as possible.
+            The timer shows <b>three decimals</b>. Your score is higher when you are closer.
+          </div>
+
+          <div class="timer" data-role="timer">0.000</div>
+
+          <div class="meta">
+            <div>Target: <b data-role="targetLabel">30.000 s</b></div>
+            <div>Last error: <b data-role="err">—</b></div>
+            <div>Last score: <b data-role="lastScore">—</b></div>
+            <div>Wins (session): <b data-role="winCount">0</b></div>
+          </div>
+
+          <div class="row">
+            <button class="primary" data-action="start">Start</button>
+            <button class="danger" data-action="stop" disabled>Stop</button>
+            <button data-action="reset">Reset</button>
+          </div>
+
+          <div class="status" data-role="status"></div>
+        </div>
+
+        <div class="card">
+          <div class="lbHeader">
+            <h1 style="margin:0;">Leaderboard (30s)</h1>
+            <div class="pill">Sorted by Wins, then Best Score</div>
+          </div>
+          <div class="sub" style="margin-top:8px; margin-bottom:0;">
+            <b>Best Score</b> is stored in the database column <code>best_scores</code> (positive integer).
+            <br/>Score formula: <code>score = max(0, target_ms - error_ms)</code>.
+          </div>
+          <ol data-role="lb"><li>Loading…</li></ol>
+        </div>
+      </div>
+    </section>
+  </div>
+<!-- Winner / Submit Dialog (Unified Style) -->
+<div id="nameDialog" style="
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+">
+  <div style="
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 20px 22px;
+    max-width: 380px;
+    width: 90%;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+  ">
+    <h3 id="dlgTitle" style="margin:0 0 8px;">Submit your score</h3>
+
+    <p id="dlgText" style="margin:0 0 12px;">
+      Enter your name to submit. (Enter = submit, Esc = cancel)
+    </p>
+
+    <input
+      id="dialogNameInput"
+      maxlength="24"
+      placeholder="Your name"
+      autocomplete="name"
+      style="
+        width:100%;
+        padding:10px 12px;
+        border-radius:10px;
+        border:1px solid #ccc;
+        font-size:16px;
+        box-sizing:border-box;
+      "
+    />
+
+    <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:12px;">
+      <button id="dialogCancel">Cancel</button>
+      <button id="dialogSubmit" style="
+        background:#2563eb;
+        color:white;
+        border:1px solid #2563eb;
+      ">
+        Submit
+      </button>
+    </div>
+
+    <div id="dlgStatus" style="margin-top:8px; font-size:13px; color:#dc2626;"></div>
+
+    <div style="margin-top:8px; font-size:12px; color:#4b5563;">
+      Tip: Submit is allowed only if you stop within <b>±0.200s</b> of the target and you do <b>not</b> press any letter key during the run.
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+(() => {
+  "use strict";
+
+  // === DB protocol ===
+  // GET  /api/leaderboard?game=<id>&limit=20
+  // POST /api/score { game, player_name, best_scores }
+
+  const WINDOW_MS = 200; // ±0.200s acceptance + trick window
+
+  // Shared dialog elements (one dialog for all challenges)
+  const nameDialog = document.getElementById("nameDialog");
+  const nameInput  = document.getElementById("dialogNameInput");
+  const submitBtn  = document.getElementById("dialogSubmit");
+  const cancelBtn  = document.getElementById("dialogCancel");
+  const dlgTitle   = document.getElementById("dlgTitle");
+  const dlgText    = document.getElementById("dlgText");
+  const dlgStatus  = document.getElementById("dlgStatus");
+
+  function fmtSeconds(ms){ return (ms / 1000).toFixed(3); }
+
+  function withinWindow(ms, targetMs){
+    return ms >= (targetMs - WINDOW_MS) && ms <= (targetMs + WINDOW_MS);
+  }
+
+  function computeScore(elapsedMs, targetMs){
+    const errMs = Math.abs(targetMs - elapsedMs);
+    const score = Math.max(0, Math.round(targetMs - errMs));
+    return { errMs, score };
+  }
+
+  function sanitizeName(s){
+    return String(s || "").trim().replace(/\s+/g, " ").slice(0, 24);
+  }
+
+  // Active submission context (set when dialog opens)
+  let activeCtx = null; // { gameId, targetMs, lastScore, cheated, canSubmit, refreshLB, onWin }
+
+  function openDialog(ctx){
+    activeCtx = ctx;
+    dlgStatus.textContent = "";
+    dlgTitle.textContent = "Submit — Score: " + (ctx.lastScore ?? 0);
+    if(dlgText){
+      dlgText.textContent = "Enter your name to submit. (Enter = submit, Esc = cancel)";
+    }
+
+    const saved = localStorage.getItem("studentName") || "";
+    nameInput.value = saved;
+
+    nameDialog.style.display = "flex";
+    setTimeout(() => nameInput.focus(), 0);
+  }
+
+  function closeDialog(){
+    nameDialog.style.display = "none";
+    dlgStatus.textContent = "";
+    activeCtx = null;
+  }
+
+  async function postScore(gameId, name, score){
+    const res = await fetch("/api/score", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        game: gameId,
+        player_name: name,
+        best_scores: Math.max(0, Math.floor(Number(score || 0)))
+      })
+    });
+    if(!res.ok) return { ok:false };
+    await res.json().catch(() => null);
+    return { ok:true };
+  }
+
+  async function loadLeaderboard(gameId, targetMs, lbEl){
+    lbEl.innerHTML = "<li>Loading…</li>";
+    try{
+      const res = await fetch("/api/leaderboard?game=" + encodeURIComponent(gameId) + "&limit=20", { cache: "no-store" });
+      const data = await res.json();
+      const rows = Array.isArray(data) ? data : (data.rows || []);
+
+      if(!rows.length){
+        lbEl.innerHTML = "<li>No scores yet.</li>";
+        return;
+      }
+
+      const norm = rows.map(r => ({
+        name: (r.player_name ?? r.playerName ?? "Unknown").toString(),
+        wins: Number(r.win_count ?? r.wins ?? r.winCount ?? 0) || 0,
+        best: Number(r.best_scores ?? r.bestScores ?? r.bestScore ?? r.score ?? 0) || 0
+      })).sort((a,b) => (b.wins - a.wins) || (b.best - a.best));
+
+      lbEl.innerHTML = "";
+      norm.forEach((r, i) => {
+        const li = document.createElement("li");
+        const err = Math.max(0, (targetMs - r.best)); // because score = target - err
+        li.textContent =
+          "#" + (i+1) + " " + r.name +
+          " — Wins: " + r.wins +
+          " — Best Score: " + r.best +
+          " (≈ best error " + fmtSeconds(err) + " s)";
+        lbEl.appendChild(li);
+      });
+    }catch{
+      lbEl.innerHTML = "<li class='lbErr'>Could not load leaderboard.</li>";
+    }
+  }
+
+  // Build challenges
+  const sections = Array.from(document.querySelectorAll("section.challenge"));
+
+  let activeRunIndex = -1; // which challenge Spacebar controls
+
+  const challenges = sections.map((sec, idx) => {
+    const targetMs = Number(sec.dataset.target || 10000);
+    const gameId   = String(sec.dataset.game || "second_10");
+
+    const timerEl      = sec.querySelector('[data-role="timer"]');
+    const errEl        = sec.querySelector('[data-role="err"]');
+    const lastScoreEl  = sec.querySelector('[data-role="lastScore"]');
+    const winCountEl   = sec.querySelector('[data-role="winCount"]');
+    const statusEl     = sec.querySelector('[data-role="status"]');
+    const targetLabel  = sec.querySelector('[data-role="targetLabel"]');
+
+    const startBtn     = sec.querySelector('[data-action="start"]');
+    const stopBtn      = sec.querySelector('[data-action="stop"]');
+    const resetBtn     = sec.querySelector('[data-action="reset"]');
+    const lbEl         = sec.querySelector('[data-role="lb"]');
+
+    if(targetLabel) targetLabel.textContent = fmtSeconds(targetMs) + " s";
+
+    let running = false;
+    let cheated = false;
+    let startT = 0;
+    let rafId = 0;
+    let elapsedMs = 0;
+    let lastScore = null;
+    let lastErrMs = null;
+    let sessionWins = 0;
+
+    function setStatus(msg, kind){
+      statusEl.innerHTML = "";
+      if(!msg) return;
+      const span = document.createElement("span");
+      span.textContent = msg;
+      if(kind) span.className = kind;
+      statusEl.appendChild(span);
+    }
+
+    function render(){ timerEl.textContent = fmtSeconds(elapsedMs); }
+
+    function tick(){
+      if(!running) return;
+      elapsedMs = performance.now() - startT;
+      render();
+      rafId = requestAnimationFrame(tick);
+    }
+
+    function start(){
+      if(running) return;
+      running = true;
+      cheated = false;
+      startT = performance.now();
+      elapsedMs = 0;
+      render();
+      setStatus("Running… try to stop near " + fmtSeconds(targetMs) + " seconds.", "");
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+      resetBtn.disabled = true;
+      rafId = requestAnimationFrame(tick);
+      activeRunIndex = idx;
+    }
+
+    function stop(){
+      if(!running) return;
+      running = false;
+      cancelAnimationFrame(rafId);
+
+      elapsedMs = performance.now() - startT;
+
+      // Trick: letter pressed + within window => show perfect but block submission
+      if(cheated && withinWindow(elapsedMs, targetMs)){
+        elapsedMs = targetMs;
+        render();
+        errEl.textContent = "0.000 s";
+        lastErrMs = 0;
+        lastScore = targetMs;
+        lastScoreEl.textContent = String(targetMs);
+
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+        resetBtn.disabled = false;
+
+        setStatus("Displayed " + fmtSeconds(targetMs) + " s (practice mode). No submission because a letter key was pressed.", "bad");
+        return;
+      }
+
+      render();
+
+      const result = computeScore(elapsedMs, targetMs);
+      lastErrMs = result.errMs;
+      lastScore = result.score;
+
+      errEl.textContent = fmtSeconds(lastErrMs) + " s";
+      lastScoreEl.textContent = String(lastScore);
+
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      resetBtn.disabled = false;
+
+      const kind = (lastErrMs <= 50) ? "ok" : ((lastErrMs >= 500) ? "bad" : "");
+      setStatus("Stopped at " + fmtSeconds(elapsedMs) + " s. Error " + fmtSeconds(lastErrMs) + " s.", kind);
+
+      if(withinWindow(elapsedMs, targetMs) && !cheated){
+        openDialog({
+          gameId,
+          targetMs,
+          lastScore,
+          cheated,
+          canSubmit: true,
+          refreshLB: () => loadLeaderboard(gameId, targetMs, lbEl),
+          onWin: () => {
+            sessionWins += 1;
+            if(winCountEl) winCountEl.textContent = String(sessionWins);
+          }
+        });
+      }else{
+        if(cheated){
+          setStatus("No submission: a letter key was pressed during the run.", "bad");
+        }else{
+          setStatus("Thank you for your time.", "");
+        }
+      }
+    }
+
+    function reset(){
+      running = false;
+      cancelAnimationFrame(rafId);
+      elapsedMs = 0;
+      render();
+      errEl.textContent = "—";
+      lastScoreEl.textContent = "—";
+      lastScore = null;
+      lastErrMs = null;
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      resetBtn.disabled = false;
+      if(winCountEl) winCountEl.textContent = String(sessionWins);
+      setStatus("", "");
+    }
+
+    startBtn.addEventListener("click", start);
+    stopBtn.addEventListener("click", stop);
+    resetBtn.addEventListener("click", reset);
+
+    reset();
+    loadLeaderboard(gameId, targetMs, lbEl);
+
+    return {
+      isRunning: () => running,
+      start,
+      stop,
+      markCheat: () => { if(running) cheated = true; }
+    };
+  });
+
+  // Global keyboard shortcuts & anti-cheat flag
+  document.addEventListener("keydown", (e) => {
+    if(nameDialog.style.display === "flex") return;
+
+    if(e.key && /^[a-zA-Z]$/.test(e.key)){
+      challenges.forEach(ch => ch.markCheat());
+    }
+
+    if(e.code === "Space"){
+      e.preventDefault();
+      let idx = activeRunIndex;
+      if(idx < 0) idx = 0;
+      const ch = challenges[idx];
+      if(ch.isRunning()) ch.stop();
+      else { ch.start(); activeRunIndex = idx; }
+    }
+  });
+
+  // Dialog keyboard shortcuts
+  document.addEventListener("keydown", (e) => {
+    if(nameDialog.style.display !== "flex") return;
+    if(e.key === "Enter"){ e.preventDefault(); submitBtn.click(); }
+    if(e.key === "Escape"){ e.preventDefault(); closeDialog(); }
+  });
+
+  // Click outside dialog closes
+  nameDialog.addEventListener("click", (e) => {
+    if(e.target === nameDialog) closeDialog();
+  });
+
+  cancelBtn.addEventListener("click", closeDialog);
+
+  submitBtn.addEventListener("click", async () => {
+    if(!activeCtx){
+      dlgStatus.textContent = "No active submission.";
+      return;
+    }
+
+    const n = sanitizeName(nameInput.value);
+    if(!n){
+      dlgStatus.textContent = "Please enter a name.";
+      nameInput.focus();
+      return;
+    }
+
+    if(activeCtx.lastScore == null){
+      dlgStatus.textContent = "No score to submit. Play first.";
+      return;
+    }
+
+    if(!activeCtx.canSubmit || activeCtx.cheated){
+      dlgStatus.textContent = "Not eligible: stop within ±0.200s and do not press letters.";
+      return;
+    }
+
+    submitBtn.disabled = true;
+    cancelBtn.disabled = true;
+    dlgStatus.textContent = "Submitting…";
+
+    const result = await postScore(activeCtx.gameId, n, activeCtx.lastScore);
+    if(result.ok){
+      localStorage.setItem("studentName", n);
+      dlgStatus.textContent = "Saved!";
+      if(typeof activeCtx.onWin === "function") activeCtx.onWin();
+      setTimeout(() => { closeDialog(); activeCtx.refreshLB(); }, 450);
+    }else{
+      dlgStatus.textContent = "Could not save. Try again.";
+      submitBtn.disabled = false;
+      cancelBtn.disabled = false;
+      return;
+    }
+
+    submitBtn.disabled = false;
+    cancelBtn.disabled = false;
+  });
+
+})();
+</script>
+
+</body>
+
+</html>

@@ -1,0 +1,778 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>Chess vs Computer (Offline) + Leaderboards</title>
+  <style>
+    :root{
+      --border:#e5e7eb;
+      --muted:#6b7280;
+      --bg:#ffffff;
+      --blue:#2563eb;
+      --good:#16a34a;
+      --bad:#dc2626;
+
+      --light:#f3f4f6;
+      --dark:#9ca3af;
+      --hl:#fde68a;
+      --mv:#bfdbfe;
+    }
+    body{
+      margin: 16px;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:#111827;
+      background: var(--bg);
+      padding-bottom: 92px;
+    }
+    .back-header{
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: #fff;
+      padding: 4px 10px;
+      border-bottom: 1px solid #eee;
+      margin: -16px -16px 12px -16px;
+    }
+    .back-header a{
+      font-size: 13px;
+      line-height: 1.2;
+      text-decoration: none;
+      color: var(--blue);
+      font-weight: 800;
+    }
+
+    .page{
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 16px;
+      align-items: start;
+    }
+    @media (max-width: 980px){
+      .page{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      border:1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      background:#fff;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+    }
+
+    .title{ margin:0 0 6px; font-size: 22px; letter-spacing: -0.02em; }
+    .sub{ margin:0 0 12px; color: var(--muted); font-size: 14px; }
+
+    .controls{
+      display:flex;
+      gap:10px;
+      flex-wrap: wrap;
+      align-items:center;
+      margin-bottom: 12px;
+    }
+    .seg{
+      display:flex;
+      gap:6px;
+      border:1px solid var(--border);
+      padding:6px;
+      border-radius: 12px;
+      background:#fafafa;
+    }
+    .seg button{
+      border:1px solid transparent;
+      background: transparent;
+      padding: 8px 10px;
+      border-radius: 10px;
+      cursor:pointer;
+      font-weight: 900;
+      color:#111827;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .seg button.active{
+      border-color:var(--blue);
+      background:#eff6ff;
+      color:#1d4ed8;
+    }
+    .btn{
+      border:1px solid var(--border);
+      background:#fff;
+      padding: 9px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight: 900;
+    }
+    .btn.primary{
+      background:var(--blue);
+      border-color:var(--blue);
+      color:#fff;
+    }
+
+    /* Board (no external libraries) */
+    .board-wrap{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      width:100%;
+    }
+    .board{
+      width: min(560px, 92vw);
+      aspect-ratio: 1 / 1;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      background:#fff;
+    }
+    .sq{
+      border: none;
+      padding: 0;
+      margin: 0;
+      background: transparent;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size: clamp(22px, 5.2vw, 44px);
+      cursor: pointer;
+      user-select:none;
+    }
+    .sq.light{ background: var(--light); }
+    .sq.dark{ background: var(--dark); }
+
+    .sq.selected{ outline: 3px solid var(--hl); outline-offset:-3px; }
+    .sq.movehint{ box-shadow: inset 0 0 0 4px rgba(37,99,235,0.35); }
+    .sq.lastmove{ box-shadow: inset 0 0 0 4px rgba(16,185,129,0.30); }
+
+    .status{
+      display:flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      font-size: 14px;
+      color:#111827;
+    }
+    .status .muted{ color: var(--muted); }
+    .pill{
+      display:inline-block;
+      padding: 4px 10px;
+      border:1px solid var(--border);
+      border-radius: 999px;
+      background:#fafafa;
+      font-weight: 900;
+    }
+    .msg{
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background:#f9fafb;
+      font-weight: 900;
+    }
+    .msg.good{ border-color:#86efac; background:#f0fdf4; }
+    .msg.bad{ border-color:#fecaca; background:#fef2f2; }
+
+    /* Leaderboard */
+    .lb-title{
+      margin: 0 0 8px;
+      font-size: 18px;
+      font-weight: 900;
+      display:flex;
+      align-items:center;
+      gap: 8px;
+    }
+    .lb-note{ margin: 0 0 12px; font-size: 13px; color: var(--muted); }
+    .lb-box{
+      border:1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px;
+      background:#fff;
+    }
+    ol{ margin: 8px 0 0 22px; padding: 0; }
+    li{ margin: 6px 0; font-size: 14px; }
+
+    /* Win dialog */
+    #nameDialog{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 3000;
+      padding: 16px;
+    }
+    #nameDialog .panel{
+      background: #fff;
+      border-radius: 14px;
+      padding: 18px 18px 14px;
+      max-width: 360px;
+      width: 100%;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+    #nameDialog input{
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    #nameDialog .row{
+      display:flex;
+      gap:10px;
+      margin-top: 12px;
+      justify-content:flex-end;
+    }
+    #nameDialog button{
+      border:1px solid var(--border);
+      background:#fff;
+      padding: 9px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight: 900;
+    }
+    #nameDialog button.primary{
+      background:var(--blue);
+      border-color:var(--blue);
+      color:#fff;
+    }
+    #dialogStatus{
+      margin-top: 8px;
+      font-size: 13px;
+      color:#b91c1c;
+      min-height: 18px;
+    }
+
+    footer{
+      position: fixed;
+      left:0;
+      right:0;
+      bottom:0;
+      background:#fff;
+      border-top:1px solid #e5e7eb;
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+      text-align:center;
+      color:#6b7280;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="back-header">
+    <a href="./">← Back to Puzzle Home</a>
+  </div>
+
+  <div class="page">
+    <section class="card">
+      <h1 class="title">Chess vs Computer</h1>
+      <p class="sub">Offline UI (no CDN). You play <b>White</b>. Tap a piece, then tap a destination. Timer starts on your first move and stops on checkmate.</p>
+
+      <div class="controls">
+        <div class="seg" role="group" aria-label="Difficulty">
+          <button id="btnEasy" class="active" type="button">Easy</button>
+          <button id="btnMedium" type="button">Medium</button>
+          <button id="btnHard" type="button">Hard</button>
+        </div>
+        <button id="btnNew" class="btn primary" type="button">New Game</button>
+      </div>
+
+      <div class="board-wrap">
+        <div id="board" class="board" aria-label="Chess board"></div>
+      </div>
+
+      <div class="status">
+        <div>
+          <span class="pill" id="turnPill">Turn: White</span>
+          <span class="pill" id="timerPill">Time: 0.0s</span>
+          <span class="pill" id="movesPill">Moves: 0</span>
+        </div>
+        <div class="muted" id="modePill">Mode: Easy</div>
+      </div>
+
+      <div id="msg" class="msg">Ready. Tap <b>New Game</b>, then make your first move.</div>
+    </section>
+
+    <aside class="card">
+      <div class="lb-title">🏆 Leaderboard (Top 5)</div>
+      <div class="lb-note">Ranking: Fastest win time (low → high). Separate boards by difficulty.</div>
+
+      <div class="lb-box">
+        <div style="font-weight:900; margin-bottom:6px;">Easy</div>
+        <ol id="lbEasy"><li>Loading…</li></ol>
+
+        <div style="height:12px;"></div>
+        <div style="font-weight:900; margin-bottom:6px;">Medium</div>
+        <ol id="lbMedium"><li>Loading…</li></ol>
+
+        <div style="height:12px;"></div>
+        <div style="font-weight:900; margin-bottom:6px;">Hard</div>
+        <ol id="lbHard"><li>Loading…</li></ol>
+
+        <div class="lb-note" id="lbStatus" style="margin-top:10px;"></div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Winner Name Dialog -->
+  <div id="nameDialog" aria-hidden="true">
+    <div class="panel" role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
+      <h3 id="dlgTitle" style="margin:0 0 8px;">🎉 You Win!</h3>
+      <p style="margin:0 0 12px;">Enter your name for the leaderboard:</p>
+      <input id="dialogNameInput" placeholder="Your name"/>
+      <div class="row">
+        <button id="dialogCancel" type="button">Cancel</button>
+        <button id="dialogSubmit" class="primary" type="button">Submit</button>
+      </div>
+      <div id="dialogStatus"></div>
+      <div class="lb-note" style="margin-top:6px;">Tip: Press <b>Enter</b> to submit, <b>Esc</b> to cancel.</div>
+    </div>
+  </div>
+
+  <footer>
+    © 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528.<br/>
+    The STEAM Teacher is Chao Yu. For educational purposes only. All rights reserved.
+  </footer>
+
+  <script type="module">
+    import { Chess } from "./lib/chess.js";
+
+    // === Server endpoints (same backend you already use) ===
+    // GET  /api/leaderboard?game=<id>&limit=5
+    // POST /api/score  { game: "<id>", player_name: "<name>", seconds: <number> }
+    const GAME_IDS = {
+      easy:   "chessai_easy",
+      medium: "chessai_medium",
+      hard:   "chessai_hard",
+    };
+
+    // === UI refs ===
+    const boardEl = document.getElementById("board");
+    const msgEl = document.getElementById("msg");
+    const turnPill = document.getElementById("turnPill");
+    const timerPill = document.getElementById("timerPill");
+    const movesPill = document.getElementById("movesPill");
+    const modePill = document.getElementById("modePill");
+
+    // Dialog
+    const nameDialog = document.getElementById("nameDialog");
+    const dialogNameInput = document.getElementById("dialogNameInput");
+    const dialogSubmit = document.getElementById("dialogSubmit");
+    const dialogCancel = document.getElementById("dialogCancel");
+    const dialogStatus = document.getElementById("dialogStatus");
+
+    // Leaderboard
+    const lbEasy = document.getElementById("lbEasy");
+    const lbMedium = document.getElementById("lbMedium");
+    const lbHard = document.getElementById("lbHard");
+    const lbStatus = document.getElementById("lbStatus");
+
+    // === State ===
+    let mode = "easy";
+    let chess = new Chess();
+    let started = false;
+    let startTs = 0;
+    let timer = null;
+    let finished = false;
+    let lastSeconds = 0;
+    let aiThinking = false;
+
+    let selected = null;          // square like "e2"
+    let legalTargets = new Set(); // squares
+    let lastMoveSquares = [];     // [from,to]
+
+    const PIECE = {
+      wp: "♙", wn: "♘", wb: "♗", wr: "♖", wq: "♕", wk: "♔",
+      bp: "♟", bn: "♞", bb: "♝", br: "♜", bq: "♛", bk: "♚",
+    };
+
+    function setMsg(text, kind="") {
+      msgEl.className = "msg" + (kind ? (" " + kind) : "");
+      msgEl.innerHTML = text;
+    }
+
+    function setMode(m) {
+      mode = m;
+      document.getElementById("btnEasy").classList.toggle("active", m==="easy");
+      document.getElementById("btnMedium").classList.toggle("active", m==="medium");
+      document.getElementById("btnHard").classList.toggle("active", m==="hard");
+      modePill.textContent = "Mode: " + (m.charAt(0).toUpperCase() + m.slice(1));
+    }
+
+    function startTimer() {
+      stopTimer();
+      started = true;
+      startTs = performance.now();
+      timer = setInterval(() => {
+        const s = (performance.now() - startTs) / 1000;
+        timerPill.textContent = "Time: " + s.toFixed(1) + "s";
+      }, 100);
+    }
+    function stopTimer() {
+      if (timer) clearInterval(timer);
+      timer = null;
+    }
+
+    function updatePills() {
+      turnPill.textContent = "Turn: " + (chess.turn() === "w" ? "White" : "Black");
+      movesPill.textContent = "Moves: " + chess.history().length;
+      if (!started) timerPill.textContent = "Time: 0.0s";
+    }
+
+    function squareId(fileIdx, rankIdx) {
+      // fileIdx 0..7 => a..h, rankIdx 0..7 => 8..1
+      const file = String.fromCharCode("a".charCodeAt(0) + fileIdx);
+      const rank = String(8 - rankIdx);
+      return file + rank;
+    }
+
+    function isLightSquare(fileIdx, rankIdx) {
+      return (fileIdx + rankIdx) % 2 === 0;
+    }
+
+    function pieceAt(square) {
+      const obj = chess.get(square);
+      if (!obj) return null;
+      const key = obj.color + obj.type; // "wp"
+      return PIECE[key] || "";
+    }
+
+    function clearSelection() {
+      selected = null;
+      legalTargets = new Set();
+    }
+
+    function computeLegalTargets(from) {
+      const moves = chess.moves({ square: from, verbose: true });
+      return new Set(moves.map(m => m.to));
+    }
+
+    function renderBoard() {
+      boardEl.innerHTML = "";
+
+      for (let r = 0; r < 8; r++) {
+        for (let f = 0; f < 8; f++) {
+          const sq = squareId(f, r);
+          const btn = document.createElement("button");
+          btn.className = "sq " + (isLightSquare(f, r) ? "light" : "dark");
+          btn.type = "button";
+          btn.dataset.square = sq;
+          btn.setAttribute("aria-label", "Square " + sq);
+
+          // highlights
+          if (selected === sq) btn.classList.add("selected");
+          if (legalTargets.has(sq)) btn.classList.add("movehint");
+          if (lastMoveSquares.includes(sq)) btn.classList.add("lastmove");
+
+          btn.textContent = pieceAt(sq) || "";
+          btn.onclick = () => onSquareClick(sq);
+
+          boardEl.appendChild(btn);
+        }
+      }
+    }
+
+    function isDraw() {
+      return chess.isDraw() ||
+             chess.isStalemate() ||
+             chess.isInsufficientMaterial() ||
+             chess.isThreefoldRepetition();
+    }
+
+    function onGameOver(result) {
+      finished = true;
+      stopTimer();
+      lastSeconds = started ? (performance.now() - startTs) / 1000 : 0;
+      timerPill.textContent = "Time: " + lastSeconds.toFixed(1) + "s";
+
+      if (result === "win") {
+        setMsg(`✅ Checkmate! You beat the computer in <b>${lastSeconds.toFixed(1)}s</b>.`, "good");
+        openWinDialog();
+      } else if (result === "loss") {
+        setMsg("❌ You were checkmated. Tap New Game to try again.", "bad");
+      } else {
+        setMsg("🤝 Draw. Tap New Game to play again.", "");
+      }
+    }
+
+    async function onSquareClick(sq) {
+      if (finished || aiThinking) return;
+      if (chess.turn() !== "w") return; // player is always white
+
+      const obj = chess.get(sq);
+      const isOwnPiece = obj && obj.color === "w";
+
+      if (!selected) {
+        if (isOwnPiece) {
+          selected = sq;
+          legalTargets = computeLegalTargets(sq);
+          renderBoard();
+        }
+        return;
+      }
+
+      // If clicking another white piece, switch selection
+      if (isOwnPiece && sq !== selected) {
+        selected = sq;
+        legalTargets = computeLegalTargets(sq);
+        renderBoard();
+        return;
+      }
+
+      // Attempt move
+      const move = chess.move({ from: selected, to: sq, promotion: "q" });
+      if (!move) {
+        // illegal: clear selection
+        clearSelection();
+        renderBoard();
+        return;
+      }
+
+      if (!started) startTimer();
+      lastMoveSquares = [move.from, move.to];
+      clearSelection();
+      updatePills();
+      renderBoard();
+
+      if (chess.isCheckmate()) return onGameOver("win");
+      if (isDraw()) return onGameOver("draw");
+
+      aiThinking = true;
+      setMsg("Computer is thinking…", "");
+      setTimeout(() => {
+        makeComputerMove();
+        aiThinking = false;
+      }, 120);
+    }
+
+    // === Simple AI (random for easy, minimax for medium/hard) ===
+    const PV = { p:100, n:320, b:330, r:500, q:900, k:20000 };
+
+    function evalMaterial(g) {
+      let score = 0;
+      const b = g.board();
+      for (const row of b) {
+        for (const pc of row) {
+          if (!pc) continue;
+          const val = PV[pc.type] || 0;
+          score += (pc.color === "w") ? val : -val;
+        }
+      }
+      return score; // positive = white ahead
+    }
+
+    function pickRandomMove() {
+      const moves = chess.moves({ verbose: true });
+      return moves[Math.floor(Math.random() * moves.length)];
+    }
+
+    function minimaxRoot(depth) {
+      const moves = chess.moves({ verbose: true });
+      let bestMove = null;
+      let bestScore = Infinity; // black minimizes white score
+      const nodeLimit = (depth >= 3) ? 25000 : 12000;
+      let nodes = 0;
+
+      function minimax(d, alpha, beta) {
+        nodes++;
+        if (nodes > nodeLimit) return evalMaterial(chess);
+
+        if (d === 0 || chess.isGameOver()) {
+          if (chess.isCheckmate()) {
+            return (chess.turn() === "w") ? -99999 : 99999;
+          }
+          return evalMaterial(chess);
+        }
+
+        const legal = chess.moves({ verbose: true });
+        if (chess.turn() === "w") {
+          let maxEval = -Infinity;
+          for (const m of legal) {
+            chess.move(m);
+            const e = minimax(d - 1, alpha, beta);
+            chess.undo();
+            maxEval = Math.max(maxEval, e);
+            alpha = Math.max(alpha, e);
+            if (beta <= alpha) break;
+          }
+          return maxEval;
+        } else {
+          let minEval = Infinity;
+          for (const m of legal) {
+            chess.move(m);
+            const e = minimax(d - 1, alpha, beta);
+            chess.undo();
+            minEval = Math.min(minEval, e);
+            beta = Math.min(beta, e);
+            if (beta <= alpha) break;
+          }
+          return minEval;
+        }
+      }
+
+      for (const m of moves) {
+        chess.move(m);
+        const score = minimax(depth - 1, -Infinity, Infinity);
+        chess.undo();
+        if (score < bestScore) {
+          bestScore = score;
+          bestMove = m;
+        }
+      }
+      return bestMove || pickRandomMove();
+    }
+
+    function makeComputerMove() {
+      if (finished) return;
+      if (chess.turn() !== "b") return;
+
+      let move = null;
+      if (mode === "easy") move = pickRandomMove();
+      else if (mode === "medium") move = minimaxRoot(2);
+      else move = minimaxRoot(3);
+
+      if (!move) return;
+      const m = chess.move(move);
+      lastMoveSquares = [m.from, m.to];
+
+      updatePills();
+      renderBoard();
+
+      if (chess.isCheckmate()) return onGameOver("loss");
+      if (isDraw()) return onGameOver("draw");
+
+      setMsg("Your turn.", "");
+    }
+
+    // === Leaderboard ===
+    function sanitizeName(s) {
+      return String(s || "").trim().replace(/\s+/g, " ").slice(0, 24);
+    }
+
+    async function loadOneLB(gameId, listEl) {
+      listEl.innerHTML = "<li>Loading…</li>";
+      try {
+        const res = await fetch(`/api/leaderboard?game=${encodeURIComponent(gameId)}&limit=5`, { cache: "no-store" });
+        const data = await res.json();
+        const rows = Array.isArray(data) ? data : (data.rows || []);
+
+        listEl.innerHTML = "";
+        if (!rows.length) {
+          listEl.innerHTML = "<li>No scores yet.</li>";
+          return;
+        }
+
+        rows.forEach((r, i) => {
+          const name = r.player_name ?? r.playerName ?? "Unknown";
+          const best = r.best_seconds ?? r.bestSeconds ?? r.seconds ?? null;
+          const li = document.createElement("li");
+          li.textContent = `#${i + 1} ${name} — Best: ${best != null ? (Number(best).toFixed(1) + "s") : "—"}`;
+          listEl.appendChild(li);
+        });
+      } catch (e) {
+        listEl.innerHTML = "<li style='color:#b91c1c;font-weight:900;'>Could not load leaderboard.</li>";
+      }
+    }
+
+    async function loadAllLeaderboards() {
+      lbStatus.textContent = "Loading…";
+      await Promise.all([
+        loadOneLB(GAME_IDS.easy, lbEasy),
+        loadOneLB(GAME_IDS.medium, lbMedium),
+        loadOneLB(GAME_IDS.hard, lbHard),
+      ]);
+      lbStatus.textContent = "Updated just now.";
+    }
+
+    async function submitWinToDB(name, seconds) {
+      const game = GAME_IDS[mode];
+      try {
+        const res = await fetch("/api/score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            game,
+            player_name: name,
+            seconds: Math.max(0, Number(seconds.toFixed(1)))
+          })
+        });
+        return res.ok;
+      } catch {
+        return false;
+      }
+    }
+
+    // === Win dialog ===
+    function openWinDialog() {
+      dialogStatus.textContent = "";
+      dialogNameInput.value = localStorage.getItem("studentName") || "";
+      nameDialog.style.display = "flex";
+      nameDialog.setAttribute("aria-hidden", "false");
+      setTimeout(() => dialogNameInput.focus(), 50);
+    }
+    function closeWinDialog() {
+      nameDialog.style.display = "none";
+      nameDialog.setAttribute("aria-hidden", "true");
+    }
+
+    dialogCancel.onclick = closeWinDialog;
+    dialogSubmit.onclick = async () => {
+      const n = sanitizeName(dialogNameInput.value);
+      if (!n) { dialogStatus.textContent = "Name is required."; return; }
+
+      dialogSubmit.disabled = true;
+      dialogStatus.textContent = "Saving…";
+      const ok = await submitWinToDB(n, lastSeconds);
+
+      if (ok) {
+        localStorage.setItem("studentName", n);
+        dialogStatus.textContent = "Saved!";
+        closeWinDialog();
+        loadAllLeaderboards();
+      } else {
+        dialogStatus.textContent = "Could not save. Try again.";
+      }
+      dialogSubmit.disabled = false;
+    };
+
+    document.addEventListener("keydown", (e) => {
+      if (nameDialog.style.display !== "flex") return;
+      if (e.key === "Escape") { e.preventDefault(); closeWinDialog(); }
+      if (e.key === "Enter") { e.preventDefault(); dialogSubmit.click(); }
+    });
+
+    // Buttons
+    document.getElementById("btnEasy").onclick = () => setMode("easy");
+    document.getElementById("btnMedium").onclick = () => setMode("medium");
+    document.getElementById("btnHard").onclick = () => setMode("hard");
+    document.getElementById("btnNew").onclick = newGame;
+
+    function newGame() {
+      chess = new Chess();
+      finished = false;
+      started = false;
+      lastSeconds = 0;
+      aiThinking = false;
+      stopTimer();
+      clearSelection();
+      lastMoveSquares = [];
+
+      updatePills();
+      renderBoard();
+      setMsg("New game started. You are White. Tap a piece, then tap where to move.", "");
+      loadAllLeaderboards();
+    }
+
+    // Init
+    setMode("easy");
+    loadAllLeaderboards();
+    newGame();
+  </script>
+</body>
+</html>

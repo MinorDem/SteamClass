@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>Chess (Full Game) + Leaderboard</title>
+
+  <!-- Chessboard UI -->
+  <link rel="stylesheet" href="https://unpkg.com/chessboardjs@1.0.0/www/css/chessboard-1.0.0.min.css"/>
+
+  <style>
+    :root{
+      --card-border:#e5e7eb;
+      --muted:#6b7280;
+      --bg:#ffffff;
+      --blue:#2563eb;
+    }
+    body{
+      margin: 16px;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:#111827;
+      background: var(--bg);
+      padding-bottom: 92px;
+    }
+    .back-header{
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: #fff;
+      padding: 4px 10px;
+      border-bottom: 1px solid #eee;
+      margin: -16px -16px 12px -16px;
+    }
+    .back-header a{
+      font-size: 13px;
+      line-height: 1.2;
+      text-decoration: none;
+      color: var(--blue);
+      font-weight: 700;
+    }
+
+    .page{
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 16px;
+      align-items: start;
+    }
+    @media (max-width: 980px){
+      .page{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      border:1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 14px;
+      background:#fff;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+    }
+
+    .title{
+      margin:0 0 6px;
+      font-size: 22px;
+      letter-spacing: -0.02em;
+    }
+    .sub{
+      margin:0 0 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .controls{
+      display:flex;
+      gap:10px;
+      flex-wrap: wrap;
+      align-items:center;
+      margin-bottom: 12px;
+    }
+    .seg{
+      display:flex;
+      gap:6px;
+      border:1px solid var(--card-border);
+      padding:6px;
+      border-radius: 12px;
+      background:#fafafa;
+    }
+    .seg button{
+      border:1px solid transparent;
+      background: transparent;
+      padding: 8px 10px;
+      border-radius: 10px;
+      cursor:pointer;
+      font-weight: 900;
+      color:#111827;
+    }
+    .seg button.active{
+      border-color:var(--blue);
+      background:#eff6ff;
+      color:#1d4ed8;
+    }
+    .btn{
+      border:1px solid var(--card-border);
+      background:#fff;
+      padding: 9px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight: 900;
+    }
+    .btn.primary{
+      background:var(--blue);
+      border-color:var(--blue);
+      color:#fff;
+    }
+
+    .board-wrap{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      width:100%;
+    }
+    #board{
+      width: min(560px, 92vw);
+      max-width: 560px;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .status{
+      display:flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      font-size: 14px;
+      color:#111827;
+    }
+    .status .muted{ color: var(--muted); }
+    .pill{
+      display:inline-block;
+      padding: 4px 10px;
+      border:1px solid var(--card-border);
+      border-radius: 999px;
+      background:#fafafa;
+      font-weight: 900;
+    }
+    .msg{
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+      background:#f9fafb;
+      font-weight: 900;
+    }
+    .msg.good{ border-color:#86efac; background:#f0fdf4; }
+    .msg.bad{ border-color:#fecaca; background:#fef2f2; }
+
+    /* Leaderboard */
+    .lb-title{
+      margin: 0 0 8px;
+      font-size: 18px;
+      font-weight: 900;
+      display:flex;
+      align-items:center;
+      gap: 8px;
+    }
+    .lb-note{
+      margin: 0 0 12px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .lb-box{
+      border:1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 10px;
+      background:#fff;
+    }
+    ol{
+      margin: 8px 0 0 22px;
+      padding: 0;
+    }
+    li{
+      margin: 6px 0;
+      font-size: 14px;
+    }
+
+    /* Win dialog */
+    #nameDialog{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 3000;
+      padding: 16px;
+    }
+    #nameDialog .panel{
+      background: #fff;
+      border-radius: 14px;
+      padding: 18px 18px 14px;
+      max-width: 360px;
+      width: 100%;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+    #nameDialog input{
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    #nameDialog .row{
+      display:flex;
+      gap:10px;
+      margin-top: 12px;
+      justify-content:flex-end;
+    }
+    #nameDialog button{
+      border:1px solid var(--card-border);
+      background:#fff;
+      padding: 9px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight: 900;
+    }
+    #nameDialog button.primary{
+      background:var(--blue);
+      border-color:var(--blue);
+      color:#fff;
+    }
+    #dialogStatus{
+      margin-top: 8px;
+      font-size: 13px;
+      color:#b91c1c;
+      min-height: 18px;
+    }
+
+    footer{
+      position: fixed;
+      left:0;
+      right:0;
+      bottom:0;
+      background:#fff;
+      border-top:1px solid #e5e7eb;
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+      text-align:center;
+      color:#6b7280;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="back-header">
+    <a href="./">← Back to Puzzle Home</a>
+  </div>
+
+  <div class="page">
+    <section class="card">
+      <h1 class="title">Chess — Full Game</h1>
+      <p class="sub">Play a full chess game (two-player on one device). Timer starts on the first move and stops on checkmate.</p>
+
+      <div class="controls">
+        <div class="seg" role="group" aria-label="Mode (separate leaderboards)">
+          <button id="btnEasy" class="active" type="button">Easy</button>
+          <button id="btnMedium" type="button">Medium</button>
+          <button id="btnHard" type="button">Hard</button>
+        </div>
+        <button id="btnNew" class="btn primary" type="button">New Game</button>
+        <button id="btnFlip" class="btn" type="button">Flip Board</button>
+      </div>
+
+      <div class="board-wrap">
+        <div id="board"></div>
+      </div>
+
+      <div class="status">
+        <div>
+          <span class="pill" id="turnPill">Turn: White</span>
+          <span class="pill" id="timerPill">Time: 0.0s</span>
+          <span class="pill" id="movesPill">Moves: 0</span>
+        </div>
+        <div class="muted" id="modePill">Mode: Easy</div>
+      </div>
+
+      <div id="msg" class="msg">Tap <b>New Game</b> to start. Timer begins on your first move.</div>
+    </section>
+
+    <aside class="card">
+      <div class="lb-title">🏆 Leaderboard (Top 5)</div>
+      <div class="lb-note">Ranking: Fastest checkmate time (low → high). Separate boards by mode.</div>
+
+      <div class="lb-box">
+        <div style="font-weight:900; margin-bottom:6px;" id="lbHeader">Easy</div>
+        <ol id="lbList"><li>Loading…</li></ol>
+        <div class="lb-note" id="lbStatus" style="margin-top:10px;"></div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Winner Name Dialog -->
+  <div id="nameDialog" aria-hidden="true">
+    <div class="panel" role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
+      <h3 id="dlgTitle" style="margin:0 0 8px;">🎉 Checkmate!</h3>
+      <p style="margin:0 0 12px;">Enter your name for the leaderboard:</p>
+      <input id="dialogNameInput" placeholder="Your name"/>
+      <div class="row">
+        <button id="dialogCancel" type="button">Cancel</button>
+        <button id="dialogSubmit" class="primary" type="button">Submit</button>
+      </div>
+      <div id="dialogStatus"></div>
+      <div class="lb-note" style="margin-top:6px;">Tip: Press <b>Enter</b> to submit, <b>Esc</b> to cancel.</div>
+    </div>
+  </div>
+
+  <footer>
+    © 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528.<br/>
+    The STEAM Teacher is Chao Yu. For educational purposes only. All rights reserved.
+  </footer>
+
+  <!-- Libraries -->
+  <script src="https://unpkg.com/jquery@3.7.1/dist/jquery.min.js"></script>
+  <script src="https://unpkg.com/chess.js@1.0.0/chess.min.js"></script>
+  <script src="https://unpkg.com/chessboardjs@1.0.0/www/js/chessboard-1.0.0.min.js"></script>
+
+  <script>
+    // === Server endpoints (same backend you already use) ===
+    // GET  /api/leaderboard?game=<id>&limit=5
+    // POST /api/score  { game: "<id>", player_name: "<name>", seconds: <number> }
+    const GAME_IDS = {
+      easy:   "chess_full_easy",
+      medium: "chess_full_medium",
+      hard:   "chess_full_hard",
+    };
+
+    // === State ===
+    let mode = "easy";
+    let chess = new Chess(); // standard start position
+    let board = null;
+    let flipped = false;
+
+    let started = false;
+    let startTs = 0;
+    let timer = null;
+    let finished = false;
+    let lastSeconds = 0;
+
+    const msgEl = document.getElementById("msg");
+    const turnPill = document.getElementById("turnPill");
+    const timerPill = document.getElementById("timerPill");
+    const movesPill = document.getElementById("movesPill");
+    const modePill = document.getElementById("modePill");
+
+    // Dialog
+    const nameDialog = document.getElementById("nameDialog");
+    const dialogNameInput = document.getElementById("dialogNameInput");
+    const dialogSubmit = document.getElementById("dialogSubmit");
+    const dialogCancel = document.getElementById("dialogCancel");
+    const dialogStatus = document.getElementById("dialogStatus");
+
+    // Leaderboard
+    const lbHeader = document.getElementById("lbHeader");
+    const lbList = document.getElementById("lbList");
+    const lbStatus = document.getElementById("lbStatus");
+
+    function setMsg(text, kind="") {
+      msgEl.className = "msg" + (kind ? (" " + kind) : "");
+      msgEl.innerHTML = text;
+    }
+
+    function setMode(m) {
+      mode = m;
+      document.getElementById("btnEasy").classList.toggle("active", m==="easy");
+      document.getElementById("btnMedium").classList.toggle("active", m==="medium");
+      document.getElementById("btnHard").classList.toggle("active", m==="hard");
+      lbHeader.textContent = m.charAt(0).toUpperCase() + m.slice(1);
+      modePill.textContent = "Mode: " + lbHeader.textContent;
+      loadLeaderboard();
+    }
+
+    function startTimer() {
+      stopTimer();
+      started = true;
+      startTs = performance.now();
+      timer = setInterval(() => {
+        const s = (performance.now() - startTs) / 1000;
+        timerPill.textContent = "Time: " + s.toFixed(1) + "s";
+      }, 100);
+    }
+    function stopTimer() {
+      if (timer) clearInterval(timer);
+      timer = null;
+    }
+
+    function updateUI() {
+      turnPill.textContent = "Turn: " + (chess.turn() === "w" ? "White" : "Black");
+      movesPill.textContent = "Moves: " + Math.floor(chess.history().length / 2) + "½";
+      if (!started) timerPill.textContent = "Time: 0.0s";
+    }
+
+    function newGame() {
+      chess = new Chess(); // reset to starting position
+      finished = false;
+      started = false;
+      lastSeconds = 0;
+      stopTimer();
+
+      const orientation = flipped ? "black" : "white";
+      if (!board) {
+        board = Chessboard("board", {
+          position: "start",
+          draggable: true,
+          orientation,
+          onDragStart,
+          onDrop,
+          onSnapEnd: () => board.position(chess.fen()),
+        });
+      } else {
+        board.orientation(orientation);
+        board.position("start", false);
+      }
+
+      updateUI();
+      setMsg("Game reset. Make your first move — the timer will start.", "");
+      loadLeaderboard();
+    }
+
+    function onDragStart(source, piece) {
+      if (finished) return false;
+
+      // Allow both sides to move, but only on their turn.
+      if ((chess.turn() === "w" && piece.startsWith("b")) ||
+          (chess.turn() === "b" && piece.startsWith("w"))) return false;
+
+      return true;
+    }
+
+    function onDrop(source, target) {
+      if (finished) return "snapback";
+
+      const move = chess.move({ from: source, to: target, promotion: "q" });
+      if (move === null) return "snapback";
+
+      // Start timer on first legal move.
+      if (!started) startTimer();
+
+      updateUI();
+
+      // End condition: checkmate
+      if (chess.in_checkmate()) {
+        finished = true;
+        stopTimer();
+        lastSeconds = (performance.now() - startTs) / 1000;
+        timerPill.textContent = "Time: " + lastSeconds.toFixed(1) + "s";
+        setMsg(`✅ Checkmate! Time: <b>${lastSeconds.toFixed(1)}s</b>.`, "good");
+        openWinDialog();
+      } else if (chess.in_draw() || chess.in_stalemate() || chess.insufficient_material() || chess.in_threefold_repetition()) {
+        // Draw: stop timer but do not submit
+        finished = true;
+        stopTimer();
+        lastSeconds = started ? (performance.now() - startTs) / 1000 : 0;
+        timerPill.textContent = "Time: " + lastSeconds.toFixed(1) + "s";
+        setMsg("🤝 Draw. Start a new game to try again.", "");
+      } else {
+        setMsg("Keep playing…", "");
+      }
+    }
+
+    // === Leaderboard ===
+    function sanitizeName(s) {
+      return String(s || "").trim().replace(/\s+/g, " ").slice(0, 24);
+    }
+
+    async function loadLeaderboard() {
+      const game = GAME_IDS[mode];
+      lbStatus.textContent = "Loading…";
+      lbList.innerHTML = "<li>Loading…</li>";
+
+      try {
+        const res = await fetch(`/api/leaderboard?game=${encodeURIComponent(game)}&limit=5`, { cache: "no-store" });
+        const data = await res.json();
+        const rows = Array.isArray(data) ? data : (data.rows || []);
+
+        lbList.innerHTML = "";
+        if (!rows.length) {
+          lbList.innerHTML = "<li>No scores yet.</li>";
+          lbStatus.textContent = "";
+          return;
+        }
+
+        rows.forEach((r, i) => {
+          const name = r.player_name ?? r.playerName ?? "Unknown";
+          const best = r.best_seconds ?? r.bestSeconds ?? r.seconds ?? null;
+          const li = document.createElement("li");
+          li.textContent = `#${i + 1} ${name} — Best: ${best != null ? (Number(best).toFixed(1) + "s") : "—"}`;
+          lbList.appendChild(li);
+        });
+
+        lbStatus.textContent = "Updated just now.";
+      } catch (e) {
+        lbList.innerHTML = "<li style='color:#b91c1c;font-weight:900;'>Could not load leaderboard.</li>";
+        lbStatus.textContent = "Check that /api/leaderboard is reachable.";
+      }
+    }
+
+    async function submitWinToDB(name, seconds) {
+      const game = GAME_IDS[mode];
+      try {
+        const res = await fetch("/api/score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            game,
+            player_name: name,
+            seconds: Math.max(0, Number(seconds.toFixed(1)))
+          })
+        });
+        return res.ok;
+      } catch {
+        return false;
+      }
+    }
+
+    // === Win dialog ===
+    function openWinDialog() {
+      dialogStatus.textContent = "";
+      dialogNameInput.value = localStorage.getItem("studentName") || "";
+      nameDialog.style.display = "flex";
+      nameDialog.setAttribute("aria-hidden", "false");
+      setTimeout(() => dialogNameInput.focus(), 50);
+    }
+    function closeWinDialog() {
+      nameDialog.style.display = "none";
+      nameDialog.setAttribute("aria-hidden", "true");
+    }
+
+    dialogCancel.onclick = closeWinDialog;
+
+    dialogSubmit.onclick = async () => {
+      const n = sanitizeName(dialogNameInput.value);
+      if (!n) {
+        dialogStatus.textContent = "Name is required.";
+        return;
+      }
+      dialogSubmit.disabled = true;
+      dialogStatus.textContent = "Saving…";
+
+      const ok = await submitWinToDB(n, lastSeconds);
+      if (ok) {
+        localStorage.setItem("studentName", n);
+        dialogStatus.textContent = "Saved!";
+        closeWinDialog();
+        loadLeaderboard();
+      } else {
+        dialogStatus.textContent = "Could not save. Try again.";
+      }
+      dialogSubmit.disabled = false;
+    };
+
+    document.addEventListener("keydown", (e) => {
+      if (nameDialog.style.display !== "flex") return;
+      if (e.key === "Escape") { e.preventDefault(); closeWinDialog(); }
+      if (e.key === "Enter") { e.preventDefault(); dialogSubmit.click(); }
+    });
+
+    // === Buttons ===
+    document.getElementById("btnEasy").onclick = () => setMode("easy");
+    document.getElementById("btnMedium").onclick = () => setMode("medium");
+    document.getElementById("btnHard").onclick = () => setMode("hard");
+    document.getElementById("btnNew").onclick = newGame;
+    document.getElementById("btnFlip").onclick = () => {
+      flipped = !flipped;
+      if (board) board.flip();
+    };
+
+    // Init
+    setMode("easy");
+    window.addEventListener("load", () => {
+      if (typeof Chessboard !== "function" || typeof Chess !== "function") {
+        setMsg("⚠️ Chess libraries failed to load. If your site blocks external CDNs, allow unpkg.com (or host the libs locally).", "bad");
+        return;
+      }
+      newGame();
+    });
+  </script>
+</body>
+</html>

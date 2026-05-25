@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Side Finish Run</title>
+  <style>
+    :root{
+      --bg:#fff7d6; --card:#ffffff; --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb;
+      --yellow:#facc15; --orange:#fb923c; --blue:#38bdf8; --green:#22c55e; --red:#ef4444;
+      --shadow:0 12px 30px rgba(0,0,0,.12);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:
+      radial-gradient(circle at 20% 12%,#fde68a 0 120px,transparent 260px),
+      radial-gradient(circle at 88% 82%,#bfdbfe 0 140px,transparent 290px),var(--bg);color:var(--ink);padding:18px}
+    .back{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink);background:#fff;border:2px solid var(--line);border-radius:999px;padding:8px 14px;font-weight:800;box-shadow:0 3px 10px rgba(0,0,0,.08);margin-bottom:14px}
+    .wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:18px;align-items:start}
+    footer{position:fixed;bottom:0;left:0;width:100%;background:rgba(255,243,224,.97);border-top:1px solid var(--border);text-align:center;padding:8px 0;font-size:12px;color:var(--muted);z-index:50;backdrop-filter:blur(6px)}
+    @media(max-width:920px){.wrap{grid-template-columns:1fr}.side{position:static!important}.game-area{height:68vh}}
+    .card{background:rgba(255,255,255,.94);border:2px solid var(--line);border-radius:24px;padding:18px;box-shadow:var(--shadow)}
+    h1{margin:0;font-size:clamp(2rem,5vw,3.2rem);letter-spacing:-.04em;color:#eab308;text-shadow:3px 3px 0 #fef3c7}.tag{color:var(--muted);font-weight:700;margin:4px 0 14px}
+    .topline{display:flex;justify-content:space-between;gap:12px;align-items:end;flex-wrap:wrap}.levels{display:flex;gap:8px;flex-wrap:wrap}.level{border:2px solid var(--line);background:#fff;border-radius:999px;padding:9px 13px;font-weight:900;cursor:pointer}.level.active{background:var(--yellow);border-color:#eab308;box-shadow:0 4px 0 #ca8a04;color:#713f12}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:14px 0}.stat{background:#fff;border:2px solid var(--line);border-radius:16px;padding:10px;text-align:center}.num{font-size:1.45rem;font-weight:1000;color:#0284c7}.label{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:900}
+    .game-area{position:relative;height:620px;border:4px solid #f59e0b;border-radius:24px;overflow:hidden;background:
+      linear-gradient(#93c5fd 1px,transparent 1px) 0 0/100% 42px,
+      linear-gradient(90deg,#fde68a,#fff7ed);touch-action:none;user-select:none}.game-area:focus{outline:4px solid #facc15}
+    .finish{position:absolute;right:18px;top:110px;width:120px;height:58px;border-radius:14px;border:4px solid #16a34a;background:repeating-linear-gradient(45deg,#fff 0 10px,#dcfce7 10px 20px);display:grid;place-items:center;font-weight:1000;color:#166534;font-size:18px;box-shadow:0 5px 0 #15803d;z-index:4}
+    .player{position:absolute;width:34px;height:44px;transform:translate(-50%,-50%);z-index:8}.head{position:absolute;left:9px;top:0;width:16px;height:16px;border:4px solid #eab308;border-radius:50%;background:#fef9c3}.body{position:absolute;left:15px;top:16px;width:4px;height:18px;background:#eab308}.arm,.leg{position:absolute;background:#eab308;height:4px;border-radius:999px;transform-origin:left center}.arm.a1{left:16px;top:20px;width:19px;transform:rotate(28deg)}.arm.a2{left:16px;top:20px;width:18px;transform:rotate(150deg)}.leg.l1{left:16px;top:33px;width:19px;transform:rotate(58deg)}.leg.l2{left:16px;top:33px;width:19px;transform:rotate(122deg)}
+    .player.run .arm.a1{animation:swing1 .18s infinite alternate}.player.run .arm.a2{animation:swing2 .18s infinite alternate}.player.run .leg.l1{animation:leg1 .18s infinite alternate}.player.run .leg.l2{animation:leg2 .18s infinite alternate}
+    @keyframes swing1{to{transform:rotate(-35deg)}}@keyframes swing2{to{transform:rotate(205deg)}}@keyframes leg1{to{transform:rotate(118deg)}}@keyframes leg2{to{transform:rotate(42deg)}}
+    .platform{position:absolute;border-radius:11px;background:#fef08a;border:4px solid #eab308;box-shadow:0 6px 0 #ca8a04}.platform.bad{background:#fecaca;border-color:#ef4444;box-shadow:0 6px 0 #b91c1c}.platform.move{background:#dbeafe;border-color:#38bdf8;box-shadow:0 6px 0 #0284c7}.platform.spring{background:#dcfce7;border-color:#22c55e;box-shadow:0 6px 0 #15803d}
+    .coin{position:absolute;width:28px;height:28px;border-radius:50%;background:#fde047;border:4px solid #eab308;display:grid;place-items:center;font-weight:1000;color:#854d0e;box-shadow:0 4px 0 #ca8a04}.coin::after{content:'★';font-size:12px}.coin.got{display:none}
+    .msg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;border:3px solid #f59e0b;border-radius:24px;padding:18px 22px;text-align:center;box-shadow:var(--shadow);z-index:20;max-width:350px}.msg h2{margin:0 0 6px;color:#eab308}.msg p{margin:0;color:var(--muted);font-weight:800}.hidden{display:none!important}
+    .controls{display:flex;gap:10px;margin-top:12px}.btn{border:0;border-radius:16px;padding:13px 16px;font-weight:1000;cursor:pointer;font-size:16px}.start{background:#facc15;color:#713f12;flex:1;box-shadow:0 5px 0 #ca8a04}.reset{background:#fff;border:2px solid var(--line);color:var(--ink)}.hint{font-size:13px;color:var(--muted);font-weight:700;margin-top:9px}.hint kbd{background:#fff;border:1px solid var(--line);border-bottom-width:3px;border-radius:7px;padding:2px 6px;font-weight:900;color:#111827}
+    .side{position:sticky;top:18px}.rank h3{margin:0 0 8px;font-size:1.35rem}.rank small{color:var(--muted);font-weight:800}.rank-section{margin-top:12px;background:#f8fafc;border-radius:16px;padding:12px;border:1px solid var(--line)}.rank-title{font-weight:1000;color:#334155;margin-bottom:8px}.rank ol{margin:0;padding-left:22px}.rank li{padding:5px 0;border-bottom:1px dashed #d1d5db;font-size:14px}.rank li:last-child{border:0}.dialog-bg{position:fixed;inset:0;background:rgba(15,23,42,.56);display:none;align-items:center;justify-content:center;z-index:50;padding:18px}.dialog-bg.open{display:flex}.dialog{width:min(420px,100%);background:#fff;border-radius:26px;padding:24px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.35)}.dialog h2{margin:0;color:#eab308;font-size:2rem}.dialog p{color:var(--muted);font-weight:800}.dialog input{width:100%;padding:13px 15px;border:2px solid var(--line);border-radius:14px;font-size:16px}.dialog-actions{display:flex;gap:10px;margin-top:12px}.dialog-actions button{flex:1;border-radius:14px;padding:12px;border:2px solid var(--line);background:#fff;font-weight:1000;cursor:pointer}.dialog-actions .primary{background:#22c55e;color:white;border-color:#22c55e}.status{min-height:20px;margin-top:8px;color:#6b7280;font-weight:900;font-size:13px}
+  </style>
+</head>
+<body>
+  <a class="back" href="/puzzle">← Back to Puzzle Home</a>
+  <div class="wrap">
+    <main class="card">
+      <div class="topline"><div><h1>🏃 Side Finish Run</h1><p class="tag">Move left or right, jump between platforms, collect stars, and reach FINISH at the top right.</p></div><div class="levels"><button class="level active" data-level="easy">Easy</button><button class="level" data-level="medium">Medium</button><button class="level" data-level="hard">Hard</button></div></div>
+      <div class="stats"><div class="stat"><div class="num" id="time">0.0</div><div class="label">Time</div></div><div class="stat"><div class="num" id="stars">0</div><div class="label">Stars</div></div><div class="stat"><div class="num" id="best">—</div><div class="label">Best</div></div><div class="stat"><div class="num" id="levelName">Easy</div><div class="label">Level</div></div></div>
+      <div class="game-area" id="game" tabindex="0" aria-label="Side Finish Run game area">
+        <div class="finish">FINISH</div>
+        <div class="player" id="player"><span class="head"></span><span class="body"></span><span class="arm a1"></span><span class="arm a2"></span><span class="leg l1"></span><span class="leg l2"></span></div>
+        <div class="msg" id="message"><h2>Ready?</h2><p>Use A/D or ←/→ to move. Use W/↑/Space to jump. Reach the green FINISH box at the top right.</p></div>
+      </div>
+      <div class="controls"><button class="btn start" id="start">▶ Start</button><button class="btn reset" id="reset">↺ Reset</button></div>
+      <div class="hint">Move: <kbd>A</kbd><kbd>D</kbd> or <kbd>←</kbd><kbd>→</kbd>. Jump/start: <kbd>W</kbd><kbd>↑</kbd><kbd>Space</kbd>. Restart: <kbd>R</kbd>. Avoid red platforms and falling.</div>
+    </main>
+    <aside class="side card rank"><h3>🏆 Leaderboard</h3><small>Uses the same /api/score and /api/leaderboard system as your example HTML.</small><div class="rank-section"><div class="rank-title">🌱 Easy</div><ol id="rankEasy"><li>Loading…</li></ol></div><div class="rank-section"><div class="rank-title">⚡ Medium</div><ol id="rankMedium"><li>Loading…</li></ol></div><div class="rank-section"><div class="rank-title">🔥 Hard</div><ol id="rankHard"><li>Loading…</li></ol></div><p class="hint" id="rankNote">Loading leaderboard…</p></aside>
+  </div>
+  <div class="dialog-bg" id="dialog"><div class="dialog"><h2>🎉 You Finished!</h2><p id="summary">Great job.</p><p>Enter your name for the leaderboard:</p><input id="name" maxlength="40" placeholder="Your name" autocomplete="off"><div class="dialog-actions"><button id="skip">Skip</button><button class="primary" id="submit">Submit ✓</button></div><div class="status" id="dialogStatus"></div></div></div>
+<script>
+const BASE_ID='sidefinishrun';
+const game=document.getElementById('game'), playerEl=document.getElementById('player'), msg=document.getElementById('message');
+const timeEl=document.getElementById('time'), starsEl=document.getElementById('stars'), bestEl=document.getElementById('best'), levelNameEl=document.getElementById('levelName');
+let level='easy', running=false, finished=false, lastTs=0, elapsed=0, stars=0, keys={}, platforms=[], coins=[];
+let pos={x:70,y:520}, vel={x:0,y:0}, onGround=false, canJump=false;
+const WORLD={w:1000,h:620}, PLAYER={w:30,h:42};
+const LEVELS={
+ easy:{label:'Easy',gravity:1650,move:410,jump:690,limit:60,map:[
+  {x:30,y:560,w:180,h:34},{x:245,y:492,w:125,h:30},{x:420,y:430,w:125,h:30},{x:590,y:356,w:130,h:30},{x:735,y:318,w:115,h:30},],coins:[[300,452],[480,390],[650,316],[812,240]]},
+ medium:{label:'Medium',gravity:1750,move:430,jump:675,limit:75,map:[
+  {x:30,y:560,w:160,h:34},{x:230,y:508,w:105,h:28},{x:385,y:448,w:105,h:28,bad:true},{x:535,y:392,w:110,h:28},{x:672,y:326,w:105,h:28,move:true,dx:80},{x:760,y:310,w:105,h:28},],coins:[[270,468],[575,352],[720,288],[842,212]]},
+ hard:{label:'Hard',gravity:1850,move:450,jump:665,limit:90,map:[
+  {x:30,y:560,w:140,h:32},{x:210,y:520,w:82,h:26},{x:330,y:468,w:82,h:26,bad:true},{x:450,y:414,w:86,h:26,move:true,dx:90},{x:595,y:358,w:82,h:26},{x:700,y:302,w:78,h:26,bad:true},{x:800,y:238,w:82,h:26,move:true,dx:70},{x:800,y:285,w:88,h:26},],coins:[[240,480],[480,374],[635,318],[830,198],[900,126]]}
+};
+function gameKey(lv){return `${BASE_ID}_${lv}`}
+function scaleX(x){return x/WORLD.w*game.clientWidth} function scaleY(y){return y/WORLD.h*game.clientHeight} function scaleW(w){return w/WORLD.w*game.clientWidth} function scaleH(h){return h/WORLD.h*game.clientHeight}
+function current(){return LEVELS[level]}
+function playerRect(){return {x:pos.x-PLAYER.w/2,y:pos.y-PLAYER.h/2,w:PLAYER.w,h:PLAYER.h}}
+function touch(a,b){return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y}
+function build(){game.querySelectorAll('.platform,.coin').forEach(e=>e.remove());platforms=current().map.map(p=>({...p,baseX:p.x,prevX:p.x}));coins=current().coins.map(([x,y])=>({x,y,got:false}));for(const p of platforms){const el=document.createElement('div');el.className='platform'+(p.bad?' bad':'')+(p.move?' move':'')+(p.spring?' spring':'');p.el=el;game.appendChild(el)}for(const c of coins){const el=document.createElement('div');el.className='coin';c.el=el;game.appendChild(el)}render()}
+function reset(show=true){running=false;finished=false;elapsed=0;stars=0;keys={};pos={x:80,y:560-PLAYER.h/2};vel={x:0,y:0};onGround=true;canJump=true;levelNameEl.textContent=current().label;bestEl.textContent=localStorage.getItem(`${BASE_ID}_best_${level}`)||'—';build();msg.classList.toggle('hidden',!show);if(show)msg.innerHTML='<h2>Ready?</h2><p>Use A/D or ←/→ to move. Use W/↑/Space to jump. Finish is at the top right.</p>';document.getElementById('start').textContent='▶ Start';playerEl.classList.remove('run')}
+function start(){reset(false);running=true;lastTs=performance.now();game.focus();document.getElementById('start').textContent='Playing…';requestAnimationFrame(loop)}
+function render(){for(const p of platforms){p.el.style.left=scaleX(p.x)+'px';p.el.style.top=scaleY(p.y)+'px';p.el.style.width=scaleW(p.w)+'px';p.el.style.height=scaleH(p.h)+'px'}for(const c of coins){c.el.style.left=(scaleX(c.x)-14)+'px';c.el.style.top=(scaleY(c.y)-14)+'px';c.el.classList.toggle('got',c.got)}playerEl.style.left=scaleX(pos.x)+'px';playerEl.style.top=scaleY(pos.y)+'px';timeEl.textContent=elapsed.toFixed(1);starsEl.textContent=stars;playerEl.classList.toggle('run',running && Math.abs(vel.x)>20)}
+function loop(ts){if(!running)return;const dt=Math.min(.033,(ts-lastTs)/1000);lastTs=ts;elapsed+=dt;if(elapsed>current().limit){lose('⏰ Time is up. Try a faster path.');return}update(dt,ts);render();requestAnimationFrame(loop)}
+function wantJump(){return keys.ArrowUp||keys.w||keys.W||keys[' ']}
+function update(dt,ts){
+  for(const p of platforms){
+    p.prevX = p.x;
+    if(p.move) p.x = p.baseX + Math.sin(ts/650) * (p.dx || 60);
+    p.vx = p.x - p.prevX;
+  }
+
+  const cfg = current();
+  let dir = 0;
+  if(keys.ArrowLeft || keys.a || keys.A) dir -= 1;
+  if(keys.ArrowRight || keys.d || keys.D) dir += 1;
+
+  vel.x = dir * cfg.move;
+
+  if(wantJump() && canJump){
+    vel.y = -cfg.jump;
+    canJump = false;
+    onGround = false;
+  }
+
+  vel.y += cfg.gravity * dt;
+
+  // Horizontal movement and side collision
+  pos.x += vel.x * dt;
+  pos.x = Math.max(PLAYER.w/2, Math.min(WORLD.w - PLAYER.w/2, pos.x));
+
+  let r = playerRect();
+  for(const p of platforms){
+    if(!touch(r, p)) continue;
+    if(p.bad){
+      lose('🔥 You touched a red lava platform.');
+      return;
+    }
+
+    // Only push sideways when the player is actually overlapping from the side.
+    const playerBottom = r.y + r.h;
+    const playerTop = r.y;
+    const platformTop = p.y;
+    const platformBottom = p.y + p.h;
+    const verticalOverlap = Math.min(playerBottom, platformBottom) - Math.max(playerTop, platformTop);
+
+    if(verticalOverlap > 10 && vel.x > 0){
+      pos.x = p.x - PLAYER.w/2;
+    }else if(verticalOverlap > 10 && vel.x < 0){
+      pos.x = p.x + p.w + PLAYER.w/2;
+    }
+    r = playerRect();
+  }
+
+  // Vertical movement and landing/head collision
+  const previousY = pos.y;
+  const previousBottom = previousY + PLAYER.h/2;
+  const previousTop = previousY - PLAYER.h/2;
+
+  pos.y += vel.y * dt;
+  onGround = false;
+  r = playerRect();
+
+  for(const p of platforms){
+    if(!touch(r, p)) continue;
+
+    if(p.bad){
+      lose('🔥 You touched a red lava platform.');
+      return;
+    }
+
+    const platformTop = p.y;
+    const platformBottom = p.y + p.h;
+
+    // Landing from above. The tolerance prevents falling through thin boards at high speed.
+    if(vel.y >= 0 && previousBottom <= platformTop + 14){
+      pos.y = platformTop - PLAYER.h/2;
+      if(p.move && Math.abs(p.vx || 0) > 0){
+        pos.x += p.vx;
+        pos.x = Math.max(PLAYER.w/2, Math.min(WORLD.w - PLAYER.w/2, pos.x));
+      }
+      vel.y = 0;
+      onGround = true;
+      canJump = true;
+      r = playerRect();
+      continue;
+    }
+
+    // Hitting the underside of a platform.
+    if(vel.y < 0 && previousTop >= platformBottom - 14){
+      pos.y = platformBottom + PLAYER.h/2;
+      vel.y = 0;
+      r = playerRect();
+      continue;
+    }
+  }
+
+  // Small grace check: if the player is exactly on a platform, keep jump available.
+  if(!onGround){
+    const foot = {x:pos.x - PLAYER.w/2 + 3, y:pos.y + PLAYER.h/2, w:PLAYER.w - 6, h:3};
+    for(const p of platforms){
+      if(!p.bad && touch(foot, p)){
+        onGround = true;
+        canJump = true;
+        break;
+      }
+    }
+  }
+
+  if(pos.y > WORLD.h + 60){
+    lose('💥 You fell off the path.');
+    return;
+  }
+
+  for(const c of coins){
+    if(!c.got && Math.hypot(pos.x - c.x, pos.y - c.y) < 38){
+      c.got = true;
+      stars++;
+    }
+  }
+
+  if(pos.x > 835 && pos.y < 285) win();
+}
+function lose(text){running=false;msg.classList.remove('hidden');msg.innerHTML=`<h2>Try Again</h2><p>${text}</p>`;document.getElementById('start').textContent='▶ Start Again';playerEl.classList.remove('run')}
+function win(){if(finished)return;running=false;finished=true;playerEl.classList.remove('run');const score=Math.max(1,Math.round((current().limit-elapsed)*10)+stars*25);const sec=elapsed.toFixed(2);const bestKey=`${BASE_ID}_best_${level}`;const old=localStorage.getItem(bestKey);if(!old||Number(sec)<Number(old))localStorage.setItem(bestKey,sec);bestEl.textContent=localStorage.getItem(bestKey);document.getElementById('summary').textContent=`Level: ${current().label} · Time: ${sec}s · Stars: ${stars} · Score: ${score}`;document.getElementById('dialog').classList.add('open');document.getElementById('dialog').dataset.score=score;document.getElementById('dialog').dataset.seconds=sec;loadBoards()}
+function isTypingField(el){
+  return el && (
+    el.tagName === 'INPUT' ||
+    el.tagName === 'TEXTAREA' ||
+    el.tagName === 'SELECT' ||
+    el.isContentEditable
+  );
+}
+
+document.addEventListener('keydown',e=>{
+  // Do not let game controls block typing in the name/submission box.
+  if(isTypingField(e.target)){
+    if(e.key === 'Enter') document.getElementById('submit').click();
+    return;
+  }
+
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' ','w','W','a','A','s','S','d','D'].includes(e.key)){
+    e.preventDefault();
+  }
+
+  if(e.key===' ' && !running && !document.getElementById('dialog').classList.contains('open')){
+    start();
+    return;
+  }
+
+  if(e.key==='r'||e.key==='R'){
+    reset(true);
+    return;
+  }
+
+  keys[e.key]=true;
+});
+
+document.addEventListener('keyup',e=>{
+  if(isTypingField(e.target)) return;
+  keys[e.key]=false;
+});
+document.getElementById('start').onclick=start;document.getElementById('reset').onclick=()=>reset(true);document.querySelectorAll('.level').forEach(b=>b.onclick=()=>{document.querySelectorAll('.level').forEach(x=>x.classList.remove('active'));b.classList.add('active');level=b.dataset.level;reset(true);loadBoards()});
+async function submitScore(name){const seconds=Number(document.getElementById('dialog').dataset.seconds), score=Number(document.getElementById('dialog').dataset.score);try{const r=await fetch('/api/score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:gameKey(level),player_name:name,seconds:seconds,best_scores:score})});const d=await r.json().catch(()=>({}));return d.ok===true}catch(e){return false}}
+document.getElementById('skip').onclick=()=>document.getElementById('dialog').classList.remove('open');document.getElementById('submit').onclick=async()=>{const name=document.getElementById('name').value.trim();const st=document.getElementById('dialogStatus');if(!name){st.textContent='Name required.';return}document.getElementById('submit').disabled=true;st.textContent='Saving…';const ok=await submitScore(name);if(ok){st.textContent='Saved ✅';await loadBoards();setTimeout(()=>document.getElementById('dialog').classList.remove('open'),500)}else st.textContent='Could not save. Check /api/score.';document.getElementById('submit').disabled=false};document.getElementById('name').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('submit').click()});
+async function loadBoard(lv,id){const list=document.getElementById(id);try{const r=await fetch(`/api/leaderboard?game=${encodeURIComponent(gameKey(lv))}&limit=10`,{cache:'no-store'});const d=await r.json();const rows=Array.isArray(d)?d:(d.rows||[]);list.innerHTML=rows.length?rows.map((r,i)=>`<li>#${i+1} ${r.player_name||'Unknown'} — ${(r.best_seconds??r.bestSeconds??'—')}s · wins ${r.win_count??r.wins??0}</li>`).join(''):'<li>No scores yet.</li>'}catch(e){list.innerHTML='<li>Could not load.</li>'}}
+async function loadBoards(){document.getElementById('rankNote').textContent='Loading…';await Promise.all([loadBoard('easy','rankEasy'),loadBoard('medium','rankMedium'),loadBoard('hard','rankHard')]);document.getElementById('rankNote').textContent='Updated just now.'}
+reset(true);loadBoards();
+</script>
+
+<footer>© 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528. <br>
+      Made by the science and STEAM teacher Chao Yu. For educational purposes only. All rights reserved.</footer>
+<script>
+</body>
+</html>

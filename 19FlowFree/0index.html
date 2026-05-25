@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Flow Links · Ranked Puzzle</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700;800;900&display=swap');
+:root{
+  --bg:#0d1117;--surface:#161b22;--surface2:#21262d;--border:#30363d;
+  --grid:#2b313a;--tile:#1c2128;--text:#e6edf3;--muted:#7d8590;
+  --accent:#58a6ff;--win:#39d353;--danger:#f78166;--cell:64px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Space Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:56px}
+.back-header{position:sticky;top:0;left:0;z-index:100;background:rgba(13,17,23,.95);border-bottom:1px solid var(--border);padding:8px 16px;backdrop-filter:blur(8px)}
+.back-link{text-decoration:none;color:var(--text);font-weight:700;font-size:14px}.back-link:hover{color:var(--accent)}
+.page{max-width:1200px;margin:0 auto;padding:16px 12px 0}.layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+.card,.rank-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px}
+.game-header{display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:14px}.logo{width:42px;height:42px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#ff7b72,#f2cc60,#39d353,#58a6ff);border-radius:8px;font-size:22px;flex-shrink:0}.game-header h1{font-family:'Syne',sans-serif;font-size:22px;font-weight:900;letter-spacing:-.02em}.game-header p{font-size:11px;color:var(--muted);margin-top:2px}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}select,button{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;padding:7px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer}select:hover,button:hover{border-color:var(--accent);background:#2d333b}button.primary{background:var(--accent);color:#000;border-color:var(--accent)}button.primary:hover{background:#79b8ff;border-color:#79b8ff}.lbl{font-size:12px;color:var(--muted);font-weight:700}
+.stats{display:flex;gap:18px;align-items:center;flex-wrap:wrap;padding:8px 12px;background:var(--tile);border:1px solid var(--border);border-radius:6px;margin-bottom:14px;font-size:12px;font-weight:700;color:var(--muted)}.stat-val{color:var(--text);margin-left:4px}.win-banner{color:var(--win);font-weight:700;font-size:13px;animation:glow .8s ease-in-out infinite alternate}@keyframes glow{from{text-shadow:0 0 4px #39d35380}to{text-shadow:0 0 12px #39d353cc}}
+.instructions{font-size:12px;line-height:1.5;color:var(--muted);background:#111820;border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:14px}
+#boardWrap{display:flex;justify-content:center;align-items:center;width:100%;overflow:auto;touch-action:none}#board{display:grid;gap:2px;background:var(--grid);border:2px solid var(--grid);border-radius:10px;overflow:hidden;touch-action:none;user-select:none;position:relative}.cell{width:var(--cell);height:var(--cell);background:var(--tile);position:relative;cursor:pointer;-webkit-tap-highlight-color:transparent}.cell:hover{background:#232a33}.segment{position:absolute;left:50%;top:50%;width:16px;height:16px;transform:translate(-50%,-50%);border-radius:999px;opacity:.95}.seg-n,.seg-s{width:16px;height:50%;left:50%;transform:translateX(-50%)}.seg-n{top:0;border-radius:999px 999px 0 0}.seg-s{bottom:0;top:auto;border-radius:0 0 999px 999px}.seg-e,.seg-w{height:16px;width:50%;top:50%;transform:translateY(-50%)}.seg-e{right:0;left:auto;border-radius:0 999px 999px 0}.seg-w{left:0;border-radius:999px 0 0 999px}.dot{position:absolute;left:50%;top:50%;width:58%;height:58%;transform:translate(-50%,-50%);border-radius:999px;border:4px solid rgba(255,255,255,.78);box-shadow:0 0 18px rgba(255,255,255,.15), inset 0 0 12px rgba(0,0,0,.25);z-index:3}.dot.active{outline:4px solid rgba(255,255,255,.35)}
+.rank-sidebar{position:sticky;top:56px}.rank-card{padding:14px}.rank-card h3{font-family:'Syne',sans-serif;font-size:16px;font-weight:900;margin-bottom:4px}.rank-note{font-size:11px;color:var(--muted);margin-bottom:12px}.rank-sub{border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;background:var(--surface2)}.rank-sub-title{font-size:11px;font-weight:700;color:var(--accent);margin-bottom:6px;letter-spacing:.05em;text-transform:uppercase}.rank-sub ol{padding-left:18px;margin:0}.rank-sub li{font-size:11px;margin:4px 0;color:var(--muted)}.rank-sub li:first-child{color:var(--text)}.rank-err{color:#f78166}#rankStatus{font-size:11px;color:var(--muted);margin-top:8px}
+#nameDialog{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:3000;backdrop-filter:blur(4px)}.dialog-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px 22px 20px;max-width:380px;width:90%;box-shadow:0 24px 64px rgba(0,0,0,.5)}.dialog-box h3{font-family:'Syne',sans-serif;font-size:20px;font-weight:900;margin-bottom:8px;color:var(--win)}.dialog-box p{font-size:13px;color:var(--muted);margin-bottom:14px}.dialog-box input{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Space Mono',monospace;font-size:14px}.dialog-box input:focus{outline:none;border-color:var(--accent)}.dialog-actions{display:flex;gap:10px;margin-top:12px;justify-content:flex-end}#dialogStatus{margin-top:8px;font-size:12px;color:#f78166;font-weight:700}
+#promoTrigger{position:fixed;bottom:64px;right:16px;z-index:200;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;display:flex;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .2s}#promoTrigger.visible{opacity:1;pointer-events:auto}#promoInput{background:transparent;border:none;outline:none;color:var(--text);font-family:'Space Mono',monospace;font-size:12px;width:120px;letter-spacing:.08em}#promoInput::placeholder{color:var(--muted)}#promoBtn{padding:5px 10px;font-size:11px}#promoDialog{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:4000;backdrop-filter:blur(6px)}.promo-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;max-width:520px;width:92%;box-shadow:0 32px 80px rgba(0,0,0,.6);text-align:center}.promo-box h3{font-family:'Syne',sans-serif;font-size:18px;font-weight:900;color:#f78166;margin-bottom:4px}.promo-box p{font-size:11px;color:var(--muted);margin-bottom:14px}#solvedCanvas{border-radius:10px;border:2px solid var(--border);max-width:100%;display:block;margin:0 auto 14px}.promo-close{width:100%}
+footer{position:fixed;bottom:0;left:0;width:100%;background:rgba(13,17,23,.95);border-top:1px solid var(--border);text-align:center;padding:8px 0;font-size:12px;color:var(--muted);z-index:50;backdrop-filter:blur(6px)}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.rank-sidebar{position:static}}@media(max-width:540px){:root{--cell:52px}.segment{width:13px;height:13px}.seg-n,.seg-s{width:13px}.seg-e,.seg-w{height:13px}}@media(max-width:400px){:root{--cell:44px}.segment{width:11px;height:11px}.seg-n,.seg-s{width:11px}.seg-e,.seg-w{height:11px}}
+</style>
+</head>
+<body>
+<header class="back-header"><a class="back-link" href="/puzzle">← Back to Puzzle Home</a></header>
+<div class="page"><div class="layout">
+<div><div class="card"><div class="game-header"><div class="logo">🌈</div><div><h1>Flow Links · Ranked</h1><p>Connect all matching colored dots to win. Full board coverage is not required.</p></div></div>
+<div class="controls"><span class="lbl">Grid:</span><select id="sizeSelect"><option value="5" selected>5 × 5</option><option value="6">6 × 6</option><option value="7">7 × 7</option><option value="8">8 × 8</option></select><button class="primary" id="newBtn">New Game</button><button id="clearBtn">Clear Board</button></div>
+<div class="stats"><div>⏱ <span class="stat-val" id="timeEl">0</span>s</div><div>✏️ Moves <span class="stat-val" id="moveEl">0</span></div><div>🔗 Flows <span class="stat-val" id="flowEl">0/0</span></div><div>⬛ Filled <span class="stat-val" id="fillEl">0%</span></div><div id="winBanner"></div></div>
+<div class="instructions">Drag or click from one colored dot to its matching dot. Connect all pairs to win — you don't need to fill every square. A path can overwrite empty squares and its own color; crossing another color removes that blocking path.</div>
+<div id="boardWrap"><div id="board"></div></div>
+</div></div>
+<aside class="rank-sidebar"><div class="rank-card"><h3>🏆 Leaderboard</h3><div class="rank-note">Ranking: Wins ↓ then Best Time ↑. Separate boards by grid size.</div><div id="rankBoards" style="display:grid;gap:8px;"><div class="rank-sub"><div class="rank-sub-title">5 × 5</div><ol id="rankList5"><li>Loading…</li></ol></div><div class="rank-sub"><div class="rank-sub-title">6 × 6</div><ol id="rankList6"><li>Loading…</li></ol></div><div class="rank-sub"><div class="rank-sub-title">7 × 7</div><ol id="rankList7"><li>Loading…</li></ol></div><div class="rank-sub"><div class="rank-sub-title">8 × 8</div><ol id="rankList8"><li>Loading…</li></ol></div></div><div id="rankStatus">Loading…</div></div></aside>
+</div></div>
+<div id="nameDialog"><div class="dialog-box"><h3>🎉 Flow Complete!</h3><p id="dialogPrompt">Enter your name for the leaderboard:</p><input id="dialogNameInput" placeholder="Your name" maxlength="40"/><div class="dialog-actions"><button id="dialogCancel">Cancel</button><button class="primary" id="dialogSubmit">Submit</button></div><div id="dialogStatus"></div></div></div>
+<div id="promoTrigger"><span style="font-size:11px;color:var(--muted);white-space:nowrap;">🔑 Code:</span><input id="promoInput" placeholder="enter code…" maxlength="20" autocomplete="off" spellcheck="false"/><button class="primary" id="promoBtn">Go</button></div>
+<div id="promoDialog"><div class="promo-box"><h3>🗺️ Solution Preview</h3><p>Promo code accepted — here is the solved flow map for the current puzzle.</p><canvas id="solvedCanvas"></canvas><button class="primary promo-close" id="promoClose">Close</button></div></div>
+<footer>© 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528. The STEAM Teacher is Chao Yu. For educational purposes only.</footer>
+<script>
+const BASE_GAME_ID='flow_links';
+const PALETTE=['#ff7b72','#f2cc60','#39d353','#58a6ff','#d2a8ff','#ff9bce','#ffa657','#56d4dd'];
+let N=5,pairs=[],solutionOwner=[],owner=[],paths={},activeColor=null,isDrawing=false,seconds=0,moves=0,timer=null,solved=false,_submittedThisRound=false;
+const el=id=>document.getElementById(id);
+function startTimer(){if(timer)return;timer=setInterval(()=>{seconds++;el('timeEl').textContent=seconds},1000)}
+function stopTimer(){clearInterval(timer);timer=null}
+function idx(r,c){return r*N+c}function rc(i){return [Math.floor(i/N),i%N]}function key(r,c){return `${r},${c}`}function inBounds(r,c){return r>=0&&r<N&&c>=0&&c<N}
+function neighbors(cell){const [r,c]=rc(cell);return [[r-1,c],[r+1,c],[r,c-1],[r,c+1]].filter(([a,b])=>inBounds(a,b)).map(([a,b])=>idx(a,b))}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function computeTileSize(){const wrap=el('boardWrap');const gap=2;const avW=Math.max(220,wrap.clientWidth-4);const avH=Math.max(220,window.innerHeight-wrap.getBoundingClientRect().top-82);const sz=Math.floor((Math.min(avW,avH)-gap*(N-1))/N);return Math.max(36,Math.min(78,sz))}
+function generateSolution(n){
+  const total=n*n; const targetPairs=Math.min(PALETTE.length, n===5?5:n===6?6:n===7?7:8);
+  for(let attempt=0;attempt<250;attempt++){
+    const own=new Array(total).fill(-1); const ps=[]; let cells=shuffle([...Array(total).keys()]);
+    let ok=true;
+    for(let color=0;color<targetPairs;color++){
+      const starts=cells.filter(i=>own[i]===-1 && neighbors(i).some(j=>own[j]===-1));
+      if(!starts.length){ok=false;break}
+      let cur=starts[0], path=[cur]; own[cur]=color;
+      const minLen=Math.max(3,Math.floor(total/targetPairs*.55)), maxLen=Math.max(minLen+2,Math.ceil(total/targetPairs*1.45));
+      while(path.length<maxLen){
+        const opts=shuffle(neighbors(cur).filter(j=>own[j]===-1));
+        if(!opts.length)break;
+        const shouldStop=path.length>=minLen && Math.random()<.28;
+        if(shouldStop)break;
+        cur=opts[0]; own[cur]=color; path.push(cur);
+      }
+      if(path.length<2){ok=false;break}
+      ps.push({color,start:path[0],end:path[path.length-1],solution:path});
+    }
+    let empties=own.map((v,i)=>v===-1?i:null).filter(v=>v!==null);
+    let guard=0;
+    while(empties.length && guard++<total*20){
+      let changed=false;
+      for(const cell of shuffle(empties.slice())){
+        const ns=neighbors(cell).filter(j=>own[j]!==-1);
+        if(ns.length){own[cell]=own[ns[0]]; changed=true;}
+      }
+      empties=own.map((v,i)=>v===-1?i:null).filter(v=>v!==null);
+      if(!changed)break;
+    }
+    if(ok && !empties.length) return {own,ps};
+  }
+  return fallbackSolution(n);
+}
+function fallbackSolution(n){
+  const own=new Array(n*n).fill(0); const ps=[]; const pairCount=Math.min(PALETTE.length,n);
+  for(let r=0;r<n;r++){const color=Math.min(r,pairCount-1);for(let c=0;c<n;c++)own[idx(r,c)]=color;}
+  for(let color=0;color<pairCount;color++){const r=color;const path=[];for(let c=0;c<n;c++)path.push(idx(r,c));ps.push({color,start:path[0],end:path[path.length-1],solution:path});}
+  for(let r=pairCount;r<n;r++){for(let c=0;c<n;c++)own[idx(r,c)]=pairCount-1}
+  return {own,ps};
+}
+function newGame(){N=+el('sizeSelect').value;solved=false;seconds=0;moves=0;activeColor=null;isDrawing=false;_submittedThisRound=false;stopTimer();startTimer();el('timeEl').textContent='0';el('moveEl').textContent='0';el('winBanner').innerHTML='';const gen=generateSolution(N);solutionOwner=gen.own;pairs=gen.ps;owner=new Array(N*N).fill(-1);paths={};pairs.forEach(p=>{paths[p.color]=[p.start];owner[p.start]=p.color;owner[p.end]=p.color});renderBoard();updateStats();loadAllRanks();}
+function isEndpoint(cell){return pairs.some(p=>p.start===cell||p.end===cell)}function endpointColor(cell){const p=pairs.find(x=>x.start===cell||x.end===cell);return p?p.color:null}
+function renderBoard(){const board=el('board');const ts=computeTileSize();document.documentElement.style.setProperty('--cell',ts+'px');board.style.gridTemplateColumns=`repeat(${N},${ts}px)`;board.style.gridTemplateRows=`repeat(${N},${ts}px)`;board.innerHTML='';for(let r=0;r<N;r++){for(let c=0;c<N;c++){const cell=idx(r,c);const div=document.createElement('div');div.className='cell';div.dataset.cell=cell;drawSegments(div,cell);const ec=endpointColor(cell);if(ec!==null){const dot=document.createElement('div');dot.className='dot'+(activeColor===ec?' active':'');dot.style.background=PALETTE[ec];div.appendChild(dot);}div.addEventListener('pointerdown',onPointerDown);div.addEventListener('pointerenter',onPointerEnter);div.addEventListener('pointerup',onPointerUp);board.appendChild(div)}}}
+function drawSegments(div,cell){const color=owner[cell];if(color<0)return;const col=PALETTE[color];const path=paths[color]||[];const pos=path.indexOf(cell);if(pos===-1)return;const dirs=[];if(pos>0)dirs.push(directionTo(cell,path[pos-1]));if(pos<path.length-1)dirs.push(directionTo(cell,path[pos+1]));if(dirs.length===0)dirs.push('center');for(const d of dirs){const s=document.createElement('div');s.className='segment '+(d==='center'?'':'seg-'+d);s.style.background=col;div.appendChild(s)}}
+function directionTo(a,b){const [ar,ac]=rc(a),[br,bc]=rc(b);if(br<ar)return'n';if(br>ar)return's';if(bc>ac)return'e';return'w'}
+function onPointerDown(e){if(solved)return;const cell=+e.currentTarget.dataset.cell;const c=endpointColor(cell);const owned=owner[cell];if(c===null&&owned<0)return;activeColor=c!==null?c:owned;beginPathFrom(cell);isDrawing=true;e.currentTarget.setPointerCapture?.(e.pointerId);renderBoard();}
+function onPointerEnter(e){if(!isDrawing||activeColor===null||solved)return;extendTo(+e.currentTarget.dataset.cell)}function onPointerUp(){isDrawing=false;activeColor=null;renderBoard();checkWin()}document.addEventListener('pointerup',()=>{if(isDrawing){isDrawing=false;activeColor=null;renderBoard();checkWin()}});
+function beginPathFrom(cell){const p=paths[activeColor]||[];const pos=p.indexOf(cell);if(pos>=0){for(let i=pos+1;i<p.length;i++){const old=p[i];if(!isEndpoint(old))owner[old]=-1;}paths[activeColor]=p.slice(0,pos+1);}else{clearColor(activeColor);paths[activeColor]=[cell];owner[cell]=activeColor;}moves++;el('moveEl').textContent=moves;}
+function clearColor(color){for(let i=0;i<owner.length;i++){if(owner[i]===color&&!isEndpoint(i))owner[i]=-1}const pair=pairs.find(p=>p.color===color);owner[pair.start]=color;owner[pair.end]=color;paths[color]=[pair.start];}
+function removeColorPath(color){if(color<0||!paths[color])return;for(const cell of paths[color]){if(!isEndpoint(cell))owner[cell]=-1}const pair=pairs.find(p=>p.color===color);if(pair){owner[pair.start]=color;owner[pair.end]=color;}paths[color]=pair?[pair.start]:[];}
+function extendTo(cell){const path=paths[activeColor];const last=path[path.length-1];if(cell===last)return;if(!neighbors(last).includes(cell))return;const hitColor=owner[cell];const ec=endpointColor(cell);if(ec!==null&&ec!==activeColor)return;if(hitColor!==-1&&hitColor!==activeColor)removeColorPath(hitColor);const existing=path.indexOf(cell);if(existing>=0){for(let i=existing+1;i<path.length;i++){const old=path[i];if(!isEndpoint(old))owner[old]=-1}paths[activeColor]=path.slice(0,existing+1);}else{path.push(cell);owner[cell]=activeColor;}renderBoard();updateStats();}
+function completedFlows(){return pairs.filter(p=>{const path=paths[p.color]||[];if(path.length<2)return false;const first=path[0],last=path[path.length-1];return(first===p.start&&last===p.end)||(first===p.end&&last===p.start)}).length}
+function filledCount(){return owner.filter(v=>v!==-1).length}
+function updateStats(){el('flowEl').textContent=`${completedFlows()}/${pairs.length}`;el('fillEl').textContent=Math.round(filledCount()/(N*N)*100)+'%'}
+function checkWin(){updateStats();if(solved)return;const all=completedFlows()===pairs.length;if(all){solved=true;stopTimer();el('winBanner').innerHTML=`<span class="win-banner">🎉 Solved in ${seconds}s!</span>`;if(!_submittedThisRound){_submittedThisRound=true;openWinDialog();}}}
+el('clearBtn').onclick=()=>{pairs.forEach(p=>{paths[p.color]=[p.start];});owner=new Array(N*N).fill(-1);pairs.forEach(p=>{owner[p.start]=p.color;owner[p.end]=p.color});moves++;el('moveEl').textContent=moves;renderBoard();updateStats()};
+function gameId(){return `${BASE_GAME_ID}_${N}x${N}`}
+async function submitScore(name){try{const res=await fetch('/api/score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:gameId(),player_name:name.trim().slice(0,40),seconds})});if(!res.ok)return false;return(await res.json().catch(()=>({}))).ok===true}catch{return false}}
+async function loadOneBoard(size){const list=el(`rankList${size}`);if(!list)return;const game=`${BASE_GAME_ID}_${size}x${size}`;try{const res=await fetch(`/api/leaderboard?game=${encodeURIComponent(game)}&limit=5`,{cache:'no-store'});const data=await res.json();const rows=Array.isArray(data)?data:(data.rows||[]);list.innerHTML='';if(!rows.length){list.innerHTML='<li>No scores yet.</li>';return}rows.forEach((r,i)=>{const name=r.player_name??r.playerName??'Unknown';const wins=r.win_count??r.wins??r.winCount??0;const best=r.best_seconds??r.bestSeconds??null;const li=document.createElement('li');li.textContent=`#${i+1} ${name} — ${wins}W`+(best!=null?` — Best: ${best}s`:'');list.appendChild(li)})}catch{list.innerHTML="<li class='rank-err'>Could not load.</li>"}}
+async function loadAllRanks(){const st=el('rankStatus');if(st)st.textContent='Loading…';await Promise.all([5,6,7,8].map(loadOneBoard));if(st)st.textContent='Updated just now.'}
+function openWinDialog(){const d=el('nameDialog'),inp=el('dialogNameInput');el('dialogPrompt').textContent=`Time: ${seconds}s · Moves: ${moves}. Enter your name:`;el('dialogStatus').textContent='';inp.value='';d.style.display='flex';setTimeout(()=>inp.focus(),50)}function closeWinDialog(){el('nameDialog').style.display='none'}
+el('dialogCancel').onclick=closeWinDialog;document.addEventListener('keydown',e=>{if(e.key==='Escape'&&el('nameDialog').style.display==='flex')closeWinDialog()});el('dialogNameInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();el('dialogSubmit').click()}});el('dialogSubmit').onclick=async()=>{const inp=el('dialogNameInput'),st=el('dialogStatus'),btn=el('dialogSubmit'),name=inp.value.trim();if(!name){st.textContent='Name is required.';return}btn.disabled=true;st.textContent='Saving…';const ok=await submitScore(name);if(ok){closeWinDialog();loadAllRanks()}else st.textContent='Could not save. Try again.';btn.disabled=false};
+const PROMO_CODE='cmd',promoTrigger=el('promoTrigger'),promoInput=el('promoInput'),promoBtn=el('promoBtn'),promoDialog=el('promoDialog'),promoClose=el('promoClose'),solvedCanvas=el('solvedCanvas');function showPromoBar(){promoTrigger.classList.add('visible');promoInput.value='';setTimeout(()=>promoInput.focus(),80)}function hidePromoBar(){promoTrigger.classList.remove('visible');promoInput.value=''}let logoClickCount=0,logoClickTimer=null;document.querySelector('.logo').addEventListener('click',()=>{logoClickCount++;clearTimeout(logoClickTimer);logoClickTimer=setTimeout(()=>logoClickCount=0,600);if(logoClickCount>=3){logoClickCount=0;showPromoBar()}});document.addEventListener('keydown',e=>{if(e.ctrlKey&&e.shiftKey&&e.key==='K'){e.preventDefault();showPromoBar()}if(e.key==='Escape'&&promoTrigger.classList.contains('visible'))hidePromoBar()});promoInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();promoBtn.click()}});promoBtn.addEventListener('click',()=>{if(promoInput.value.trim().toLowerCase()!==PROMO_CODE){promoInput.style.color='#f78166';setTimeout(()=>{promoInput.style.color='';promoInput.value=''},800);return}hidePromoBar();renderSolvedCanvas();promoDialog.style.display='flex'});promoClose.onclick=()=>promoDialog.style.display='none';promoDialog.addEventListener('click',e=>{if(e.target===promoDialog)promoDialog.style.display='none'});
+function renderSolvedCanvas(){const TILE=48,GAP=2,PAD=8,size=N*TILE+(N-1)*GAP+PAD*2;solvedCanvas.width=size;solvedCanvas.height=size;const ctx=solvedCanvas.getContext('2d');ctx.fillStyle='#1c2128';ctx.fillRect(0,0,size,size);for(let r=0;r<N;r++){for(let c=0;c<N;c++){const color=solutionOwner[idx(r,c)];ctx.fillStyle='#21262d';ctx.fillRect(PAD+c*(TILE+GAP),PAD+r*(TILE+GAP),TILE,TILE);ctx.fillStyle=PALETTE[color];ctx.fillRect(PAD+c*(TILE+GAP)+TILE*.34,PAD+r*(TILE+GAP)+TILE*.34,TILE*.32,TILE*.32)}}for(const p of pairs){ctx.strokeStyle=PALETTE[p.color];ctx.lineWidth=10;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();p.solution.forEach((cell,i)=>{const [r,c]=rc(cell);const x=PAD+c*(TILE+GAP)+TILE/2,y=PAD+r*(TILE+GAP)+TILE/2;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)});ctx.stroke();for(const cell of [p.start,p.end]){const [r,c]=rc(cell);ctx.fillStyle=PALETTE[p.color];ctx.beginPath();ctx.arc(PAD+c*(TILE+GAP)+TILE/2,PAD+r*(TILE+GAP)+TILE/2,TILE*.25,0,Math.PI*2);ctx.fill();ctx.strokeStyle='rgba(255,255,255,.8)';ctx.lineWidth=3;ctx.stroke()}}}
+el('newBtn').onclick=newGame;el('sizeSelect').onchange=newGame;window.addEventListener('resize',()=>renderBoard());newGame();
+</script>
+</body>
+</html>

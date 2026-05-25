@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Number Guessing Game (3 Levels)</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: #ffffff;
+      margin: 0;
+      padding: 24px;
+    }
+
+    h1 {
+      margin-top: 0;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 10px 0;
+    }
+
+    label {
+      font-size: 14px;
+      color: #111827;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    input[type="radio"] {
+      cursor: pointer;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      max-width: 360px;
+      padding: 8px 10px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      margin: 6px 0;
+      outline: none;
+    }
+
+    /* Name input: no outline / no border */
+    #nameInput {
+      width: 100%;
+      max-width: 360px;
+      padding: 8px 10px;
+      font-size: 16px;
+      border: none;
+      outline: none;
+      box-shadow: none;
+      margin: 6px 0 12px 0;
+      background: transparent;
+    }
+
+    /* Optional: subtle underline for name input */
+    #nameInput {
+      border-bottom: 1px solid #d1d5db;
+      border-radius: 0;
+      padding-left: 0;
+    }
+    #nameInput:focus {
+      border-bottom-color: #2563eb;
+    }
+
+    button {
+      padding: 8px 14px;
+      border: 1px solid #2563eb;
+      border-radius: 6px;
+      background: #2563eb;
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+      margin-right: 8px;
+    }
+
+    button.secondary {
+      background: white;
+      color: #2563eb;
+    }
+
+    .result {
+      margin-top: 12px;
+      font-weight: 600;
+      min-height: 22px;
+    }
+
+    .hint {
+      margin-top: 6px;
+      color: #374151;
+      min-height: 18px;
+    }
+
+    .stats {
+      margin-top: 8px;
+      color: #374151;
+      font-size: 14px;
+    }
+    /* Back link (top-left) */
+    .back-header{
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 1000;
+    }
+    .back-link{
+      text-decoration:none;
+      color:#000000;
+      font-weight:700;
+      font-size:16px;
+    }
+  </style>
+</head>
+<body>
+  <header class="back-header">
+    <a class="back-link" href="/puzzle">← Back to Puzzle Home</a>
+  </header>
+
+  <div class="container">
+    <h1>Number Guessing Game</h1>
+
+    <div>
+      <strong>Student Name:</strong><br/>
+      <input id="nameInput" type="text" placeholder="Enter your name" />
+    </div>
+
+    <p id="rangeText">I picked a number between <strong>1</strong> and <strong>1,000</strong>.</p>
+
+    <div class="row">
+      <label>
+        <input type="radio" name="level" value="easy" checked />
+        Easy (1–1,000)
+      </label>
+      <label>
+        <input type="radio" name="level" value="medium" />
+        Medium (1–1,000,000)
+      </label>
+      <label>
+        <input type="radio" name="level" value="hard" />
+        Hard (1–1,000,000,000)
+      </label>
+    </div>
+
+    <div class="row">
+      <input id="guessInput" type="number" placeholder="Enter your guess..." />
+    </div>
+
+    <div class="row">
+      <button id="guessBtn">Guess</button>
+      <button class="secondary" id="resetBtn">Reset</button>
+    </div>
+
+    <div class="result" id="result"></div>
+    <div class="hint" id="hint"></div>
+    <div class="stats" id="stats"></div>
+  </div>
+
+  <script>
+    const LEVELS = {
+      easy:   { max: 1_000 },
+      medium: { max: 1_000_000 },
+      hard:   { max: 1_000_000_000 }
+    };
+
+    let currentLevel = "easy";
+    let maxValue = LEVELS[currentLevel].max;
+    let target = randomTarget(maxValue);
+    let attempts = 0;
+    let minRange = 1;
+    let maxRange = maxValue;
+
+    const rangeText = document.getElementById("rangeText");
+    const guessInput = document.getElementById("guessInput");
+    const nameInput = document.getElementById("nameInput");
+    const resultEl = document.getElementById("result");
+    const hintEl = document.getElementById("hint");
+    const statsEl = document.getElementById("stats");
+
+    function randomTarget(max) {
+      return Math.floor(Math.random() * max) + 1;
+    }
+
+    function formatNum(n) {
+      return n.toLocaleString("en-US");
+    }
+
+    function setLevel(levelKey) {
+      currentLevel = levelKey;
+      maxValue = LEVELS[levelKey].max;
+      guessInput.min = "1";
+      guessInput.max = String(maxValue);
+      resetGame(true);
+    }
+
+    function updateRangeUI() {
+      rangeText.innerHTML = `I picked a number between <strong>1</strong> and <strong>${formatNum(maxValue)}</strong>.`;
+    }
+
+    function updateStats() {
+      statsEl.textContent = `Attempts: ${attempts}`;
+    }
+
+    function show(resultText, hintText) {
+      resultEl.textContent = resultText || "";
+      hintEl.textContent = hintText || "";
+    }
+
+    function submitGuess() {
+      const value = Number(guessInput.value);
+      const playerName = nameInput.value.trim() || "Student";
+
+      if (!Number.isInteger(value) || value < 1 || value > maxValue) {
+        show(`Please enter an integer between 1 and ${formatNum(maxValue)}.`, "");
+        return;
+      }
+
+      attempts++;
+
+      if (value === target) {
+        show(`🎉 Congratulations, ${playerName}! You guessed ${formatNum(target)} correctly!`, "");
+      } else if (value < target) {
+        minRange = Math.max(minRange, value + 1);
+        show("Too low ⬆️", `Hint range: ${formatNum(minRange)} – ${formatNum(maxRange)}`);
+      } else {
+        maxRange = Math.min(maxRange, value - 1);
+        show("Too high ⬇️", `Hint range: ${formatNum(minRange)} – ${formatNum(maxRange)}`);
+      }
+
+      updateStats();
+      guessInput.value = "";
+      guessInput.focus();
+    }
+
+    function resetGame(hardReset = false) {
+      target = randomTarget(maxValue);
+      attempts = 0;
+      minRange = 1;
+      maxRange = maxValue;
+      updateRangeUI();
+      updateStats();
+      show("Game reset. I picked a new number.", `Hint range: ${formatNum(minRange)} – ${formatNum(maxRange)}`);
+      if (!hardReset) guessInput.focus();
+    }
+
+    document.getElementById("guessBtn").addEventListener("click", submitGuess);
+    document.getElementById("resetBtn").addEventListener("click", () => resetGame(false));
+    guessInput.addEventListener("keydown", (e) => { if (e.key === "Enter") submitGuess(); });
+
+    document.querySelectorAll('input[name="level"]').forEach(radio => {
+      radio.addEventListener("change", (e) => setLevel(e.target.value));
+    });
+
+    setLevel("easy");
+  </script>
+
+  <footer style="
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: #fafafa;
+    text-align: center;
+    padding: 8px 0;
+    font-size: 14px;
+    color: #555;
+    border-top: 1px solid #ccc;
+  ">
+    © 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528. <br>
+    The STEAM Teacher is Chao Yu. For educational purposes only. All rights reserved.
+  </footer>
+
+</body>
+</html>

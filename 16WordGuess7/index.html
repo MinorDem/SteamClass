@@ -1,0 +1,847 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title> Word Guess (7 Letters)</title>
+  <style>
+    body{
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:#fff;
+      margin:0;
+      padding:56px 24px 24px;
+      color:#111827;
+    }
+    .container{ max-width:1120px; margin:0 auto; }
+    h1{ margin:0 0 10px; }
+    .sub{ color:#374151; margin:0 0 16px; }
+
+    .controls{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin: 12px 0 18px;
+    }
+    input[type="text"]{
+      width: 220px;
+      padding: 8px 10px;
+      font-size: 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      outline: none;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    button{
+      padding: 8px 14px;
+      border: 1px solid #2563eb;
+      border-radius: 6px;
+      background:#2563eb;
+      color:#fff;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    button.secondary{
+      background:#fff;
+      color:#2563eb;
+    }
+
+    .board{
+      display:grid;
+      grid-template-rows: repeat(6, 1fr);
+      gap:3px;
+      max-width: 360px;
+      margin: 10px 0 16px;
+    }
+    .row{
+      display:grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap:10px;
+    }
+    .cell{
+      width: 56px;
+      height: 56px;
+      border: 2px solid #d1d5db;
+      border-radius: 8px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight: 800;
+      font-size: 22px;
+      text-transform: uppercase;
+      user-select:none;
+    }
+
+    /* Colors */
+    .green { background:#22c55e; border-color:#22c55e; color:#fff; }
+    .yellow{ background:#eab308; border-color:#eab308; color:#fff; }
+    .black { background:#111827; border-color:#111827; color:#fff; }
+
+    .msg{ font-weight:700; min-height:22px; margin-top:8px; }
+    .hint{ color:#374151; font-size:14px; min-height:18px; }
+
+    .kbd {
+      margin-top: 18px;
+      max-width: 560px;
+    }
+
+    .kbd-row {
+      display: flex;
+      gap: 6px;
+      margin: 6px 0;
+    }
+
+    .key{
+      padding: 10px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background:#f3f4f6;
+      font-weight:700;
+      cursor:pointer;
+      min-width: 34px;
+      text-align:center;
+    }
+    .key.green { background:#22c55e; border-color:#22c55e; color:#fff; }
+    .key.yellow{ background:#eab308; border-color:#eab308; color:#fff; }
+    .key.black { background:#111827; border-color:#111827; color:#fff; }
+
+    .small{ font-size:12px; color:#6b7280; margin-top:6px; }
+  
+    /* Back link (top-left) */
+    .back-header{
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 1000;
+    }
+    .back-link{
+      text-decoration:none;
+      color:#2563eb;
+      font-weight:700;
+      font-size:16px;
+    }
+
+  
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 16px;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      .rank-sidebar {
+        position: static;
+        order: 2;
+      }
+    }
+    .rank-sidebar {
+      position: sticky;
+      top: 72px;
+      max-height: calc(100vh - 96px);
+      overflow: auto;
+    }
+
+  
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 16px;
+      align-items: start;
+    }
+        .main-col > .container, .main-col .container {
+      margin: 0 auto; /* keep the game centered */
+      max-width: 720px;
+      width: 100%;
+    }
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      .rank-sidebar {
+        position: static;
+        order: 2;
+      }
+    }
+
+  
+    /* Layout: center game column, leaderboard on right */
+    .game-container{
+      max-width: 720px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    .layout{
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 24px;
+      align-items: start;
+    }
+    .left-col{
+      display: flex;
+      justify-content: center;
+    }
+    .rank-sidebar{
+      position: sticky;
+      top: 72px;
+      max-height: calc(100vh - 96px);
+      overflow: auto;
+    }
+    @media (max-width: 980px){
+      .layout{ grid-template-columns: 1fr; }
+      .rank-sidebar{ position: static; max-height: none; }
+    }
+
+  </style>
+</head>
+<body>
+  <canvas id="fwCanvas" style="position:fixed;inset:0;pointer-events:none;z-index:2000;"></canvas>
+
+
+  <header class="back-header">
+    <a class="back-link" href="/puzzle">← Back to Puzzle Home</a>
+  </header>
+
+  
+  <div class="layout">
+    <div class="left-col">
+      <div class="game-container">
+
+    <h1>Guess the Word (7 Letters)</h1>
+    <p class="sub">
+      Green = correct letter & correct position <br>
+      Yellow = correct letter but wrong position <br>
+      Black = not in the word
+    </p>
+
+    <div class="controls">
+      <input id="guessInput" type="text" maxlength="7" placeholder="Type 7 letters" autocomplete="off" />
+      <button id="submitBtn">Enter</button>
+      <button id="resetBtn" class="secondary">New Word</button>
+    </div>
+
+    <div class="board" id="board"></div>
+
+    <div class="msg" id="msg"></div>
+    <div class="hint" id="hint"></div>
+
+    <div class="kbd" id="kbd"></div>
+    <div class="small">Tip: You can type with your keyboard and press Enter.</div>
+  
+    <div id="hintBox" style="
+      margin-top:16px;
+      padding:10px 12px;
+      border:1px dashed #c7d2fe;
+      border-radius:10px;
+      color:#1f2937;
+      display:none;
+      max-width:720px;
+    ">
+      🔎 Hint: <strong id="hintText"></strong>
+    </div>
+    </div>
+    </div>
+    <aside class="rank-sidebar">
+<div id="rankPreview" style="
+      margin-top:24px;
+      padding:12px 14px;
+      border:1px solid #e5e7eb;
+      border-radius:12px;
+      background:#fafafa;
+      max-width:720px;
+    ">
+      <h3 style="margin:0 0 8px;">🏆 Leaderboard</h3>
+      <ol id="rankPreviewList">
+        <li>Loading…</li>
+      </ol>
+      
+    </div>
+    </aside>
+  </div>
+
+  </div>
+
+  <script>
+    // Simple built-in word list (all 5 letters). Add your own!
+    const WORDS = [
+      "ABILITY","ABSENCE","ACADEMY","ACCOUNT","ACHIEVE","ACRONYM","ADDRESS","ADVANCE","AGAINST","AMAZING",
+      "ANATOMY","ANCIENT","ANOTHER","ANXIETY","APPLIED","ARRANGE","ARRIVAL","ARTICLE","ATTEMPT","AVERAGE",
+      "AWESOME","BALANCE","BECAUSE","BEDROOM","BETWEEN","BIOLOGY","BROTHER","BROUGHT","BUILDER","BURNING",
+      "CABINET","CALLING","CAPTAIN","CAPTURE","CAREFUL","CARRIED","CENTURY","CERTAIN","CHAPTER","CHARITY",
+      "CHICKEN","CITIZEN","CLASSIC","CLIMATE","CLUSTER","COLLEGE","COMBINE","COMMAND","COMMENT","COMPETE",
+      "COMPLEX","CONCERN","CONDUCT","CONNECT","CONTENT","CONTEST","CONTROL","CONVERT","COUNCIL","COUNTRY",
+      "COURAGE","CULTURE","CURRENT","DECIDED","DEFENCE","DEFINED","DELIVER","DEVELOP","DIGITAL","DISEASE",
+      "ECONOMY","ELDERLY","ELECTED","ELEMENT","EMPEROR","ENGLISH","EXCITED","EXAMPLE","EXPLAIN","EXTREME",
+      "FACTORY","FAILURE","FEDERAL","FEELING","FINALLY","FINANCE","FOREIGN","FORWARD","FREEDOM","GRAMMAR",
+      "GROWING","HABITAT","HARVEST","HEALTHY","HISTORY","HUNDRED","HUSBAND","IMAGINE","IMPROVE","INCLUDE",
+      "INSPIRE","JUSTICE","KITCHEN","KNOWING","LANDING","LEARNED","LECTURE","LIMITED","LOGICAL","MACHINE",
+      "MAGICAL","MARRIED","MEASURE","MEDICAL","MESSAGE","MILLION","MINERAL","MISSILE","MISSION","MIXTURE",
+      "MORNING","MUSICAL","MYSTERY","NATURAL","NETWORK","NOTHING","NURSING","OPINION","PACKAGE","PARKING",
+      "PARTNER","PATIENT","PATTERN","PERFECT","PERFORM","PERHAPS","PHYSICS","PICTURE","PLASTIC","POINTED",
+      "POPULAR","PORTION","PRESENT","PREVENT","PRIMARY","PROBLEM","PRODUCT","PROGRAM","PROJECT","PROMISE",
+      "PROTECT","PROVIDE","PURPOSE","QUARTER","QUICKLY","REALITY","RECEIVE","REPLACE","REQUIRE","RESPECT",
+      "RESTORE","RUNNING","SCIENCE","SECTION","SERVICE","SESSION","SETTING","SEVERAL","SIMILAR","SOCIETY",
+      "SOLDIER","SOMEONE","STATION","STORAGE","STUDENT","SUBJECT","SUCCESS","SUNRISE","SUPPORT","SURFACE",
+      "TEACHER","TENSION","TESTING","THOUGHT","THROUGH","TONIGHT","TRAINED","TROUBLE","UNIFORM","UNUSUAL",
+      "USUALLY","VARYING","VERSION","VILLAGE","VIRTUAL","WEATHER","WELCOME","WHETHER","WITHOUT","WORKING"
+    ];
+
+    const MAX_ROWS = 6;
+    const WORD_LEN = 7;
+
+    let answer = pickWord();
+    let rowIndex = 0;
+    let gameOver = false;
+
+    // Keyboard coloring: best known status for each letter
+    // rank: green(3) > yellow(2) > black(1) > unknown(0)
+    const keyRank = { green: 3, yellow: 2, black: 1, "": 0 };
+    const letterStatus = {}; // e.g., { A: "green" }
+
+    const boardEl = document.getElementById("board");
+    const msgEl = document.getElementById("msg");
+    const hintEl = document.getElementById("hint");
+    const guessInput = document.getElementById("guessInput");
+    const kbdEl = document.getElementById("kbd");
+
+    function pickWord() {
+      return WORDS[Math.floor(Math.random() * WORDS.length)];
+    }
+
+    function buildBoard() {
+      boardEl.innerHTML = "";
+      for (let r = 0; r < MAX_ROWS; r++) {
+        const row = document.createElement("div");
+        row.className = "row";
+        row.dataset.row = r;
+
+        for (let c = 0; c < WORD_LEN; c++) {
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          cell.dataset.col = c;
+          row.appendChild(cell);
+        }
+        boardEl.appendChild(row);
+      }
+    }
+
+    function buildKeyboard() {
+      const rows = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
+      kbdEl.innerHTML = "";
+
+      rows.forEach((letters, idx) => {
+        const r = document.createElement("div");
+        r.className = "kbd-row";
+
+        // Add left padding to stagger rows (like a real keyboard)
+        if (idx === 1) r.style.marginLeft = "18px"; // A row
+        if (idx === 2) r.style.marginLeft = "48px"; // Z row
+
+        for (const ch of letters) {
+          const btn = document.createElement("div");
+          btn.className = "key";
+          btn.textContent = ch;
+          btn.addEventListener("click", () => {
+            if (gameOver) return;
+            if (guessInput.value.length < WORD_LEN) {
+              guessInput.value += ch;
+              guessInput.focus();
+            }
+          });
+          r.appendChild(btn);
+        }
+
+        kbdEl.appendChild(r);
+      });
+
+      // Control row: Enter + Backspace
+      const ctrl = document.createElement("div");
+      ctrl.className = "kbd-row";
+      ctrl.style.marginLeft = "48px";
+
+      const enter = document.createElement("div");
+      enter.className = "key";
+      enter.style.minWidth = "80px";
+      enter.textContent = "ENTER";
+      enter.addEventListener("click", submitGuess);
+
+      const back = document.createElement("div");
+      back.className = "key";
+      back.style.minWidth = "110px";
+      back.textContent = "BACKSPACE";
+      back.addEventListener("click", () => {
+        if (gameOver) return;
+        guessInput.value = guessInput.value.slice(0, -1);
+        guessInput.focus();
+      });
+
+      ctrl.appendChild(enter);
+      ctrl.appendChild(back);
+      kbdEl.appendChild(ctrl);
+
+      repaintKeyboard();
+    }
+
+
+    function repaintKeyboard() {
+      const keys = kbdEl.querySelectorAll(".key");
+      keys.forEach((k) => {
+        const ch = k.textContent;
+        if (ch.length === 1 && /[A-Z]/.test(ch)) {
+          k.classList.remove("green","yellow","black");
+          const st = letterStatus[ch] || "";
+          if (st) k.classList.add(st);
+        }
+      });
+    }
+
+    // Wordle-style scoring:
+    // 1) mark greens
+    // 2) for remaining letters, mark yellow if exists in remaining answer letters
+    function scoreGuess(guess, ans) {
+      const result = Array(WORD_LEN).fill("black");
+      const ansArr = ans.split("");
+      const used = Array(WORD_LEN).fill(false);
+
+      // Greens
+      for (let i = 0; i < WORD_LEN; i++) {
+        if (guess[i] === ansArr[i]) {
+          result[i] = "green";
+          used[i] = true;
+        }
+      }
+
+      // Yellows
+      for (let i = 0; i < WORD_LEN; i++) {
+        if (result[i] === "green") continue;
+        const ch = guess[i];
+
+        let foundIndex = -1;
+        for (let j = 0; j < WORD_LEN; j++) {
+          if (!used[j] && ansArr[j] === ch) {
+            foundIndex = j;
+            break;
+          }
+        }
+        if (foundIndex !== -1) {
+          result[i] = "yellow";
+          used[foundIndex] = true;
+        }
+      }
+
+      return result;
+    }
+
+    function updateLetterStatus(guess, colors) {
+      for (let i = 0; i < WORD_LEN; i++) {
+        const ch = guess[i];
+        const st = colors[i];
+        const prev = letterStatus[ch] || "";
+        if (keyRank[st] > keyRank[prev]) {
+          letterStatus[ch] = st;
+        }
+      }
+      repaintKeyboard();
+    }
+
+    function paintRow(r, guess, colors) {
+      const row = boardEl.querySelector(`.row[data-row="${r}"]`);
+      const cells = row.querySelectorAll(".cell");
+      for (let i = 0; i < WORD_LEN; i++) {
+        cells[i].textContent = guess[i];
+        cells[i].classList.remove("green","yellow","black");
+        cells[i].classList.add(colors[i]);
+      }
+    }
+
+    function setMessage(msg, hint="") {
+      msgEl.textContent = msg;
+      hintEl.textContent = hint;
+    }
+
+    function submitGuess() {
+      if (gameOver) return;
+
+      let raw = guessInput.value.trim().toUpperCase();
+      raw = raw.replace(/[^A-Z]/g, ""); // letters only
+
+      if (raw.length !== WORD_LEN) {
+        setMessage("Please enter exactly 7 letters.", "");
+        return;
+      }
+
+      // Score and render
+      const colors = scoreGuess(raw, answer);
+      paintRow(rowIndex, raw, colors);
+      updateLetterStatus(raw, colors);
+
+      // Check win
+      if (raw === answer) {
+
+        const surpriseWords = new Set(["AMAZING","SCIENCE","STUDENT"]);
+        if (surpriseWords.has(answer)) {
+          setMessage("🎉 You win!", "You found the surprise word. Go to the teacher and ask for a prize.");
+          celebrateSurpriseWord();
+        } else {
+          setMessage("🎉 You win!", "Click “New Word” to play again.");
+        }
+
+        // Prompt for name and submit score
+        (async () => {
+          const seconds = getRoundSeconds();
+          const name = await promptForNameOnWin();
+          if (!name) return; // canceled
+          const ok = await submitWinToDB(name, seconds);
+          if (ok) {
+            loadRankPreview();
+          }
+          if (!ok) {
+            alert("Could not save your score. Please tell the teacher.");
+          }
+        })();
+
+        gameOver = true;
+        return;
+      }
+
+      rowIndex++;
+      guessInput.value = "";
+
+      if (rowIndex >= MAX_ROWS) {
+        setMessage(`Game over. The word was ${answer}.`, "Click “New Word” to try again.");
+        gameOver = true;
+      } else {
+        setMessage("Keep going!", `Attempts left: ${MAX_ROWS - rowIndex}`);
+      }
+      guessInput.focus();
+    }
+
+    function resetGame() {
+      resetRoundTimer();
+      answer = pickWord();
+      rowIndex = 0;
+      gameOver = false;
+
+      for (const k in letterStatus) delete letterStatus[k];
+
+      buildBoard();
+      buildKeyboard();
+      setMessage("New game started.", "Enter a 7-letter word and press Enter.");
+
+      const hb = document.getElementById("hintBox");
+      if (hb) hb.style.display = "none";
+
+      guessInput.value = "";
+      guessInput.focus();
+    }
+
+    // Buttons + typing support
+    document.getElementById("submitBtn").addEventListener("click", submitGuess);
+    document.getElementById("resetBtn").addEventListener("click", resetGame);
+
+    document.addEventListener("keydown", (e) => {
+      if (gameOver) return;
+
+      if (e.key === "Enter") {
+        submitGuess();
+      } else if (e.key === "Backspace") {
+        // Let the input handle it naturally if focused
+      } else if (/^[a-zA-Z]$/.test(e.key)) {
+        // Keep focus in input for easy typing
+        if (document.activeElement !== guessInput) guessInput.focus();
+      }
+    });
+
+    // Secret key sequence detector: "cmd" -> reveal two letters of the correct word
+    let _secretSeq = [];
+    const _SECRET = ["c","m","d"];
+
+    document.addEventListener("keydown", (e) => {
+      const key = e.key.toLowerCase();
+      if (!/^[a-z]$/.test(key)) return;
+
+      _secretSeq.push(key);
+      if (_secretSeq.length > _SECRET.length) _secretSeq.shift();
+
+      if (_secretSeq.join("") === _SECRET.join("")) {
+        revealTwoLetters();
+        _secretSeq = [];
+      }
+    });
+
+    function revealTwoLetters() {
+      if (typeof answer !== "string" || answer.length < 2) return;
+
+      const idx1 = Math.floor(Math.random() * answer.length);
+      let idx2 = Math.floor(Math.random() * answer.length);
+      while (idx2 === idx1) idx2 = Math.floor(Math.random() * answer.length);
+
+      const letters = [
+        `Position ${idx1 + 1}: ${answer[idx1]}`,
+        `Position ${idx2 + 1}: ${answer[idx2]}`
+      ];
+
+      const hintBox = document.getElementById("hintBox");
+      const hintText = document.getElementById("hintText");
+      if (hintBox && hintText) {
+        hintText.textContent = letters.join(" · ");
+        hintBox.style.display = "block";
+      }
+    }
+
+
+    // Fireworks + sound (triggered for surprise words)
+    let _fwRunning = false;
+
+    function playFireworkSound() {
+      // Simple celebratory "chirp" + pops using Web Audio (no external files)
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioCtx();
+
+        const now = ctx.currentTime;
+
+        // A short rising chirp
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = "sine";
+        osc1.frequency.setValueAtTime(440, now);
+        osc1.frequency.exponentialRampToValueAtTime(1320, now + 0.25);
+        gain1.gain.setValueAtTime(0.0001, now);
+        gain1.gain.exponentialRampToValueAtTime(0.35, now + 0.02);
+        gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
+        osc1.connect(gain1).connect(ctx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.3);
+
+        // A few quick "pop" bursts
+        for (let i = 0; i < 4; i++) {
+          const t = now + 0.35 + i * 0.12;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "triangle";
+          osc.frequency.setValueAtTime(220 + i * 60, t);
+          gain.gain.setValueAtTime(0.0001, t);
+          gain.gain.exponentialRampToValueAtTime(0.25, t + 0.01);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.08);
+          osc.connect(gain).connect(ctx.destination);
+          osc.start(t);
+          osc.stop(t + 0.09);
+        }
+
+        // Close context shortly after
+        setTimeout(() => {
+          try { ctx.close(); } catch(e) {}
+        }, 1200);
+      } catch (e) {
+        // If audio is blocked, just skip sound.
+      }
+    }
+
+    function launchFireworks(durationMs = 2500) {
+      if (_fwRunning) return;
+      _fwRunning = true;
+
+      const canvas = document.getElementById("fwCanvas");
+      if (!canvas) { _fwRunning = false; return; }
+
+      const ctx = canvas.getContext("2d");
+      const dpr = window.devicePixelRatio || 1;
+
+      function resize() {
+        canvas.width = Math.floor(window.innerWidth * dpr);
+        canvas.height = Math.floor(window.innerHeight * dpr);
+        canvas.style.width = window.innerWidth + "px";
+        canvas.style.height = window.innerHeight + "px";
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      resize();
+
+      const particles = [];
+      const gravity = 0.08;
+
+      function burst(x, y) {
+        const count = 70 + Math.floor(Math.random() * 40);
+        for (let i = 0; i < count; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 2 + Math.random() * 5;
+          particles.push({
+            x, y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life: 60 + Math.floor(Math.random() * 35),
+            age: 0,
+            r: 2 + Math.random() * 2.5
+          });
+        }
+      }
+
+      // Initial bursts
+      for (let i = 0; i < 5; i++) {
+        burst(80 + Math.random() * (window.innerWidth - 160),
+              80 + Math.random() * (window.innerHeight * 0.45));
+      }
+
+      let start = performance.now();
+      let lastBurst = start;
+
+      function step(ts) {
+        const elapsed = ts - start;
+
+        // Fade old frame
+        ctx.fillStyle = "rgba(255,255,255,0.18)";
+        ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+
+        // Occasional new bursts while running
+        if (ts - lastBurst > 420) {
+          burst(80 + Math.random() * (window.innerWidth - 160),
+                80 + Math.random() * (window.innerHeight * 0.45));
+          lastBurst = ts;
+        }
+
+        // Update particles
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.age++;
+          p.vy += gravity;
+          p.x += p.vx;
+          p.y += p.vy;
+
+          const alpha = Math.max(0, 1 - p.age / p.life);
+          ctx.globalAlpha = alpha;
+
+          // Color based on particle index-ish randomness
+          const hue = (p.x + p.y + p.age * 6) % 360;
+          ctx.fillStyle = `hsl(${hue} 90% 55%)`;
+
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fill();
+
+          if (p.age >= p.life || p.y > window.innerHeight + 30) {
+            particles.splice(i, 1);
+          }
+        }
+        ctx.globalAlpha = 1;
+
+        if (elapsed < durationMs || particles.length > 0) {
+          requestAnimationFrame(step);
+        } else {
+          // Clear final
+          ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+          _fwRunning = false;
+        }
+      }
+
+      window.addEventListener("resize", resize, { passive: true });
+      requestAnimationFrame(step);
+
+      // Cleanup resize listener when done
+      setTimeout(() => {
+        try { window.removeEventListener("resize", resize); } catch(e) {}
+      }, durationMs + 1200);
+    }
+
+    function celebrateSurpriseWord() {
+      playFireworkSound();
+      launchFireworks(2800);
+    }
+
+    // ===== Save win to database (requires /api/score on same domain) =====
+    const GAME_ID = "wordguess_7"; // change if you want a different game key
+
+    let roundStartMs = Date.now();
+    function resetRoundTimer() { roundStartMs = Date.now(); }
+    function getRoundSeconds() { return Math.max(1, Math.round((Date.now() - roundStartMs) / 1000)); }
+
+    function sanitizeName(name) {
+      return (name || "").trim().slice(0, 40);
+    }
+
+    async function promptForNameOnWin() {
+      // Keep asking until they enter a name or cancel
+      while (true) {
+        const input = window.prompt("You won! Enter your name for the leaderboard (not anonymous):", "");
+        if (input === null) return null; // user canceled
+        const name = sanitizeName(input);
+        if (name) return name;
+        alert("Name is required (not anonymous). Please enter your name.");
+      }
+    }
+
+    async function submitWinToDB(playerName, seconds) {
+      try {
+        await fetch("/api/score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            game: GAME_ID,
+            player_name: playerName,
+            seconds: seconds
+          })
+        });
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    // ===== Leaderboard preview (Top 5) =====
+    async function loadRankPreview() {
+      const list = document.getElementById("rankPreviewList");
+      if (!list) return;
+
+      try {
+        const res = await fetch(`/api/leaderboard?game=${encodeURIComponent(GAME_ID)}&limit=100`, { cache: "no-store" });
+        const data = await res.json();
+        const rows = Array.isArray(data) ? data : (data.rows || []);
+
+        list.innerHTML = "";
+        if (!rows.length) {
+          list.innerHTML = "<li>No scores yet.</li>";
+          return;
+        }
+
+        rows.forEach((r, i) => {
+          const name = r.player_name ?? r.playerName ?? "Unknown";
+          const wins = r.win_count ?? r.wins ?? r.winCount ?? 0;
+          const best = r.best_seconds ?? r.bestSeconds ?? null;
+
+          const li = document.createElement("li");
+          li.textContent = ` ${name} — Wins: ${wins}` + (best != null ? ` — Best: ${best}s` : "");
+          list.appendChild(li);
+        });
+      } catch (e) {
+        list.innerHTML = "<li>Could not load leaderboard.</li>";
+      }
+    }
+
+
+
+    // Init
+    resetGame();
+    loadRankPreview();
+  </script>
+
+  <!-- View Rank Page Button (bottom) -->
+
+  <footer style="
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: #fafafa;
+        text-align: center;
+        padding: 8px 0;
+        font-size: 14px;
+        color: #555;
+        border-top: 1px solid #ccc;
+      ">
+        © 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528. <br>
+        The STEAM Teacher is Chao Yu. For educational purposes only. All rights reserved.
+    </footer>
+</body>
+</html>

@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Side Finish Run</title>
+  <style>
+    :root{
+      --bg:#fff7d6; --card:#ffffff; --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb;
+      --yellow:#facc15; --orange:#fb923c; --blue:#38bdf8; --green:#22c55e; --red:#ef4444;
+      --shadow:0 12px 30px rgba(0,0,0,.12);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;overscroll-behavior:none;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:
+      radial-gradient(circle at 20% 12%,#fde68a 0 120px,transparent 260px),
+      radial-gradient(circle at 88% 82%,#bfdbfe 0 140px,transparent 290px),var(--bg);color:var(--ink);padding:18px 18px 92px}
+    .back{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink);background:#fff;border:2px solid var(--line);border-radius:999px;padding:8px 14px;font-weight:800;box-shadow:0 3px 10px rgba(0,0,0,.08);margin-bottom:14px}
+    .wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:18px;align-items:start}
+    footer{position:fixed;bottom:0;left:0;width:100%;background:rgba(255,243,224,.97);border-top:1px solid var(--line);text-align:center;padding:7px 12px;font-size:12px;line-height:1.35;color:var(--muted);z-index:50;backdrop-filter:blur(6px)}
+    @media(max-width:920px){body{padding-bottom:140px}.wrap{grid-template-columns:1fr}.side{position:static!important}.game-area{height:64vh;min-height:520px}}
+    .card{background:rgba(255,255,255,.94);border:2px solid var(--line);border-radius:24px;padding:18px;box-shadow:var(--shadow)}
+    h1{margin:0;font-size:clamp(2rem,5vw,3.2rem);letter-spacing:-.04em;color:#eab308;text-shadow:3px 3px 0 #fef3c7}.tag{color:var(--muted);font-weight:700;margin:4px 0 14px}
+    .topline{display:flex;justify-content:space-between;gap:12px;align-items:end;flex-wrap:wrap}.levels{display:flex;gap:8px;flex-wrap:wrap}.level{border:2px solid var(--line);background:#fff;border-radius:999px;padding:9px 13px;font-weight:900;cursor:pointer}.level.active{background:var(--yellow);border-color:#eab308;box-shadow:0 4px 0 #ca8a04;color:#713f12}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:14px 0}.stat{background:#fff;border:2px solid var(--line);border-radius:16px;padding:10px;text-align:center}.num{font-size:1.45rem;font-weight:1000;color:#0284c7}.label{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:900}
+    .game-area{position:relative;height:620px;border:4px solid #f59e0b;border-radius:24px;overflow:hidden;background:
+      linear-gradient(#93c5fd 1px,transparent 1px) 0 0/100% 42px,
+      linear-gradient(90deg,#fde68a,#fff7ed);touch-action:none;user-select:none}.game-area:focus{outline:4px solid #facc15}
+    .world{position:absolute;left:0;top:0;width:100%;height:100%;will-change:transform}.finish{position:absolute;width:120px;height:58px;border-radius:14px;border:4px solid #16a34a;background:repeating-linear-gradient(45deg,#fff 0 10px,#dcfce7 10px 20px);display:grid;place-items:center;font-weight:1000;color:#166534;font-size:18px;box-shadow:0 5px 0 #15803d;z-index:4}
+    .player{position:absolute;width:34px;height:44px;transform:translate(-50%,-50%);z-index:8}.head{position:absolute;left:9px;top:0;width:16px;height:16px;border:4px solid #eab308;border-radius:50%;background:#fef9c3}.body{position:absolute;left:15px;top:16px;width:4px;height:18px;background:#eab308}.arm,.leg{position:absolute;background:#eab308;height:4px;border-radius:999px;transform-origin:left center}.arm.a1{left:16px;top:20px;width:19px;transform:rotate(28deg)}.arm.a2{left:16px;top:20px;width:18px;transform:rotate(150deg)}.leg.l1{left:16px;top:33px;width:19px;transform:rotate(58deg)}.leg.l2{left:16px;top:33px;width:19px;transform:rotate(122deg)}
+    .player.run .arm.a1{animation:swing1 .18s infinite alternate}.player.run .arm.a2{animation:swing2 .18s infinite alternate}.player.run .leg.l1{animation:leg1 .18s infinite alternate}.player.run .leg.l2{animation:leg2 .18s infinite alternate}
+    @keyframes swing1{to{transform:rotate(-35deg)}}@keyframes swing2{to{transform:rotate(205deg)}}@keyframes leg1{to{transform:rotate(118deg)}}@keyframes leg2{to{transform:rotate(42deg)}}
+    .platform{position:absolute;border-radius:11px;background:#fef08a;border:4px solid #eab308;box-shadow:0 6px 0 #ca8a04}.platform.bad{background:#fecaca;border-color:#ef4444;box-shadow:0 6px 0 #b91c1c}.platform.move{background:#dbeafe;border-color:#38bdf8;box-shadow:0 6px 0 #0284c7}.platform.spring{background:#dcfce7;border-color:#22c55e;box-shadow:0 6px 0 #15803d}
+    .coin{position:absolute;width:28px;height:28px;border-radius:50%;background:#fde047;border:4px solid #eab308;display:grid;place-items:center;font-weight:1000;color:#854d0e;box-shadow:0 4px 0 #ca8a04;transform:translate(-50%,-50%)}
+    .coin::after{content:'★';font-size:12px}.coin.got{display:none}
+    .coin.small{width:22px;height:22px;border-width:3px;background:#fef08a}.coin.small::after{font-size:10px}
+    .coin.big{width:38px;height:38px;border-width:5px;background:#facc15}.coin.big::after{font-size:16px}
+    .player.wings::before,.player.wings::after{content:'';position:absolute;top:10px;width:26px;height:32px;background:rgba(191,219,254,.92);border:3px solid #38bdf8;z-index:-1;animation:.22s infinite alternate ease-in-out}
+    .player.wings::before{left:-24px;border-radius:75% 25% 75% 25%;transform-origin:right center;animation-name:leftWing}
+    .player.wings::after{right:-24px;border-radius:25% 75% 25% 75%;transform-origin:left center;animation-name:rightWing}
+    @keyframes leftWing{from{transform:rotate(-18deg)}to{transform:rotate(-52deg) scale(1.08)}}
+    @keyframes rightWing{from{transform:rotate(18deg)}to{transform:rotate(52deg) scale(1.08)}}
+    .msg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;border:3px solid #f59e0b;border-radius:24px;padding:18px 22px;text-align:center;box-shadow:var(--shadow);z-index:20;max-width:350px}.msg h2{margin:0 0 6px;color:#eab308}.msg p{margin:0;color:var(--muted);font-weight:800}.hidden{display:none!important}
+    .controls{display:flex;gap:10px;margin-top:12px}
+    .touch-controls{display:grid;grid-template-columns:74px 74px 74px;grid-template-rows:58px 58px;gap:10px;justify-content:center;margin:14px auto 6px;max-width:260px;touch-action:none;user-select:none}
+    .touch-btn{border:0;border-radius:18px;background:#fff;border:3px solid var(--line);box-shadow:0 5px 0 #d1d5db;font-size:26px;font-weight:1000;color:#1f2937;display:flex;align-items:center;justify-content:center;touch-action:none;-webkit-user-select:none;user-select:none}
+    .touch-btn:active,.touch-btn.active{transform:translateY(3px);box-shadow:0 2px 0 #d1d5db;background:#fef3c7;border-color:#f59e0b}
+    .touch-up{grid-column:2;grid-row:1}.touch-left{grid-column:1;grid-row:2}.touch-down{grid-column:2;grid-row:2}.touch-right{grid-column:3;grid-row:2}
+    @media(pointer:fine){.touch-controls{opacity:.95}}
+    @media(max-width:920px){.touch-controls{grid-template-columns:82px 82px 82px;grid-template-rows:64px 64px}.touch-btn{font-size:30px}}.btn{border:0;border-radius:16px;padding:13px 16px;font-weight:1000;cursor:pointer;font-size:16px}.start{background:#facc15;color:#713f12;flex:1;box-shadow:0 5px 0 #ca8a04}.reset{background:#fff;border:2px solid var(--line);color:var(--ink)}.hint{font-size:13px;color:var(--muted);font-weight:700;margin-top:9px}.hint kbd{background:#fff;border:1px solid var(--line);border-bottom-width:3px;border-radius:7px;padding:2px 6px;font-weight:900;color:#111827}
+    .side{position:sticky;top:18px}.rank h3{margin:0 0 8px;font-size:1.35rem}.rank small{color:var(--muted);font-weight:800}.rank-section{margin-top:12px;background:#f8fafc;border-radius:16px;padding:12px;border:1px solid var(--line)}.rank-title{font-weight:1000;color:#334155;margin-bottom:8px}.rank ol{margin:0;padding-left:22px}.rank li{padding:5px 0;border-bottom:1px dashed #d1d5db;font-size:14px}.rank li:last-child{border:0}.dialog-bg{position:fixed;inset:0;background:rgba(15,23,42,.56);display:none;align-items:center;justify-content:center;z-index:50;padding:18px}.dialog-bg.open{display:flex}.dialog{width:min(420px,100%);background:#fff;border-radius:26px;padding:24px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.35)}.dialog h2{margin:0;color:#eab308;font-size:2rem}.dialog p{color:var(--muted);font-weight:800}.dialog input{width:100%;padding:13px 15px;border:2px solid var(--line);border-radius:14px;font-size:16px}.dialog-actions{display:flex;gap:10px;margin-top:12px}.dialog-actions button{flex:1;border-radius:14px;padding:12px;border:2px solid var(--line);background:#fff;font-weight:1000;cursor:pointer}.dialog-actions .primary{background:#22c55e;color:white;border-color:#22c55e}.status{min-height:20px;margin-top:8px;color:#6b7280;font-weight:900;font-size:13px}
+  </style>
+</head>
+<body>
+  <a class="back" href="/puzzle">← Back to Puzzle Home</a>
+  <div class="wrap">
+    <main class="card">
+      <div class="topline"><div><h1>🏃 Side Finish Run</h1><p class="tag">Climb alternating left-right platforms, collect coins, reach FINISH near the top, then fly with wings.</p></div><div class="levels"><button class="level active" data-level="easy">Easy</button><button class="level" data-level="medium">Medium</button><button class="level" data-level="hard">Hard</button></div></div>
+      <div class="stats"><div class="stat"><div class="num" id="time">0.0</div><div class="label">Time</div></div><div class="stat"><div class="num" id="stars">0</div><div class="label">Stars</div></div><div class="stat"><div class="num" id="best">—</div><div class="label">Best</div></div><div class="stat"><div class="num" id="levelName">Easy</div><div class="label">Level</div></div></div>
+      <div class="game-area" id="game" tabindex="0" aria-label="Side Finish Run game area">
+        <div class="world" id="world">
+          <div class="finish">FINISH</div>
+          <div class="player" id="player"><span class="head"></span><span class="body"></span><span class="arm a1"></span><span class="arm a2"></span><span class="leg l1"></span><span class="leg l2"></span></div>
+        </div>
+        <div class="msg" id="message"><h2>Ready?</h2><p>Climb left-right-left-right through more than 10 platforms. Small coins lower jumps; big coins boost jumps. Reach FINISH, then fly for 10 seconds.</p></div>
+      </div>
+      <div class="controls"><button class="btn start" id="start">▶ Start</button><button class="btn reset" id="reset">↺ Reset</button></div>
+      <div class="touch-controls" aria-label="Touch controls">
+        <button class="touch-btn touch-up" data-key="ArrowUp" aria-label="Jump or fly up">↑</button>
+        <button class="touch-btn touch-left" data-key="ArrowLeft" aria-label="Move left">←</button>
+        <button class="touch-btn touch-down" data-key="ArrowDown" aria-label="Fly down">↓</button>
+        <button class="touch-btn touch-right" data-key="ArrowRight" aria-label="Move right">→</button>
+      </div>
+      <div class="hint">Laptop/touchscreen: use the big arrow buttons or finger swipes. Keyboard: <kbd>A</kbd><kbd>D</kbd>/<kbd>←</kbd><kbd>→</kbd> to move, <kbd>W</kbd>/<kbd>↑</kbd>/<kbd>Space</kbd> to jump or fly up, <kbd>S</kbd>/<kbd>↓</kbd> to fly down.</div>
+    </main>
+    <aside class="side card rank"><h3>🏆 Leaderboard</h3><small>Uses the same /api/score and /api/leaderboard system as your example HTML.</small><div class="rank-section"><div class="rank-title">🌱 Easy</div><ol id="rankEasy"><li>Loading…</li></ol></div><div class="rank-section"><div class="rank-title">⚡ Medium</div><ol id="rankMedium"><li>Loading…</li></ol></div><div class="rank-section"><div class="rank-title">🔥 Hard</div><ol id="rankHard"><li>Loading…</li></ol></div><p class="hint" id="rankNote">Loading leaderboard…</p></aside>
+  </div>
+  <div class="dialog-bg" id="dialog"><div class="dialog"><h2>🎉 You Finished!</h2><p id="summary">Great job.</p><p>Enter your name for the leaderboard:</p><input id="name" maxlength="40" placeholder="Your name" autocomplete="off"><div class="dialog-actions"><button id="skip">Skip</button><button class="primary" id="submit">Submit ✓</button></div><div class="status" id="dialogStatus"></div></div></div>
+<script>
+const BASE_ID='sidefinishrun';
+const game=document.getElementById('game'), worldEl=document.getElementById('world'), playerEl=document.getElementById('player'), msg=document.getElementById('message');
+const timeEl=document.getElementById('time'), starsEl=document.getElementById('stars'), bestEl=document.getElementById('best'), levelNameEl=document.getElementById('levelName');
+let level='easy', running=false, finished=false, flying=false, flightLeft=0, pendingWin=null, lastTs=0, elapsed=0, stars=0, keys={}, platforms=[], coins=[];
+let pos={x:70,y:520}, vel={x:0,y:0}, onGround=false, canJump=false, jumpBoost=1, boostLabel='normal';
+const VIEW={w:1000,h:620}, WORLD={w:1000,h:1450}, PLAYER={w:30,h:42};
+const LEVELS={
+ easy:{label:'Easy',gravity:1650,move:410,jump:690,limit:95,map:[
+  {x:45,y:1385,w:185,h:34},{x:280,y:1280,w:150,h:30},{x:70,y:1175,w:150,h:30},{x:335,y:1070,w:150,h:30},
+  {x:105,y:965,w:145,h:30},{x:380,y:860,w:145,h:30},{x:125,y:755,w:140,h:30},{x:430,y:650,w:140,h:30},
+  {x:165,y:545,w:140,h:30},{x:500,y:440,w:140,h:30},{x:250,y:335,w:135,h:30},{x:610,y:230,w:135,h:30},
+  {x:780,y:130,w:150,h:34}],coins:[[355,1240,'small'],[145,1135,'normal'],[440,1030,'big'],[175,925,'small'],[475,820,'normal'],[195,715,'big'],[550,400,'small'],[315,295,'big'],[835,95,'big']]},
+ medium:{label:'Medium',gravity:1750,move:430,jump:675,limit:115,map:[
+  {x:45,y:1385,w:165,h:34},{x:300,y:1290,w:125,h:28},{x:75,y:1195,w:120,h:28},{x:360,y:1100,w:120,h:28,move:true,dx:65},
+  {x:115,y:1005,w:115,h:28},{x:410,y:910,w:115,h:28},{x:150,y:815,w:110,h:28,bad:true},{x:470,y:720,w:115,h:28},
+  {x:190,y:625,w:110,h:28,move:true,dx:70},{x:535,y:530,w:110,h:28},{x:265,y:435,w:105,h:28},{x:625,y:340,w:105,h:28,move:true,dx:55},
+  {x:380,y:245,w:105,h:28},{x:780,y:140,w:150,h:34}],coins:[[355,1250,'small'],[135,1155,'big'],[425,1060,'normal'],[480,870,'small'],[530,680,'big'],[245,585,'normal'],[685,300,'small'],[840,105,'big']]},
+ hard:{label:'Hard',gravity:1850,move:450,jump:665,limit:135,map:[
+  {x:45,y:1385,w:145,h:32},{x:315,y:1300,w:90,h:26},{x:80,y:1215,w:90,h:26},{x:370,y:1130,w:86,h:26,move:true,dx:75},
+  {x:120,y:1045,w:82,h:26,bad:true},{x:430,y:960,w:86,h:26},{x:160,y:875,w:82,h:26,move:true,dx:70},{x:500,y:790,w:82,h:26},
+  {x:210,y:705,w:78,h:26,bad:true},{x:565,y:620,w:82,h:26,move:true,dx:80},{x:280,y:535,w:78,h:26},{x:650,y:450,w:78,h:26},
+  {x:360,y:365,w:76,h:26,move:true,dx:60},{x:720,y:280,w:76,h:26},{x:500,y:195,w:76,h:26},{x:800,y:110,w:135,h:32}],coins:[[360,1265,'small'],[125,1180,'big'],[435,1095,'normal'],[475,925,'big'],[205,840,'small'],[555,755,'normal'],[330,500,'big'],[705,415,'small'],[545,160,'big']]}
+};
+function gameKey(lv){return `${BASE_ID}_${lv}`}
+function scaleX(x){return x/WORLD.w*game.clientWidth} function scaleY(y){return y/VIEW.h*game.clientHeight} function scaleW(w){return w/WORLD.w*game.clientWidth} function scaleH(h){return h/VIEW.h*game.clientHeight}
+function current(){return LEVELS[level]}
+function playerRect(){return {x:pos.x-PLAYER.w/2,y:pos.y-PLAYER.h/2,w:PLAYER.w,h:PLAYER.h}}
+function touch(a,b){return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y}
+function build(){worldEl.querySelectorAll('.platform,.coin').forEach(e=>e.remove());platforms=current().map.map(p=>({...p,baseX:p.x,prevX:p.x}));coins=current().coins.map(([x,y,type='normal'])=>({x,y,type,got:false}));for(const p of platforms){const el=document.createElement('div');el.className='platform'+(p.bad?' bad':'')+(p.move?' move':'')+(p.spring?' spring':'');p.el=el;worldEl.appendChild(el)}for(const c of coins){const el=document.createElement('div');el.className='coin '+(c.type||'normal');c.el=el;worldEl.appendChild(el)}render()}
+function reset(show=true){running=false;finished=false;flying=false;flightLeft=0;pendingWin=null;elapsed=0;stars=0;keys={};document.querySelectorAll('.touch-btn').forEach(b=>b.classList.remove('active'));jumpBoost=1;boostLabel='normal';pos={x:90,y:1385-PLAYER.h/2};vel={x:0,y:0};onGround=true;canJump=true;levelNameEl.textContent=current().label;bestEl.textContent=localStorage.getItem(`${BASE_ID}_best_${level}`)||'—';build();msg.classList.toggle('hidden',!show);if(show)msg.innerHTML='<h2>Ready?</h2><p>Use A/D or ←/→ to move. Use W/↑/Space to jump. Finish is at the top right.</p>';document.getElementById('start').textContent='▶ Start';playerEl.classList.remove('run','wings')}
+function start(){reset(false);running=true;lastTs=performance.now();game.focus();document.getElementById('start').textContent='Playing…';requestAnimationFrame(loop)}
+function cameraY(){
+  const target = pos.y - VIEW.h * 0.58;
+  return Math.max(0, Math.min(WORLD.h - VIEW.h, target));
+}
+function render(){
+  const camY = cameraY();
+  worldEl.style.height = scaleY(WORLD.h) + 'px';
+  worldEl.style.transform = `translateY(${-scaleY(camY)}px)`;
+
+  const finishEl = document.querySelector('.finish');
+  finishEl.style.left = scaleX(780) + 'px';
+  finishEl.style.top = scaleY(55) + 'px';
+  finishEl.style.width = scaleW(140) + 'px';
+  finishEl.style.height = scaleH(58) + 'px';
+
+  for(const p of platforms){
+    p.el.style.left=scaleX(p.x)+'px';
+    p.el.style.top=scaleY(p.y)+'px';
+    p.el.style.width=scaleW(p.w)+'px';
+    p.el.style.height=scaleH(p.h)+'px';
+  }
+  for(const c of coins){
+    c.el.style.left=scaleX(c.x)+'px';
+    c.el.style.top=scaleY(c.y)+'px';
+    c.el.classList.toggle('got',c.got);
+  }
+  playerEl.style.left=scaleX(pos.x)+'px';
+  playerEl.style.top=scaleY(pos.y)+'px';
+  timeEl.textContent=flying ? flightLeft.toFixed(1) : elapsed.toFixed(1);
+  starsEl.textContent=stars;
+  playerEl.classList.toggle('run',running && Math.abs(vel.x)>20 && !flying);
+}
+function loop(ts){
+  if(!running)return;
+  const dt=Math.min(.033,(ts-lastTs)/1000);
+  lastTs=ts;
+
+  if(flying){
+    updateFlying(dt);
+    render();
+    requestAnimationFrame(loop);
+    return;
+  }
+
+  elapsed+=dt;
+  if(elapsed>current().limit){lose('⏰ Time is up. Try a faster path.');return}
+  update(dt,ts);
+  render();
+  requestAnimationFrame(loop);
+}
+function wantJump(){return keys.ArrowUp||keys.w||keys.W||keys[' ']}
+function update(dt,ts){
+  for(const p of platforms){
+    p.prevX = p.x;
+    if(p.move) p.x = p.baseX + Math.sin(ts/650) * (p.dx || 60);
+    p.vx = p.x - p.prevX;
+  }
+
+  const cfg = current();
+  let dir = 0;
+  if(keys.ArrowLeft || keys.a || keys.A) dir -= 1;
+  if(keys.ArrowRight || keys.d || keys.D) dir += 1;
+
+  vel.x = dir * cfg.move;
+
+  if(wantJump() && canJump){
+    vel.y = -cfg.jump * jumpBoost;
+    canJump = false;
+    onGround = false;
+  }
+
+  vel.y += cfg.gravity * dt;
+
+  // Horizontal movement and side collision
+  pos.x += vel.x * dt;
+  pos.x = Math.max(PLAYER.w/2, Math.min(WORLD.w - PLAYER.w/2, pos.x));
+
+  let r = playerRect();
+  for(const p of platforms){
+    if(!touch(r, p)) continue;
+    if(p.bad){
+      lose('🔥 You touched a red lava platform.');
+      return;
+    }
+
+    // Only push sideways when the player is actually overlapping from the side.
+    const playerBottom = r.y + r.h;
+    const playerTop = r.y;
+    const platformTop = p.y;
+    const platformBottom = p.y + p.h;
+    const verticalOverlap = Math.min(playerBottom, platformBottom) - Math.max(playerTop, platformTop);
+
+    if(verticalOverlap > 10 && vel.x > 0){
+      pos.x = p.x - PLAYER.w/2;
+    }else if(verticalOverlap > 10 && vel.x < 0){
+      pos.x = p.x + p.w + PLAYER.w/2;
+    }
+    r = playerRect();
+  }
+
+  // Vertical movement and landing/head collision
+  const previousY = pos.y;
+  const previousBottom = previousY + PLAYER.h/2;
+  const previousTop = previousY - PLAYER.h/2;
+
+  pos.y += vel.y * dt;
+  onGround = false;
+  r = playerRect();
+
+  for(const p of platforms){
+    if(!touch(r, p)) continue;
+
+    if(p.bad){
+      lose('🔥 You touched a red lava platform.');
+      return;
+    }
+
+    const platformTop = p.y;
+    const platformBottom = p.y + p.h;
+
+    // Landing from above. The tolerance prevents falling through thin boards at high speed.
+    if(vel.y >= 0 && previousBottom <= platformTop + 14){
+      pos.y = platformTop - PLAYER.h/2;
+      if(p.move && Math.abs(p.vx || 0) > 0){
+        pos.x += p.vx;
+        pos.x = Math.max(PLAYER.w/2, Math.min(WORLD.w - PLAYER.w/2, pos.x));
+      }
+      vel.y = 0;
+      onGround = true;
+      canJump = true;
+      r = playerRect();
+      continue;
+    }
+
+    // Hitting the underside of a platform.
+    if(vel.y < 0 && previousTop >= platformBottom - 14){
+      pos.y = platformBottom + PLAYER.h/2;
+      vel.y = 0;
+      r = playerRect();
+      continue;
+    }
+  }
+
+  // Small grace check: if the player is exactly on a platform, keep jump available.
+  if(!onGround){
+    const foot = {x:pos.x - PLAYER.w/2 + 3, y:pos.y + PLAYER.h/2, w:PLAYER.w - 6, h:3};
+    for(const p of platforms){
+      if(!p.bad && touch(foot, p)){
+        onGround = true;
+        canJump = true;
+        break;
+      }
+    }
+  }
+
+  if(pos.y > WORLD.h + 90){
+    lose('💥 You fell off the path.');
+    return;
+  }
+
+  for(const c of coins){
+    const hitRadius = c.type === 'big' ? 46 : c.type === 'small' ? 32 : 38;
+    if(!c.got && Math.hypot(pos.x - c.x, pos.y - c.y) < hitRadius){
+      c.got = true;
+      stars++;
+      if(c.type === 'small'){
+        jumpBoost = 0.72;
+        boostLabel = 'low jump';
+      }else if(c.type === 'big'){
+        jumpBoost = 1.32;
+        boostLabel = 'high jump';
+      }else{
+        jumpBoost = 1;
+        boostLabel = 'normal jump';
+      }
+      msg.classList.remove('hidden');
+      msg.innerHTML = `<h2>${c.type === 'big' ? '🟡 Big Coin!' : c.type === 'small' ? '🪙 Small Coin!' : '⭐ Coin!'}</h2><p>Next jumps are ${boostLabel}.</p>`;
+      setTimeout(()=>{ if(running && !flying) msg.classList.add('hidden'); }, 700);
+    }
+  }
+
+  if(pos.x > 765 && pos.y < 145) startFlyingPhase();
+}
+function lose(text){running=false;document.querySelectorAll('.touch-btn').forEach(b=>b.classList.remove('active'));msg.classList.remove('hidden');msg.innerHTML=`<h2>Try Again</h2><p>${text}</p>`;document.getElementById('start').textContent='▶ Start Again';playerEl.classList.remove('run','wings')}
+function startFlyingPhase(){
+  if(finished || flying) return;
+  flying = true;
+  flightLeft = 10;
+  vel = {x:0,y:0};
+  playerEl.classList.add('wings');
+  msg.classList.remove('hidden');
+  msg.innerHTML = '<h2>🪽 Wings Unlocked!</h2><p>Fly freely for 10 seconds. Use WASD or arrow keys.</p>';
+}
+
+function updateFlying(dt){
+  flightLeft -= dt;
+  const flySpeed = 360;
+  let dx = 0, dy = 0;
+  if(keys.ArrowLeft || keys.a || keys.A) dx -= 1;
+  if(keys.ArrowRight || keys.d || keys.D) dx += 1;
+  if(keys.ArrowUp || keys.w || keys.W || keys[' ']) dy -= 1;
+  if(keys.ArrowDown || keys.s || keys.S) dy += 1;
+
+  if(dx && dy){
+    dx *= 0.707;
+    dy *= 0.707;
+  }
+
+  pos.x += dx * flySpeed * dt;
+  pos.y += dy * flySpeed * dt;
+  pos.x = Math.max(PLAYER.w/2, Math.min(WORLD.w - PLAYER.w/2, pos.x));
+  pos.y = Math.max(PLAYER.h/2, Math.min(WORLD.h - PLAYER.h/2, pos.y));
+  vel.x = dx * flySpeed;
+  vel.y = dy * flySpeed;
+
+  if(flightLeft <= 0){
+    finishWin();
+  }
+}
+
+function finishWin(){
+  if(finished)return;
+  flying=false;
+  running=false;
+  document.querySelectorAll('.touch-btn').forEach(b=>b.classList.remove('active'));
+  finished=true;
+  flightLeft=0;
+  playerEl.classList.remove('run','wings');
+  const score=Math.max(1,Math.round((current().limit-elapsed)*10)+stars*25+100);
+  const sec=elapsed.toFixed(2);
+  const bestKey=`${BASE_ID}_best_${level}`;
+  const old=localStorage.getItem(bestKey);
+  if(!old||Number(sec)<Number(old))localStorage.setItem(bestKey,sec);
+  bestEl.textContent=localStorage.getItem(bestKey);
+  document.getElementById('summary').textContent=`Level: ${current().label} · Time: ${sec}s · Stars: ${stars} · Flight Bonus: 100 · Score: ${score}`;
+  document.getElementById('dialog').classList.add('open');
+  document.getElementById('dialog').dataset.score=score;
+  document.getElementById('dialog').dataset.seconds=sec;
+  loadBoards();
+}
+function isTypingField(el){
+  return el && (
+    el.tagName === 'INPUT' ||
+    el.tagName === 'TEXTAREA' ||
+    el.tagName === 'SELECT' ||
+    el.isContentEditable
+  );
+}
+
+document.addEventListener('keydown',e=>{
+  // Do not let game controls block typing in the name/submission box.
+  if(isTypingField(e.target)){
+    if(e.key === 'Enter') document.getElementById('submit').click();
+    return;
+  }
+
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' ','w','W','a','A','s','S','d','D'].includes(e.key)){
+    e.preventDefault();
+  }
+
+  if(e.key===' ' && !running && !document.getElementById('dialog').classList.contains('open')){
+    start();
+    return;
+  }
+
+  if(e.key==='r'||e.key==='R'){
+    reset(true);
+    return;
+  }
+
+  keys[e.key]=true;
+});
+
+document.addEventListener('keyup',e=>{
+  if(isTypingField(e.target)) return;
+  keys[e.key]=false;
+});
+
+
+// Finger swipe controls for laptop touchscreens.
+// Swipe left/right = short horizontal movement.
+// Swipe up = jump or fly up.
+// Swipe down = fly down during the wing phase.
+let swipeStart = null;
+
+game.addEventListener('pointerdown', e=>{
+  if(isTypingField(e.target)) return;
+  if(e.target.closest('.touch-btn') || e.target.closest('button')) return;
+  swipeStart = {
+    x: e.clientX,
+    y: e.clientY,
+    t: performance.now()
+  };
+}, {passive:true});
+
+game.addEventListener('pointerup', e=>{
+  if(!swipeStart) return;
+
+  const dx = e.clientX - swipeStart.x;
+  const dy = e.clientY - swipeStart.y;
+  const dt = performance.now() - swipeStart.t;
+  swipeStart = null;
+
+  if(Math.abs(dx) < 24 && Math.abs(dy) < 24) return;
+
+  // Start game with any clear swipe.
+  if(!running && !document.getElementById('dialog').classList.contains('open')){
+    start();
+  }
+
+  if(Math.abs(dx) > Math.abs(dy)){
+    const key = dx > 0 ? 'ArrowRight' : 'ArrowLeft';
+    setTouchKey(key, true);
+    setTimeout(()=>setTouchKey(key, false), flying ? 260 : 180);
+  }else{
+    if(dy < 0){
+      // Swipe up: jump in platform mode, fly upward in wing mode.
+      if(flying){
+        setTouchKey('ArrowUp', true);
+        setTimeout(()=>setTouchKey('ArrowUp', false), 260);
+      }else{
+        keys[' '] = true;
+        setTimeout(()=>{ keys[' '] = false; }, 140);
+      }
+    }else if(flying){
+      // Swipe down only matters during flight.
+      setTouchKey('ArrowDown', true);
+      setTimeout(()=>setTouchKey('ArrowDown', false), 260);
+    }
+  }
+}, {passive:true});
+
+// Large finger-friendly controls for touchscreen laptops / touchpads.
+// Holding a button acts like holding the matching keyboard key.
+function setTouchKey(key, pressed){
+  keys[key] = pressed;
+  const btn = document.querySelector(`.touch-btn[data-key="${key}"]`);
+  if(btn) btn.classList.toggle('active', pressed);
+}
+
+document.querySelectorAll('.touch-btn').forEach(btn=>{
+  const key = btn.dataset.key;
+
+  const press = (e)=>{
+    e.preventDefault();
+    if(!running && key === 'ArrowUp' && !document.getElementById('dialog').classList.contains('open')){
+      start();
+    }
+    setTouchKey(key, true);
+    game.focus();
+  };
+
+  const release = (e)=>{
+    e.preventDefault();
+    setTouchKey(key, false);
+  };
+
+  btn.addEventListener('pointerdown', press);
+  btn.addEventListener('pointerup', release);
+  btn.addEventListener('pointercancel', release);
+  btn.addEventListener('pointerleave', release);
+  btn.addEventListener('contextmenu', e=>e.preventDefault());
+});
+
+// Tap/click the game area to jump while playing, useful on touchscreens.
+game.addEventListener('pointerdown', e=>{
+  if(isTypingField(e.target)) return;
+  if(e.target.closest('.touch-btn') || e.target.closest('button')) return;
+  if(!running && !document.getElementById('dialog').classList.contains('open')){
+    start();
+    return;
+  }
+  if(running && !flying){
+    keys[' '] = true;
+    setTimeout(()=>{ keys[' '] = false; }, 120);
+  }
+});
+
+document.getElementById('start').onclick=start;document.getElementById('reset').onclick=()=>reset(true);document.querySelectorAll('.level').forEach(b=>b.onclick=()=>{document.querySelectorAll('.level').forEach(x=>x.classList.remove('active'));b.classList.add('active');level=b.dataset.level;reset(true);loadBoards()});
+async function submitScore(name){const seconds=Number(document.getElementById('dialog').dataset.seconds), score=Number(document.getElementById('dialog').dataset.score);try{const r=await fetch('/api/score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:gameKey(level),player_name:name,seconds:seconds,best_scores:score})});const d=await r.json().catch(()=>({}));return d.ok===true}catch(e){return false}}
+document.getElementById('skip').onclick=()=>document.getElementById('dialog').classList.remove('open');document.getElementById('submit').onclick=async()=>{const name=document.getElementById('name').value.trim();const st=document.getElementById('dialogStatus');if(!name){st.textContent='Name required.';return}document.getElementById('submit').disabled=true;st.textContent='Saving…';const ok=await submitScore(name);if(ok){st.textContent='Saved ✅';await loadBoards();setTimeout(()=>document.getElementById('dialog').classList.remove('open'),500)}else st.textContent='Could not save. Check /api/score.';document.getElementById('submit').disabled=false};document.getElementById('name').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('submit').click()});
+async function loadBoard(lv,id){const list=document.getElementById(id);try{const r=await fetch(`/api/leaderboard?game=${encodeURIComponent(gameKey(lv))}&limit=10`,{cache:'no-store'});const d=await r.json();const rows=Array.isArray(d)?d:(d.rows||[]);list.innerHTML=rows.length?rows.map((r,i)=>`<li>#${i+1} ${r.player_name||'Unknown'} — ${(r.best_seconds??r.bestSeconds??'—')}s · wins ${r.win_count??r.wins??0}</li>`).join(''):'<li>No scores yet.</li>'}catch(e){list.innerHTML='<li>Could not load.</li>'}}
+async function loadBoards(){document.getElementById('rankNote').textContent='Loading…';await Promise.all([loadBoard('easy','rankEasy'),loadBoard('medium','rankMedium'),loadBoard('hard','rankHard')]);document.getElementById('rankNote').textContent='Updated just now.'}
+reset(true);loadBoards();
+</script>
+
+<footer>© 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528. <br>
+      Made by the science and STEAM teacher Chao Yu. For educational purposes only. All rights reserved.</footer>
+</body>
+</html>

@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Pieces Puzzle · Ranked</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;700;900&family=Caveat:wght@600;700&display=swap');
+:root {
+  --bg:#f4eadb;--paper:#fff8eb;--paper2:#efe0c8;--ink:#4b3929;--muted:#8a735c;
+  --accent:#6f9c96;--accent2:#d08b73;--gold:#c69b52;--ok:#2f8f63;--bad:#bd5a4f;
+  --border:#d7c3a5;--shadow:0 18px 40px rgba(75,57,41,.18);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;min-height:100vh;color:var(--ink);background:radial-gradient(circle at 20% 0%,#fffaf0 0,#f4eadb 38%,#e7d6bd 100%);padding-bottom:58px}
+.back-header{position:sticky;top:0;z-index:50;background:rgba(255,248,235,.95);border-bottom:1px solid var(--border);padding:9px 16px;backdrop-filter:blur(8px)}
+.back-link{color:var(--ink);text-decoration:none;font-weight:800;font-size:14px}.back-link:hover{color:var(--accent)}
+.page{max-width:1440px;margin:0 auto;padding:16px 12px 0}.layout{display:grid;grid-template-columns:minmax(0,1fr)330px;gap:18px;align-items:start}
+.card,.rank-card{background:rgba(255,248,235,.93);border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow);padding:18px;position:relative;overflow:hidden}
+.card:before,.rank-card:before{content:"";position:absolute;inset:8px;border:1px dashed rgba(138,115,92,.22);border-radius:18px;pointer-events:none}
+.header{display:flex;gap:13px;align-items:center;border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:14px;position:relative;z-index:1}
+.logo{width:54px;height:54px;border-radius:16px;background:linear-gradient(135deg,#6f9c96,#e8cfa8);display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 6px 16px rgba(75,57,41,.16)}
+h1{font-family:Caveat,cursive;font-size:36px;line-height:1;font-weight:700}.subtitle{color:var(--muted);font-size:13px;margin-top:3px}
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;position:relative;z-index:1}.lbl{font-size:12px;color:var(--muted);font-weight:900;text-transform:uppercase;letter-spacing:.04em}
+button,select{font:700 13px Inter,system-ui,sans-serif;padding:9px 12px;border-radius:12px;border:1px solid var(--border);background:var(--paper2);color:var(--ink);cursor:pointer;box-shadow:0 4px 12px rgba(75,57,41,.08)}
+button:hover,select:hover{border-color:var(--accent)}button.primary{background:var(--accent);border-color:var(--accent);color:white}button.warn{background:#ead0aa}#solveBtn{display:none}
+.image-picker{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 14px;position:relative;z-index:1}
+.image-choice{padding:8px;border:2px solid transparent;background:#fffdf6;border-radius:16px;text-align:left;box-shadow:0 8px 20px rgba(75,57,41,.10)}
+.image-choice.active{border-color:var(--accent);background:#f2faf7}.thumb{height:82px;border-radius:12px;background-size:cover;background-position:center;margin-bottom:7px;border:1px solid var(--border)}
+.choice-title{font-size:12px;font-weight:900;color:var(--ink)}
+.stats{display:flex;gap:16px;align-items:center;flex-wrap:wrap;padding:10px 12px;background:#fffdf6;border:1px solid var(--border);border-radius:14px;margin-bottom:12px;font-size:12px;font-weight:800;color:var(--muted);position:relative;z-index:1}
+.stat-val{color:var(--ink);margin-left:4px}#message.win{color:var(--ok)}#message{color:var(--accent2)}
+.board-wrap{position:relative;z-index:1;width:100%;overflow:auto;background:#fffdf6;border:1px solid var(--border);border-radius:18px;padding:10px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.45)}
+#board{display:grid;margin:0 auto;gap:0;background:#d8c5a8;border:1px solid var(--border)}
+.piece{position:relative;background-repeat:no-repeat;border:1px solid rgba(255,255,255,.25);padding:0;margin:0;border-radius:0;box-shadow:none;color:rgba(255,255,255,.82);font-size:9px;text-shadow:0 1px 2px rgba(0,0,0,.65);overflow:hidden}
+.piece:hover{outline:2px solid var(--gold);z-index:3}.piece.selected{outline:3px solid var(--accent2);z-index:4;filter:brightness(1.08)}.piece.correct{box-shadow:inset 0 0 0 1px rgba(47,143,99,.55)}
+.numbers-off .piece{color:transparent;text-shadow:none}
+.preview-row{display:grid;grid-template-columns:220px 1fr;gap:14px;align-items:center;margin-top:12px;position:relative;z-index:1}.preview{height:150px;border-radius:16px;background-size:cover;background-position:center;border:1px solid var(--border);box-shadow:0 8px 20px rgba(75,57,41,.16)}
+.tip{font-size:12px;line-height:1.6;color:var(--muted);background:#fffdf6;border:1px solid var(--border);border-radius:16px;padding:12px}
+.rank-sidebar{position:sticky;top:56px}.rank-card h3{font-family:Caveat,cursive;font-size:30px;margin-bottom:3px}.rank-note{font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.5}
+.rank-sub{border:1px solid var(--border);border-radius:14px;padding:10px 12px;background:#fffdf6;margin-bottom:10px}.rank-sub-title{font-size:12px;font-weight:900;color:var(--accent);margin-bottom:6px;text-transform:uppercase}
+.rank-sub ol{padding-left:18px}.rank-sub li{font-size:12px;margin:5px 0;color:var(--muted)}.rank-sub li:first-child{color:var(--ink)}.rank-err{color:var(--bad)}#rankStatus{font-size:12px;color:var(--muted);margin-top:8px}
+#nameDialog{position:fixed;inset:0;background:rgba(75,57,41,.28);display:none;align-items:center;justify-content:center;z-index:3000;backdrop-filter:blur(4px)}.dialog-box{background:var(--paper);border:1px solid var(--border);border-radius:18px;padding:24px 22px 20px;max-width:430px;width:92%;box-shadow:0 24px 64px rgba(75,57,41,.28)}
+.dialog-box h3{font-family:Caveat,cursive;font-size:34px;color:var(--ok);margin-bottom:8px}.dialog-box p{font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.5}.dialog-box input{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--border);background:#fffdf6;color:var(--ink);font:700 14px Inter,system-ui,sans-serif}
+.dialog-actions{display:flex;gap:10px;margin-top:12px;justify-content:flex-end}#dialogStatus{margin-top:8px;font-size:12px;color:var(--bad);font-weight:800}
+footer{position:fixed;bottom:0;left:0;width:100%;background:rgba(255,248,235,.95);border-top:1px solid var(--border);text-align:center;padding:8px 0;font-size:12px;color:var(--muted);z-index:50;backdrop-filter:blur(6px)}
+
+@media(max-width:980px){
+.layout{grid-template-columns:1fr}
+.rank-sidebar{position:static}
+.preview{width:100%;max-width:360px}
+h1{font-size:30px}
+.image-picker{grid-template-columns:1fr}
+.thumb{height:120px}
+}
+
+</style>
+</head>
+<body>
+<header class="back-header"><a class="back-link" href="/puzzle">← Back to Puzzle Home</a></header>
+<div class="page"><div class="layout"><main><section class="card">
+  <div class="header"><div class="logo">🧩</div><div><h1>Pieces Puzzle · Ranked</h1><div class="subtitle">Choose an image and difficulty level. Hard mode has 1,000 pieces.</div></div></div>
+  <div class="image-picker" id="imagePicker"></div>
+  <div class="controls">
+    <span class="lbl">Level</span><select id="difficultySelect"><option value="easy" selected>Easy — 24 pieces</option><option value="medium">Medium — 100 pieces</option><option value="hard">Hard — 300 pieces</option></select>
+    <button class="primary" id="newBtn">New Puzzle</button><button id="previewBtn">Show Preview</button><button id="showNumbersBtn">Show Piece Numbers</button><button class="warn" id="solveBtn">Reveal Solution</button>
+  </div>
+  <div class="stats"><div>Image <span class="stat-val" id="imageEl">Classroom Projects</span></div><div>Level <span class="stat-val" id="levelEl">Hard</span></div><div>🧩 Pieces <span class="stat-val" id="piecesEl">1,000</span></div><div>⏱ Time <span class="stat-val" id="timeEl">0</span>s</div><div>🔁 Moves <span class="stat-val" id="movesEl">0</span></div><div>✅ Correct <span class="stat-val" id="correctEl">0</span>/<span id="totalEl">1,000</span></div><div id="message">Select two pieces to swap them.</div></div>
+  <div class="board-wrap"><div id="board" aria-label="ranked image puzzle board"></div></div>
+</section></main>
+
+<aside class="rank-sidebar">
+<section class="rank-card" id="previewRow">
+<div class="preview" id="preview" title="Reference image" style="margin-bottom:12px;"></div>
+<div class="tip"><b>How to play:</b> Choose one of the three images, then select two pieces to swap them. Rankings are shared across all images and separated only by difficulty level. Hard mode uses 40 columns × 25 rows = 1,000 pieces.</div>
+</section>
+
+<section class="rank-card"><h3>🏆 Leaderboard</h3><div class="rank-note">Rankings are shared across all images. Each difficulty level has its own leaderboard. Players are ranked by wins first, then by best time.</div>
+  <div class="rank-sub"><div class="rank-sub-title">Easy · 24 pieces</div><ol id="rankListEasy"><li>Loading…</li></ol></div>
+  <div class="rank-sub"><div class="rank-sub-title">Medium · 100 pieces</div><ol id="rankListMedium"><li>Loading…</li></ol></div>
+  <div class="rank-sub"><div class="rank-sub-title">Hard · 300 pieces</div><ol id="rankListHard"><li>Loading…</li></ol></div>
+  <div id="rankStatus">Loading…</div></section></aside>
+</div></div>
+<div id="nameDialog"><div class="dialog-box"><h3>🎉 Puzzle Completed!</h3><p id="dialogPrompt">Enter your name for the leaderboard:</p><input id="dialogNameInput" placeholder="Your name" maxlength="40"/><div class="dialog-actions"><button id="dialogCancel">Cancel</button><button class="primary" id="dialogSubmit">Submit</button></div><div id="dialogStatus"></div></div></div>
+<footer>© 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528. Made by Science and STEAM Teacher Chao Yu. For educational purposes only.</footer>
+<script>
+const BASE_GAME_ID='pieces_puzzle';
+const IMAGES={
+  image1: { label: 'Science Class 1', url: 'image1.jpg' },
+  image2: { label: 'Science Class 2', url: 'image2.jpg' },
+  image3: { label: 'Science Class 3', url: 'image3.jpg' }
+};
+const LEVELS={ easy:{label:'Easy',cols:6,rows:4}, medium:{label:'Medium',cols:10,rows:10}, hard:{label:'Hard',cols:20,rows:15} };
+let imageKey='image1', difficulty='medium', COLS=10, ROWS=10, TOTAL=100;
+let order=[], selected=null, seconds=0, moves=0, timer=null, gameOver=false, submitted=false, solvedByButton=false;
+const el=id=>document.getElementById(id);
+function levelKeyCap(k){return k.charAt(0).toUpperCase()+k.slice(1)}
+function gameId(diff=difficulty){return `${BASE_GAME_ID}_${diff}`;}
+function currentImage(){return IMAGES[imageKey];}
+function buildImagePicker(){const box=el('imagePicker');box.innerHTML='';Object.entries(IMAGES).forEach(([key,img])=>{const btn=document.createElement('button');btn.type='button';btn.className='image-choice'+(key===imageKey?' active':'');btn.innerHTML=`<div class="thumb" style="background-image:url('${img.url}')"></div><div class="choice-title">${img.label}</div>`;btn.onclick=()=>{imageKey=key;newGame();};box.appendChild(btn);});}
+function updateImageUI(){document.querySelectorAll('.image-choice').forEach((b,i)=>{const key=Object.keys(IMAGES)[i];b.classList.toggle('active',key===imageKey);});el('imageEl').textContent=currentImage().label;el('preview').style.backgroundImage=`url('${currentImage().url}')`;}
+function applyDifficulty(){const cfg=LEVELS[difficulty];COLS=cfg.cols;ROWS=cfg.rows;TOTAL=COLS*ROWS;el('levelEl').textContent=cfg.label;el('piecesEl').textContent=TOTAL.toLocaleString();el('totalEl').textContent=TOTAL.toLocaleString();}
+function startTimer(){if(timer)return;timer=setInterval(()=>{seconds++;el('timeEl').textContent=seconds;},1000)}
+function stopTimer(){clearInterval(timer);timer=null}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function makeDerangedOrder(){let a=Array.from({length:TOTAL},(_,i)=>i);shuffle(a);if(a.every((v,i)=>v===i)&&TOTAL>1){[a[0],a[1]]=[a[1],a[0]]}return a}
+function newGame(){difficulty=el('difficultySelect').value;applyDifficulty();updateImageUI();order=makeDerangedOrder();selected=null;seconds=0;moves=0;gameOver=false;submitted=false;solvedByButton=false;stopTimer();startTimer();el('timeEl').textContent='0';el('movesEl').textContent='0';el('message').textContent='Select two pieces to swap them.';el('message').className='';renderBoard();updateCorrect();loadAllRanks();}
+function renderBoard(){const board=el('board');const wrap=document.querySelector('.board-wrap');const minWidth=difficulty==='hard'?760:(difficulty==='medium'?640:430);const available=Math.max(minWidth,wrap.clientWidth-22);const pieceW=Math.max(difficulty==='hard'?18:28,Math.floor(available/COLS));const pieceH=Math.round(pieceW*3/4);board.style.gridTemplateColumns=`repeat(${COLS}, ${pieceW}px)`;board.style.gridTemplateRows=`repeat(${ROWS}, ${pieceH}px)`;board.style.width=`${pieceW*COLS}px`;board.style.height=`${pieceH*ROWS}px`;board.innerHTML='';for(let pos=0;pos<TOTAL;pos++){const original=order[pos];const sx=original%COLS, sy=Math.floor(original/COLS);const div=document.createElement('button');div.type='button';div.className='piece'+(original===pos?' correct':'');div.dataset.pos=pos;div.dataset.original=original;div.style.width=pieceW+'px';div.style.height=pieceH+'px';div.style.backgroundImage=`url('${currentImage().url}')`;div.style.backgroundSize=`${pieceW*COLS}px ${pieceH*ROWS}px`;div.style.backgroundPosition=`-${sx*pieceW}px -${sy*pieceH}px`;div.textContent=String(original+1);div.title=`Piece ${original+1}`;div.onclick=()=>selectPiece(pos);board.appendChild(div);}}
+function rerenderClasses(){document.querySelectorAll('.piece').forEach((p,pos)=>{p.classList.toggle('selected',pos===selected);p.classList.toggle('correct',order[pos]===pos);})}
+function selectPiece(pos){if(gameOver)return;if(selected===null){selected=pos;rerenderClasses();return}if(selected===pos){selected=null;rerenderClasses();return}[order[selected],order[pos]]=[order[pos],order[selected]];moves++;el('movesEl').textContent=moves;selected=null;renderBoard();const c=updateCorrect();if(c===TOTAL)finishGame(true);}
+function updateCorrect(){let c=0;for(let i=0;i<TOTAL;i++)if(order[i]===i)c++;el('correctEl').textContent=c;return c;}
+function finishGame(allowSubmit=true){gameOver=true;stopTimer();el('message').textContent=`${currentImage().label} · ${LEVELS[difficulty].label} restored in ${seconds}s with ${moves} moves!`;el('message').className='win';if(allowSubmit&&!submitted&&!solvedByButton){submitted=true;openWinDialog();}}
+function solvePuzzle(){solvedByButton=true;order=Array.from({length:TOTAL},(_,i)=>i);selected=null;moves++;el('movesEl').textContent=moves;renderBoard();updateCorrect();finishGame(false);el('message').textContent='Solution revealed for checking only. This result was not submitted to the leaderboard.';}
+el('newBtn').onclick=newGame;el('difficultySelect').onchange=newGame;el('solveBtn').onclick=solvePuzzle;el('showNumbersBtn').onclick=()=>{document.body.classList.toggle('numbers-off');el('showNumbersBtn').textContent=document.body.classList.contains('numbers-off')?'Show Piece Numbers':'Hide Piece Numbers';};el('previewBtn').onclick=()=>{const row=el('previewRow');const hide=row.style.display!=='none';row.style.display=hide?'none':'grid';el('previewBtn').textContent=hide?'Show Preview':'Hide Preview';};
+window.addEventListener('resize',()=>{if(order.length&&!gameOver)renderBoard();});
+async function submitScore(name){try{const res=await fetch('/api/score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:gameId(),player_name:name.trim().slice(0,40),seconds})});if(!res.ok)return false;const data=await res.json().catch(()=>({}));return data.ok===true;}catch{return false;}}
+async function loadRankList(diff){const list=el(`rankList${levelKeyCap(diff)}`);if(!list)return;try{const res=await fetch(`/api/leaderboard?game=${encodeURIComponent(gameId(diff))}&limit=5`,{cache:'no-store'});const data=await res.json();const rows=Array.isArray(data)?data:(data.rows||[]);list.innerHTML='';if(!rows.length){list.innerHTML='<li>No scores yet.</li>';return;}rows.forEach((r,i)=>{const name=r.player_name??r.playerName??'Unknown';const wins=r.win_count??r.wins??r.winCount??0;const best=r.best_seconds??r.bestSeconds??null;const li=document.createElement('li');li.textContent=`#${i+1} ${name} — ${wins} win${wins===1?'':'s'}`+(best!=null?` — Best: ${best}s`:'');list.appendChild(li);});}catch{list.innerHTML="<li class='rank-err'>Could not load.</li>";}}
+async function loadAllRanks(){el('rankStatus').textContent='Loading shared rankings…';await Promise.all(['easy','medium','hard'].map(loadRankList));el('rankStatus').textContent='Shared rankings updated.';}
+function openWinDialog(){const d=el('nameDialog'),inp=el('dialogNameInput');el('dialogPrompt').textContent=`Image: ${currentImage().label} · Level: ${LEVELS[difficulty].label} · Pieces: ${TOTAL} · Time: ${seconds}s · Moves: ${moves}. Enter your name:`;el('dialogStatus').textContent='';inp.value='';d.style.display='flex';setTimeout(()=>inp.focus(),50);}
+function closeWinDialog(){el('nameDialog').style.display='none';}
+el('dialogCancel').onclick=closeWinDialog;el('dialogNameInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();el('dialogSubmit').click();}});el('dialogSubmit').onclick=async()=>{const name=el('dialogNameInput').value.trim(),st=el('dialogStatus'),btn=el('dialogSubmit');if(!name){st.textContent='Name is required.';return;}btn.disabled=true;st.textContent='Saving…';const ok=await submitScore(name);if(ok){closeWinDialog();loadAllRanks();}else st.textContent='Could not save. Try again.';btn.disabled=false;};
+
+let secretBuffer='';
+document.addEventListener('keydown',e=>{
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  if(e.key.length!==1)return;
+  secretBuffer=(secretBuffer+e.key.toLowerCase()).slice(-3);
+  if(secretBuffer==='cmd'){
+    const solveBtn=el('solveBtn');
+    const hidden=solveBtn.style.display==='none'||getComputedStyle(solveBtn).display==='none';
+    solveBtn.style.display=hidden?'inline-block':'none';
+    el('message').textContent=hidden?'Reveal button is now visible.':'Select two pieces to swap them.';
+    el('message').className='';
+    secretBuffer='';
+  }
+});
+
+buildImagePicker();
+document.body.classList.add('numbers-off');
+document.getElementById('previewRow').style.display='none';
+newGame();
+</script>
+</body>
+</html>

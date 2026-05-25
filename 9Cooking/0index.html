@@ -1,0 +1,1171 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dish Maker</title>
+  <style>
+    *{ box-sizing:border-box; }
+    body{
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:#ffffff;
+      margin:0;
+      padding:56px 16px 64px;
+      color:#111827;
+    }
+
+    .back-header{
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 1000;
+    }
+    .back-link{
+      text-decoration:none;
+      color:#000;
+      font-weight:800;
+      font-size:16px;
+    }
+
+    .layout{
+      max-width: 1220px;
+      margin: 0 auto;
+      display:grid;
+      grid-template-columns: minmax(0, 1fr) 380px;
+      gap: 24px;
+      align-items:start;
+    }
+    .main{ display:flex; justify-content:center; }
+    .game-shell{ width:100%; max-width: 860px; }
+
+    h1{ margin:0 0 8px; }
+    .sub{ margin:0 0 14px; color:#374151; font-size:14px; }
+
+    .topbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      margin: 8px 0 12px;
+    }
+    .topbar button{
+      padding:8px 14px;
+      border:1px solid #2563eb;
+      border-radius:10px;
+      background:#2563eb;
+      color:#fff;
+      cursor:pointer;
+      font-weight:800;
+      font-size:14px;
+    }
+    .topbar button.secondary{
+      background:#fff;
+      color:#2563eb;
+    }
+    .stats{
+      margin-left:auto;
+      font-weight:800;
+      color:#111827;
+      white-space:nowrap;
+    }
+    .stats span{ font-variant-numeric: tabular-nums; }
+
+    .difficulty{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin: 0 0 12px;
+    }
+    .difficulty label{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      padding:8px 10px;
+      border:1px solid #d1d5db;
+      border-radius:12px;
+      cursor:pointer;
+      user-select:none;
+      background:#fff;
+      font-weight:800;
+      font-size:14px;
+    }
+    .difficulty input{ cursor:pointer; }
+
+    .game-area{
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 14px;
+      background:#fff;
+    }
+
+    .two-col{
+      display:grid;
+      grid-template-columns: 1fr 340px;
+      gap: 12px;
+      align-items:start;
+    }
+
+    .panel{
+      border:1px solid #e5e7eb;
+      border-radius:14px;
+      padding:12px;
+      background:#fafafa;
+      min-height: 240px;
+    }
+
+    .order-title{
+      font-weight:900;
+      margin:0 0 6px;
+    }
+    .order-line{
+      margin: 6px 0;
+      font-size:14px;
+      color:#111827;
+      font-weight:800;
+    }
+    .order-line small{
+      font-weight:700;
+      color:#6b7280;
+    }
+
+    .pot{
+      border:2px solid #e5e7eb;
+      border-radius:16px;
+      background:#ffffff;
+      padding:12px;
+      min-height: 240px;
+      position:relative;
+      overflow:hidden;
+    }
+    .pot-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .phase-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid #d1d5db;
+      font-weight:900;
+      font-size:13px;
+      background:#fff;
+    }
+    .timer{
+      font-weight:900;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .dropzone{
+      border:2px dashed #d1d5db;
+      border-radius:14px;
+      padding: 12px;
+      min-height: 150px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-content:flex-start;
+      background:#fcfcfc;
+    }
+    .dropzone.dragover{
+      border-color:#2563eb;
+      background:#f5faff;
+    }
+
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid #e5e7eb;
+      background:#fff;
+      font-weight:900;
+      cursor:grab;
+      user-select:none;
+      touch-action:none;
+    }
+    .chip:active{ cursor:grabbing; }
+    .chip small{
+      font-weight:800;
+      color:#6b7280;
+      margin-left:2px;
+    }
+
+    .bins{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .bin{
+      border:1px solid #e5e7eb;
+      border-radius:14px;
+      padding:10px;
+      background:#fff;
+    }
+    .bin-title{
+      margin:0 0 8px;
+      font-weight:900;
+      font-size:14px;
+    }
+    .bin-items{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      min-height: 54px;
+    }
+
+    .actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top: 12px;
+      align-items:center;
+    }
+    .actions button{
+      padding:10px 14px;
+      border-radius:12px;
+      border:1px solid #9ca3af;
+      background:#f3f4f6;
+      cursor:pointer;
+      font-weight:900;
+      color:#111827;
+    }
+    .actions button.primary{
+      background:#2563eb;
+      border-color:#2563eb;
+      color:#fff;
+    }
+    .actions button:disabled{
+      opacity: 0.6;
+      cursor:not-allowed;
+    }
+
+    .msg{
+      margin-top:12px;
+      min-height:22px;
+      font-weight:900;
+    }
+    .hint{
+      margin-top:6px;
+      min-height:18px;
+      font-size:14px;
+      color:#374151;
+    }
+
+    .rank-sidebar{
+      position: sticky;
+      top: 72px;
+      max-height: calc(100vh - 96px);
+      overflow:auto;
+    }
+    .rank-card{
+      border:1px solid #e5e7eb;
+      background:#fafafa;
+      border-radius:14px;
+      padding:12px 14px;
+    }
+    .rank-card h3{ margin:0 0 8px; }
+    .rank-note{
+      margin-top:10px;
+      font-size:12px;
+      color:#6b7280;
+      min-height:16px;
+    }
+    .rank-sub{
+      border:1px solid #e5e7eb;
+      background:#fff;
+      border-radius:12px;
+      padding:10px 12px;
+      margin-top:12px;
+    }
+    .rank-sub-title{
+      font-weight:900;
+      margin:0 0 6px;
+    }
+    .rank-sub ol{ margin:0; padding-left:22px; }
+    .rank-sub li{ margin:6px 0; }
+
+    @media (max-width: 980px){
+      .layout{ grid-template-columns: 1fr; }
+      .rank-sidebar{ position: static; max-height:none; }
+      .stats{ margin-left:0; }
+      .two-col{ grid-template-columns: 1fr; }
+    }
+
+    /* Winner dialog */
+    .dialog-backdrop{
+      position:fixed;
+      inset:0;
+      background: rgba(17,24,39,0.45);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index: 4000;
+      padding: 16px;
+    }
+    .dialog{
+      width:100%;
+      max-width: 380px;
+      background:#fff;
+      border-radius:14px;
+      border:1px solid #e5e7eb;
+      box-shadow: 0 16px 30px rgba(0,0,0,0.2);
+      padding: 14px;
+    }
+    .dialog h4{ margin:0 0 8px; }
+    .dialog p{ margin:0 0 10px; color:#374151; font-size:14px; }
+    .dialog input{
+      width:100%;
+      padding:10px 12px;
+      border:1px solid #d1d5db;
+      border-radius:10px;
+      font-size:16px;
+      outline:none;
+    }
+    .dialog-actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:12px;
+      justify-content:flex-end;
+    }
+    .dialog-actions button{
+      padding:10px 14px;
+      border-radius:10px;
+      border:1px solid #9ca3af;
+      background:#f3f4f6;
+      cursor:pointer;
+      font-weight:900;
+      min-width: 110px;
+      color:#111827;
+    }
+    .dialog-actions button.primary{
+      background:#2563eb;
+      border-color:#2563eb;
+      color:#fff;
+      min-width: 140px;
+    }
+    .dialog-status{
+      margin-top:10px;
+      min-height:18px;
+      font-size:13px;
+      color:#374151;
+      font-weight:800;
+    }
+
+    footer{
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: #fafafa;
+      text-align: center;
+      padding: 8px 0;
+      font-size: 14px;
+      color: #555;
+      border-top: 1px solid #ccc;
+    }
+  </style>
+</head>
+
+<body>
+  <header class="back-header">
+    <a class="back-link" href="/puzzle">← Back to Puzzle Home</a>
+  </header>
+
+  <div class="layout">
+    <main class="main">
+      <div class="game-shell">
+        <h1>Dish Maker</h1>
+        <p class="sub">
+          Drag ingredients into the pot in the correct order: <b>Flavors → Meat → Vegetables → Cook → Serve</b>.
+          Make as many dishes as you can before time runs out.
+        </p>
+
+        <div class="topbar">
+          <button id="startBtn">Start</button>
+          <button id="pauseBtn" class="secondary">Pause</button>
+          <button id="resetBtn" class="secondary">Reset</button>
+
+          <div class="stats">
+            Score: <span id="score">0</span> · Best: <span id="bestLocal">0</span> · Dishes: <span id="dishes">0</span> · Level: <span id="lvlText">EASY</span>
+          </div>
+        </div>
+
+        <div class="difficulty" role="radiogroup" aria-label="Difficulty">
+          <strong>Difficulty:</strong>
+          <label><input type="radio" name="difficulty" value="easy" checked /> Easy</label>
+          <label><input type="radio" name="difficulty" value="medium" /> Medium</label>
+          <label><input type="radio" name="difficulty" value="hard" /> Hard</label>
+        </div>
+
+        <div class="game-area">
+          <div class="two-col">
+            <!-- Left: Pot -->
+            <div class="panel" style="background:#fff;">
+              <div class="pot">
+                <div class="pot-header">
+                  <div class="phase-pill">
+                    Phase: <span id="phaseText">READY</span>
+                  </div>
+                  <div class="timer">Time: <span id="timeLeft">0</span>s</div>
+                </div>
+
+                <div id="dropzone" class="dropzone" aria-label="Pot drop zone">
+                  <div style="font-weight:900; color:#6b7280;">
+                    Drop ingredients here 👇
+                    <div style="font-weight:800; margin-top:4px; font-size:13px;">
+                      Tip: follow the recipe phase!
+                    </div>
+                  </div>
+                </div>
+
+                <div class="actions">
+                  <button id="cookBtn" class="primary" disabled>Cook</button>
+                  <button id="serveBtn" class="primary" disabled>Serve</button>
+                  <button id="trashBtn">Trash Last</button>
+                </div>
+
+                <div class="msg" id="msg"></div>
+                <div class="hint" id="hint"></div>
+              </div>
+            </div>
+
+            <!-- Right: Order + Ingredient bins -->
+            <div class="panel">
+              <div class="order-title">🧾 Current Order</div>
+              <div class="order-line" id="orderName">—</div>
+              <div class="order-line">
+                Flavors: <span id="orderFlavors"></span>
+                <small>(drag into pot during FLAVORS)</small>
+              </div>
+              <div class="order-line">
+                Meat: <span id="orderMeat"></span>
+                <small>(drag into pot during MEAT)</small>
+              </div>
+              <div class="order-line">
+                Vegetables: <span id="orderVeg"></span>
+                <small>(drag into pot during VEG)</small>
+              </div>
+
+              <div class="bins">
+                <div class="bin">
+                  <div class="bin-title">Flavors</div>
+                  <div class="bin-items" id="binFlavors"></div>
+                </div>
+                <div class="bin">
+                  <div class="bin-title">Meat</div>
+                  <div class="bin-items" id="binMeat"></div>
+                </div>
+                <div class="bin">
+                  <div class="bin-title">Vegetables</div>
+                  <div class="bin-items" id="binVeg"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <aside class="rank-sidebar">
+      <div class="rank-card">
+        <h3>🏆 Leaderboard</h3>
+        <div style="font-size:13px; opacity:0.85;">
+          Separate boards by difficulty. Ranking: Wins (high → low), then Best Score (high → low).
+        </div>
+
+        <div class="rank-sub">
+          <div class="rank-sub-title">Easy</div>
+          <ol id="rankEasy"><li>Loading…</li></ol>
+        </div>
+        <div class="rank-sub">
+          <div class="rank-sub-title">Medium</div>
+          <ol id="rankMedium"><li>Loading…</li></ol>
+        </div>
+        <div class="rank-sub">
+          <div class="rank-sub-title">Hard</div>
+          <ol id="rankHard"><li>Loading…</li></ol>
+        </div>
+
+        <div id="rankStatus" class="rank-note"></div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Winner Name Dialog -->
+  <div id="nameDialog" class="dialog-backdrop" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
+      <h4 id="dialogTitle">Time's up</h4>
+      <p>Enter your name to submit your score.</p>
+      <input id="dialogNameInput" type="text" placeholder="Your name" maxlength="40" autocomplete="off" />
+      <div class="dialog-actions">
+        <button id="dialogCancel">Cancel (Esc)</button>
+        <button id="dialogSubmit" class="primary">Submit (Enter)</button>
+      </div>
+      <div id="dialogStatus" class="dialog-status"></div>
+    </div>
+  </div>
+
+  <footer>
+    © 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528. <br>
+    The STEAM Teacher is Chao Yu. For educational purposes only. All rights reserved.
+  </footer>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const BASE_GAME_ID = "dish_maker";
+
+      // ===== UI =====
+      const startBtn = document.getElementById("startBtn");
+      const pauseBtn = document.getElementById("pauseBtn");
+      const resetBtn = document.getElementById("resetBtn");
+
+      const scoreEl = document.getElementById("score");
+      const bestLocalEl = document.getElementById("bestLocal");
+      const dishesEl = document.getElementById("dishes");
+      const lvlTextEl = document.getElementById("lvlText");
+
+      const phaseTextEl = document.getElementById("phaseText");
+      const timeLeftEl = document.getElementById("timeLeft");
+
+      const msgEl = document.getElementById("msg");
+      const hintEl = document.getElementById("hint");
+
+      const dropzone = document.getElementById("dropzone");
+      const cookBtn = document.getElementById("cookBtn");
+      const serveBtn = document.getElementById("serveBtn");
+      const trashBtn = document.getElementById("trashBtn");
+
+      const orderNameEl = document.getElementById("orderName");
+      const orderFlavorsEl = document.getElementById("orderFlavors");
+      const orderMeatEl = document.getElementById("orderMeat");
+      const orderVegEl = document.getElementById("orderVeg");
+
+      const binFlavors = document.getElementById("binFlavors");
+      const binMeat = document.getElementById("binMeat");
+      const binVeg = document.getElementById("binVeg");
+
+      const nameDialog = document.getElementById("nameDialog");
+      const dialogNameInput = document.getElementById("dialogNameInput");
+      const dialogSubmit = document.getElementById("dialogSubmit");
+      const dialogCancel = document.getElementById("dialogCancel");
+      const dialogStatus = document.getElementById("dialogStatus");
+      const dialogTitle = document.getElementById("dialogTitle");
+
+      // ===== Game Config =====
+      const LEVEL = {
+        easy:   { totalSeconds: 75, orderSize: {fl:2, me:1, ve:2}, penaltyWrong: 1, penaltyTime: 2 },
+        medium: { totalSeconds: 70, orderSize: {fl:2, me:2, ve:2}, penaltyWrong: 2, penaltyTime: 3 },
+        hard:   { totalSeconds: 60, orderSize: {fl:3, me:2, ve:3}, penaltyWrong: 3, penaltyTime: 4 }
+      };
+
+      const POOL = {
+        flavors: [
+          { id:"salt",  label:"Salt",  icon:"🧂" },
+          { id:"pepper",label:"Pepper",icon:"🌶️" },
+          { id:"soy",   label:"Soy Sauce", icon:"🥢" },
+          { id:"ginger",label:"Ginger",icon:"🫚" },
+          { id:"garlic",label:"Garlic",icon:"🧄" },
+          { id:"sugar", label:"Sugar", icon:"🍬" }
+        ],
+        meat: [
+          { id:"chicken", label:"Chicken", icon:"🍗" },
+          { id:"beef",    label:"Beef",    icon:"🥩" },
+          { id:"pork",    label:"Pork",    icon:"🍖" },
+          { id:"shrimp",  label:"Shrimp",  icon:"🦐" }
+        ],
+        veg: [
+          { id:"carrot",  label:"Carrot",  icon:"🥕" },
+          { id:"broccoli",label:"Broccoli",icon:"🥦" },
+          { id:"mushroom",label:"Mushroom",icon:"🍄" },
+          { id:"pepperveg",label:"Bell Pepper",icon:"🫑" },
+          { id:"corn",    label:"Corn",    icon:"🌽" },
+          { id:"onion",   label:"Onion",   icon:"🧅" }
+        ]
+      };
+
+      const PHASE = {
+        READY: "READY",
+        FLAVORS: "FLAVORS",
+        MEAT: "MEAT",
+        VEG: "VEG",
+        COOK: "COOK",
+        SERVE: "SERVE",
+        OVER: "OVER"
+      };
+
+      let difficulty = "easy";
+
+      // ===== State =====
+      let running = false;
+      let paused = false;
+      let tickId = null;
+
+      let score = 0;
+      let dishes = 0;
+      let bestLocal = 0;
+
+      let timeLeft = 0;
+      let phase = PHASE.READY;
+
+      // current order
+      let order = null;
+
+      // pot contents (ids in sequence)
+      let pot = [];
+
+      // last dragged ingredient (for trash)
+      let lastAdded = null;
+
+      // ===== Helpers =====
+      function setMsg(m, h=""){
+        msgEl.textContent = m;
+        hintEl.textContent = h;
+      }
+
+      function keyForLocalBest(){
+        return `dish_best_${difficulty}`;
+      }
+
+      function gameKey(diff){
+        return `${BASE_GAME_ID}_${diff}`;
+      }
+
+      function loadLocalBest(){
+        const v = Number(localStorage.getItem(keyForLocalBest()) || "0");
+        bestLocal = Number.isFinite(v) ? v : 0;
+        bestLocalEl.textContent = String(bestLocal);
+      }
+
+      function saveLocalBest(){
+        localStorage.setItem(keyForLocalBest(), String(bestLocal));
+      }
+
+      function randInt(n){ return Math.floor(Math.random() * n); }
+
+      function pickUnique(arr, k){
+        const copy = arr.slice();
+        // Fisher-Yates shuffle (partial)
+        for (let i = copy.length - 1; i > 0; i--){
+          const j = randInt(i + 1);
+          [copy[i], copy[j]] = [copy[j], copy[i]];
+        }
+        return copy.slice(0, Math.min(k, copy.length));
+      }
+
+      function phaseLabel(p){
+        if (p === PHASE.READY) return "READY";
+        if (p === PHASE.FLAVORS) return "FLAVORS";
+        if (p === PHASE.MEAT) return "MEAT";
+        if (p === PHASE.VEG) return "VEG";
+        if (p === PHASE.COOK) return "COOK";
+        if (p === PHASE.SERVE) return "SERVE";
+        return "OVER";
+      }
+
+      function updateUI(){
+        scoreEl.textContent = String(score);
+        dishesEl.textContent = String(dishes);
+        timeLeftEl.textContent = String(Math.max(0, timeLeft));
+        phaseTextEl.textContent = phaseLabel(phase);
+        lvlTextEl.textContent = difficulty.toUpperCase();
+
+        cookBtn.disabled = !(running && !paused && phase === PHASE.COOK);
+        serveBtn.disabled = !(running && !paused && phase === PHASE.SERVE);
+      }
+
+      function renderPot(){
+        dropzone.innerHTML = "";
+        if (!pot.length){
+          const helper = document.createElement("div");
+          helper.style.fontWeight = "900";
+          helper.style.color = "#6b7280";
+          helper.innerHTML = `Drop ingredients here 👇
+            <div style="font-weight:800; margin-top:4px; font-size:13px;">
+              Tip: follow the recipe phase!
+            </div>`;
+          dropzone.appendChild(helper);
+          return;
+        }
+
+        pot.forEach((entry) => {
+          const chip = document.createElement("div");
+          chip.className = "chip";
+          chip.style.cursor = "default";
+          chip.textContent = `${entry.icon} ${entry.label}`;
+          dropzone.appendChild(chip);
+        });
+      }
+
+      function renderBins(){
+        function fillBin(bin, items, group){
+          bin.innerHTML = "";
+          items.forEach(it => {
+            const chip = document.createElement("div");
+            chip.className = "chip";
+            chip.setAttribute("draggable", "true");
+            chip.dataset.group = group;
+            chip.dataset.id = it.id;
+            chip.dataset.label = it.label;
+            chip.dataset.icon = it.icon;
+            chip.innerHTML = `${it.icon} ${it.label} <small>drag</small>`;
+
+            chip.addEventListener("dragstart", (e) => {
+              e.dataTransfer.setData("text/plain", JSON.stringify({
+                group,
+                id: it.id,
+                label: it.label,
+                icon: it.icon
+              }));
+            });
+
+            chip.addEventListener("click", () => {
+              if (!running || paused) return;
+              addToPot({group, id: it.id, label: it.label, icon: it.icon});
+            });
+
+            bin.appendChild(chip);
+          });
+        }
+
+        fillBin(binFlavors, POOL.flavors, "flavors");
+        fillBin(binMeat, POOL.meat, "meat");
+        fillBin(binVeg, POOL.veg, "veg");
+      }
+
+      function renderOrder(){
+        if (!order){
+          orderNameEl.textContent = "—";
+          orderFlavorsEl.textContent = "—";
+          orderMeatEl.textContent = "—";
+          orderVegEl.textContent = "—";
+          return;
+        }
+        orderNameEl.textContent = `🍲 ${order.name}`;
+        orderFlavorsEl.textContent = order.flavors.map(x => x.label).join(", ");
+        orderMeatEl.textContent = order.meat.map(x => x.label).join(", ");
+        orderVegEl.textContent = order.veg.map(x => x.label).join(", ");
+      }
+
+      function newOrder(){
+        const cfg = LEVEL[difficulty];
+        const flavors = pickUnique(POOL.flavors, cfg.orderSize.fl);
+        const meat = pickUnique(POOL.meat, cfg.orderSize.me);
+        const veg = pickUnique(POOL.veg, cfg.orderSize.ve);
+
+        const names = [
+          "Stir-fry Special",
+          "Noodle Bowl",
+          "Hearty Soup",
+          "Veggie Mix",
+          "Chef's Combo",
+          "Quick Lunch"
+        ];
+
+        order = {
+          name: names[randInt(names.length)],
+          flavors,
+          meat,
+          veg,
+          need: {
+            flavors: new Set(flavors.map(x => x.id)),
+            meat: new Set(meat.map(x => x.id)),
+            veg: new Set(veg.map(x => x.id))
+          }
+        };
+
+        pot = [];
+        lastAdded = null;
+        phase = PHASE.FLAVORS;
+
+        renderOrder();
+        renderPot();
+        updateUI();
+
+        setMsg("New order!", "Add the FLAVORS first. Drag (or tap) ingredients into the pot.");
+      }
+
+      function isCorrectGroupForPhase(group){
+        if (phase === PHASE.FLAVORS) return group === "flavors";
+        if (phase === PHASE.MEAT) return group === "meat";
+        if (phase === PHASE.VEG) return group === "veg";
+        return false;
+      }
+
+      function neededSetForGroup(group){
+        if (!order) return new Set();
+        if (group === "flavors") return order.need.flavors;
+        if (group === "meat") return order.need.meat;
+        return order.need.veg;
+      }
+
+      function groupDone(group){
+        const need = neededSetForGroup(group);
+        if (!need.size) return true;
+        const have = new Set(pot.filter(x => x.group === group).map(x => x.id));
+        for (const id of need) if (!have.has(id)) return false;
+        return true;
+      }
+
+      function advancePhaseIfReady(){
+        if (phase === PHASE.FLAVORS && groupDone("flavors")){
+          phase = PHASE.MEAT;
+          setMsg("Nice!", "Now add the MEAT.");
+        } else if (phase === PHASE.MEAT && groupDone("meat")){
+          phase = PHASE.VEG;
+          setMsg("Good!", "Now add the VEGETABLES.");
+        } else if (phase === PHASE.VEG && groupDone("veg")){
+          phase = PHASE.COOK;
+          setMsg("Almost done!", "Press COOK.");
+        }
+        updateUI();
+      }
+
+      function penalize(reason){
+        const cfg = LEVEL[difficulty];
+        score = Math.max(0, score - cfg.penaltyWrong);
+        timeLeft = Math.max(0, timeLeft - cfg.penaltyTime);
+        setMsg("Oops!", reason);
+      }
+
+      function addToPot(item){
+        if (!running || paused) return;
+        if (!order) return;
+
+        if (!isCorrectGroupForPhase(item.group)){
+          penalize(`Wrong step. Current phase is ${phaseLabel(phase)}.`);
+          updateUI();
+          return;
+        }
+
+        const need = neededSetForGroup(item.group);
+        if (!need.has(item.id)){
+          penalize("That ingredient is not in the order.");
+          updateUI();
+          return;
+        }
+
+        const already = pot.some(x => x.group === item.group && x.id === item.id);
+        if (already){
+          penalize("You already added that ingredient.");
+          updateUI();
+          return;
+        }
+
+        pot.push(item);
+        lastAdded = item;
+
+        renderPot();
+
+        score += 1;
+        advancePhaseIfReady();
+
+        if (score > bestLocal){
+          bestLocal = score;
+          bestLocalEl.textContent = String(bestLocal);
+          saveLocalBest();
+        }
+        updateUI();
+      }
+
+      function cook(){
+        if (!running || paused) return;
+        if (phase !== PHASE.COOK) return;
+
+        score += 3;
+        phase = PHASE.SERVE;
+        setMsg("Cooking… ✅", "Now press SERVE.");
+        updateUI();
+      }
+
+      function serve(){
+        if (!running || paused) return;
+        if (phase !== PHASE.SERVE) return;
+
+        dishes += 1;
+        score += 5;
+
+        timeLeft += (difficulty === "hard" ? 2 : (difficulty === "medium" ? 3 : 4));
+
+        if (score > bestLocal){
+          bestLocal = score;
+          bestLocalEl.textContent = String(bestLocal);
+          saveLocalBest();
+        }
+
+        setMsg("Served! 🍽️", "Next order coming up…");
+        updateUI();
+
+        setTimeout(() => {
+          if (running && timeLeft > 0){
+            newOrder();
+          }
+        }, 350);
+      }
+
+      function trashLast(){
+        if (!running || paused) return;
+        if (!pot.length) return;
+
+        const removed = pot.pop();
+        lastAdded = pot.length ? pot[pot.length - 1] : null;
+        renderPot();
+
+        score = Math.max(0, score - 1);
+        setMsg("Trashed last item.", removed ? `Removed: ${removed.label}` : "");
+        updateUI();
+      }
+
+      // ===== Timer / lifecycle =====
+      function resetState(){
+        if (tickId) clearInterval(tickId);
+        tickId = null;
+
+        running = false;
+        paused = false;
+
+        score = 0;
+        dishes = 0;
+
+        timeLeft = 0;
+        phase = PHASE.READY;
+        order = null;
+        pot = [];
+        lastAdded = null;
+
+        pauseBtn.textContent = "Pause";
+        renderBins();
+        renderOrder();
+        renderPot();
+        loadLocalBest();
+        updateUI();
+
+        setMsg("Ready.", "Press Start. Then follow phases: Flavors → Meat → Vegetables → Cook → Serve.");
+      }
+
+      function start(){
+        if (running) return;
+        const cfg = LEVEL[difficulty];
+
+        running = true;
+        paused = false;
+        pauseBtn.textContent = "Pause";
+
+        timeLeft = cfg.totalSeconds;
+        newOrder();
+
+        tickId = setInterval(() => {
+          if (!running || paused) return;
+          timeLeft -= 1;
+          if (timeLeft <= 0){
+            timeLeft = 0;
+            updateUI();
+            gameOver();
+            return;
+          }
+          updateUI();
+        }, 1000);
+      }
+
+      function togglePause(){
+        if (!running) return;
+        paused = !paused;
+        pauseBtn.textContent = paused ? "Resume" : "Pause";
+        setMsg(paused ? "Paused." : "Go!", paused ? "Press Resume to continue." : "Keep cooking!");
+        updateUI();
+      }
+
+      function gameOver(){
+        if (tickId) clearInterval(tickId);
+        tickId = null;
+        running = false;
+        paused = false;
+        phase = PHASE.OVER;
+        pauseBtn.textContent = "Pause";
+        updateUI();
+
+        setMsg("Time's up.", "Nice cooking! If your score is 0, nothing will be submitted.");
+
+        if (score > 0){
+          dialogTitle.textContent = `Time's up — Score: ${score} (Dishes: ${dishes})`;
+          openDialog();
+        }
+      }
+
+      // ===== Drag & Drop =====
+      dropzone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropzone.classList.add("dragover");
+      });
+      dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));
+      dropzone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropzone.classList.remove("dragover");
+        if (!running || paused) return;
+
+        const raw = e.dataTransfer.getData("text/plain");
+        if (!raw) return;
+        try{
+          const item = JSON.parse(raw);
+          addToPot(item);
+        }catch(_){}
+      });
+
+      // ===== Buttons =====
+      startBtn.addEventListener("click", start);
+      pauseBtn.addEventListener("click", togglePause);
+      resetBtn.addEventListener("click", resetState);
+
+      cookBtn.addEventListener("click", cook);
+      serveBtn.addEventListener("click", serve);
+      trashBtn.addEventListener("click", trashLast);
+
+      document.querySelectorAll('input[name="difficulty"]').forEach(r => {
+        r.addEventListener("change", (e) => {
+          difficulty = e.target.value;
+          resetState();
+          loadRankBoards();
+        });
+      });
+
+      // ===== Dialog =====
+      function openDialog(){
+        dialogStatus.textContent = "";
+        dialogNameInput.value = "";
+        nameDialog.style.display = "flex";
+        nameDialog.setAttribute("aria-hidden","false");
+        setTimeout(() => dialogNameInput.focus(), 0);
+      }
+
+      function closeDialog(){
+        nameDialog.style.display = "none";
+        nameDialog.setAttribute("aria-hidden","true");
+      }
+
+      function dialogKeydown(e){
+        if (nameDialog.getAttribute("aria-hidden") === "true") return;
+        if (e.key === "Escape"){
+          e.preventDefault();
+          closeDialog();
+        }
+      }
+      document.addEventListener("keydown", dialogKeydown);
+
+      dialogNameInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter"){
+          e.preventDefault();
+          dialogSubmit.click();
+        } else if (e.key === "Escape"){
+          e.preventDefault();
+          closeDialog();
+        }
+      });
+
+      dialogCancel.addEventListener("click", () => closeDialog());
+
+      async function submitScore(name){
+        try{
+          const res = await fetch("/api/score", {
+            method: "POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({
+              game: gameKey(difficulty),
+              player_name: name,
+              seconds: -Math.max(0, Math.floor(score))
+            })
+          });
+          if (!res.ok) return false;
+          const data = await res.json().catch(() => ({}));
+          return data.ok === true;
+        }catch(_){
+          return false;
+        }
+      }
+
+      dialogSubmit.addEventListener("click", async () => {
+        const name = (dialogNameInput.value || "").trim();
+        if (!name){
+          dialogStatus.textContent = "Name is required.";
+          return;
+        }
+
+        dialogSubmit.disabled = true;
+        dialogCancel.disabled = true;
+        dialogStatus.textContent = "Saving…";
+
+        const ok = await submitScore(name);
+
+        if (ok){
+          dialogStatus.textContent = "Saved ✅";
+          await loadRankBoards();
+          setTimeout(() => closeDialog(), 350);
+        } else {
+          dialogStatus.textContent = "Could not save. Please tell the teacher.";
+        }
+
+        dialogSubmit.disabled = false;
+        dialogCancel.disabled = false;
+      });
+
+      // ===== Leaderboards (right) =====
+      async function loadOneBoard(diff, listId){
+        const list = document.getElementById(listId);
+        if (!list) return;
+
+        const game = gameKey(diff);
+
+        try{
+          const res = await fetch(`/api/leaderboard?game=${encodeURIComponent(game)}&limit=10`, { cache: "no-store" });
+          const data = await res.json();
+          const rows = Array.isArray(data) ? data : (data.rows || []);
+
+          list.innerHTML = "";
+          if (!rows.length){
+            list.innerHTML = "<li>No scores yet.</li>";
+            return;
+          }
+
+          rows.forEach((r, i) => {
+            const name = r.player_name ?? "Unknown";
+            const wins = r.win_count ?? 0;
+            const bestRaw = r.best_seconds ?? null;
+            const best = (bestRaw == null) ? null : (bestRaw < 0 ? -bestRaw : bestRaw);
+
+            const li = document.createElement("li");
+            li.textContent = `#${i+1} ${name} — Wins: ${wins}` + (best != null ? ` — Best Score: ${best}` : "");
+            list.appendChild(li);
+          });
+        }catch(_){
+          list.innerHTML = "<li>Could not load leaderboard.</li>";
+        }
+      }
+
+      async function loadRankBoards(){
+        const status = document.getElementById("rankStatus");
+        if (status) status.textContent = "Loading…";
+
+        await Promise.all([
+          loadOneBoard("easy", "rankEasy"),
+          loadOneBoard("medium", "rankMedium"),
+          loadOneBoard("hard", "rankHard")
+        ]);
+
+        if (status) status.textContent = "Updated just now.";
+      }
+
+      // ===== Init =====
+      resetState();
+      loadRankBoards();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Flipping Bird</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body{
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:#fff;
+      margin:0;
+      padding:56px 24px 24px;
+      color:#111827;
+    }
+    h1{ margin:0 0 10px; }
+    .sub{ color:#374151; margin:0 0 16px; }
+
+    button{
+      padding: 8px 14px;
+      border: 1px solid #2563eb;
+      border-radius: 6px;
+      background:#2563eb;
+      color:#fff;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    button.secondary{ background:#fff; color:#2563eb; }
+    button.ghost{ background:#fff; color:#111827; border-color:#d1d5db; }
+    button:disabled{ opacity:.55; cursor:not-allowed; }
+
+    .back-header{ position: fixed; top: 12px; left: 12px; z-index: 1000; }
+    .back-link{ text-decoration:none; color:#2563eb; font-weight:700; font-size:16px; }
+
+    .game-container{ max-width: 720px; width: 100%; margin: 0 auto; }
+    .layout{
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 24px;
+      align-items: start;
+      padding-bottom: 64px;
+    }
+    .left-col{ display: flex; justify-content: center; }
+    .rank-sidebar{
+      position: sticky;
+      top: 72px;
+      max-height: calc(100vh - 96px);
+      overflow: auto;
+    }
+    @media (max-width: 980px){
+      .layout{ grid-template-columns: 1fr; }
+      .rank-sidebar{ position: static; max-height: none; }
+    }
+
+    .controls{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin: 12px 0 12px;
+    }
+    .pill{
+      display:inline-flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      padding:8px 10px;
+      border:1px solid #e5e7eb;
+      border-radius:12px;
+      background:#fafafa;
+      color:#374151;
+      font-size:14px;
+    }
+    .stat{ font-weight:800; color:#111827; }
+
+    .stage{
+      width: min(640px, 100%);
+      margin: 0 auto;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      background: linear-gradient(#eaf3ff, #ffffff);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+      overflow:hidden;
+    }
+    canvas{ display:block; width:100%; height:auto; background: transparent; }
+    .help{ color:#374151; font-size:14px; margin-top:10px; line-height:1.35; }
+
+    .card{
+      margin-top: 0;
+      padding:12px 14px;
+      border:1px solid #e5e7eb;
+      border-radius:12px;
+      background:#fafafa;
+    }
+    .tabs{ display:flex; gap:8px; flex-wrap:wrap; margin:8px 0 10px; }
+    .tab{
+      padding:6px 10px;
+      border:1px solid #d1d5db;
+      border-radius:999px;
+      background:#fff;
+      cursor:pointer;
+      font-weight:700;
+      font-size:13px;
+      user-select:none;
+     color:#111827; }
+    .tab.active{ border-color:#2563eb; color:#2563eb; }
+    ol{ margin: 8px 0 0; padding-left: 18px; }
+    li{ margin: 6px 0; }
+
+    .modal-overlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(17,24,39,0.50);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index: 3000;
+      padding: 18px;
+    }
+    .modal{
+      width: min(520px, 100%);
+      max-height: min(80vh, 520px);
+      overflow: auto;
+      background: #fff;
+      border-radius: 16px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
+      padding: 16px 16px 14px;
+    }
+    .modal h3{ margin: 0 0 6px; font-size: 18px; }
+    .modal p{ margin: 0 0 10px; color:#374151; font-size: 14px; line-height: 1.35; }
+    .modal input{
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      outline: none;
+      font-size: 16px;
+    }
+    .modal .row{ display:flex; gap:10px; justify-content:flex-end; margin-top: 12px; flex-wrap:wrap; }
+    .modal .err{ color:#b91c1c; font-weight:700; font-size: 13px; margin-top: 8px; min-height: 16px; }
+
+    footer{
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: #fafafa;
+      text-align: center;
+      padding: 8px 0;
+      font-size: 14px;
+      color: #555;
+      border-top: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+  <header class="back-header">
+    <a class="back-link" href="/puzzle">← Back to Puzzle Home</a>
+  </header>
+
+  <div class="layout">
+    <div class="left-col">
+      <div class="game-container">
+        <h1>Flipping Bird</h1>
+        <p class="sub">Tap / Click / Press <b>Space</b> to flap. Avoid the pipes. Survive as long as you can.</p>
+
+        <div class="controls">
+          <button id="startBtn">Start</button>
+          <button id="restartBtn" class="secondary" disabled>Restart</button>
+          <button id="pauseBtn" class="ghost" disabled>Pause</button>
+
+          <span class="pill">
+            Difficulty:
+            <button class="tab active" data-diff="easy" type="button">Easy</button>
+            <button class="tab" data-diff="medium" type="button">Medium</button>
+            <button class="tab" data-diff="hard" type="button">Hard</button>
+          </span>
+
+          <span class="pill">Score: <span class="stat" id="scoreText">0</span></span>
+          <span class="pill">Time: <span class="stat" id="timeText">0</span>s</span>
+        </div>
+
+        <div class="stage">
+          <canvas id="game" width="640" height="480"></canvas>
+        </div>
+
+        <div class="help">
+          <b>How leaderboard works:</b> after a round ends, you will enter your name and we’ll save your <b>survival time (seconds)</b>.
+          Wins = number of rounds you submitted. “Best” = your best survival time.
+        </div>
+      </div>
+    </div>
+
+    <aside class="rank-sidebar">
+      <div class="card">
+        <h3 style="margin:0 0 6px;">🏆 Leaderboard</h3>
+        <div class="tabs" id="lbTabs">
+          <div class="tab active" data-diff="easy">Easy</div>
+          <div class="tab" data-diff="medium">Medium</div>
+          <div class="tab" data-diff="hard">Hard</div>
+        </div>
+        <ol id="rankList"><li>Loading…</li></ol>
+        <div style="margin-top:10px;color:#6b7280;font-size:12px;">
+          Tip: switch difficulty tabs to see separate boards.
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="modal-overlay" id="nameOverlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="nameTitle">
+      <h3 id="nameTitle">Save your score</h3>
+      <p id="nameDesc"></p>
+      <input id="nameInput" type="text" maxlength="40" placeholder="Enter your name (required)" autocomplete="off" />
+      <div class="err" id="nameErr"></div>
+      <div class="row">
+        <button class="ghost" id="cancelNameBtn" type="button">Cancel (Esc)</button>
+        <button id="submitNameBtn" type="button">Submit (Enter)</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== Backend integration (same endpoints as your other games) =====
+    // Uses survival time as "seconds".
+    const GAME_ID_BASE = "flippingbird";
+    function gameIdFor(diff){ return `${GAME_ID_BASE}_${diff}`; }
+
+    async function submitScore(playerName, seconds, diff){
+      try{
+        await fetch("/api/score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ game: gameIdFor(diff), player_name: playerName, seconds })
+        });
+        return true;
+      }catch(e){ return false; }
+    }
+
+    async function loadLeaderboard(diff){
+      const list = document.getElementById("rankList");
+      list.innerHTML = "<li>Loading…</li>";
+      try{
+        const res = await fetch(`/api/leaderboard?game=${encodeURIComponent(gameIdFor(diff))}&limit=10`, { cache: "no-store" });
+        const data = await res.json();
+        const rows = Array.isArray(data) ? data : (data.rows || []);
+        list.innerHTML = "";
+        if(!rows.length){ list.innerHTML = "<li>No scores yet.</li>"; return; }
+        rows.forEach((r,i)=>{
+          const name = r.player_name ?? r.playerName ?? "Unknown";
+          const wins = r.win_count ?? r.wins ?? r.winCount ?? 0;
+          const best = r.best_seconds ?? r.bestSeconds ?? null;
+          const li = document.createElement("li");
+          li.textContent = `#${i+1} ${name} — Wins: ${wins}` + (best != null ? ` — Best: ${best}s` : "");
+          list.appendChild(li);
+        });
+      }catch(e){
+        list.innerHTML = "<li>Could not load leaderboard.</li>";
+      }
+    }
+
+    // ===== Game =====
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const scoreText = document.getElementById("scoreText");
+    const timeText  = document.getElementById("timeText");
+    const startBtn   = document.getElementById("startBtn");
+    const restartBtn = document.getElementById("restartBtn");
+    const pauseBtn   = document.getElementById("pauseBtn");
+
+    let diff = "easy";
+    let running = false;
+    let paused = false;
+    let gameOver = false;
+
+    let roundStartMs = 0;
+    function roundSeconds(){
+      if(!roundStartMs) return 0;
+      return Math.max(0, Math.floor((Date.now() - roundStartMs)/1000));
+    }
+
+    const DIFF = {
+      easy:   { gravity: 0.24, flap: -6.5, pipeGap: 180, pipeSpeed: 2.1, pipeEvery: 150 },
+      medium: { gravity: 0.39, flap: -7.7, pipeGap: 150, pipeSpeed: 2.6, pipeEvery: 106 },
+      hard:   { gravity: 0.46, flap: -8.0, pipeGap: 130, pipeSpeed: 3.1, pipeEvery: 94  }
+    };
+
+    const W = canvas.width;
+    const H = canvas.height;
+    const GROUND_H = 62;
+
+    const bird = { x: 140, y: 200, r: 12, vy: 0 };
+
+    let pipes = [];
+    let frame = 0;
+    let score = 0;
+
+    function resetRound(){
+      bird.y = 200;
+      bird.vy = 0;
+      pipes = [];
+      frame = 0;
+      score = 0;
+      scoreText.textContent = "0";
+      timeText.textContent = "0";
+      gameOver = false;
+      paused = false;
+      pauseBtn.textContent = "Pause";
+      roundStartMs = Date.now();
+    }
+
+    function setButtons(){
+      startBtn.disabled = running && !gameOver;
+      restartBtn.disabled = !running;
+      pauseBtn.disabled = !running || gameOver;
+    }
+
+    function rand(min,max){ return Math.floor(min + Math.random()*(max-min+1)); }
+
+    function spawnPipe(){
+      const cfg = DIFF[diff];
+      const gap = cfg.pipeGap;
+      const topMin = 40;
+      const topMax = H - GROUND_H - 40 - gap;
+      const topH = rand(topMin, topMax);
+      pipes.push({ x: W + 40, w: 64, topH, gap, passed: false });
+    }
+
+    function flap(){
+      if(!running || paused || gameOver) return;
+      bird.vy = DIFF[diff].flap;
+    }
+
+    function collideCircleRect(cx,cy,cr, rx,ry,rw,rh){
+      const nx = Math.max(rx, Math.min(cx, rx+rw));
+      const ny = Math.max(ry, Math.min(cy, ry+rh));
+      const dx = cx - nx;
+      const dy = cy - ny;
+      return (dx*dx + dy*dy) <= cr*cr;
+    }
+
+    function endRound(){
+      gameOver = true;
+      running = true;
+      setButtons();
+      pauseBtn.disabled = true;
+      draw();
+      openNameModal();
+    }
+
+    function update(){
+      if(!running || paused || gameOver) return;
+
+      const cfg = DIFF[diff];
+      frame++;
+
+      // ramp gravity in the first ~2.5s so the bird doesn't drop too fast right after start
+      const t = Date.now() - roundStartMs;
+      const ramp = Math.min(1, Math.max(0, t / 2500));
+      const gEff = cfg.gravity * (0.45 + 0.55 * ramp); // start gentler, reach full gravity
+      bird.vy += gEff;
+      // cap max fall speed a bit for nicer early control
+      bird.vy = Math.min(bird.vy, 10.5);
+      bird.y += bird.vy;
+
+      if(frame % cfg.pipeEvery === 0) spawnPipe();
+
+      for(const p of pipes){
+        p.x -= cfg.pipeSpeed;
+        if(!p.passed && p.x + p.w < bird.x - bird.r){
+          p.passed = true;
+          score++;
+          scoreText.textContent = String(score);
+        }
+      }
+      while(pipes.length && pipes[0].x + pipes[0].w < -80) pipes.shift();
+
+      if(bird.y - bird.r < 0) bird.y = bird.r;
+      if(bird.y + bird.r > H - GROUND_H) return endRound();
+
+      for(const p of pipes){
+        const topRect = { x: p.x, y: 0, w: p.w, h: p.topH };
+        const botY = p.topH + p.gap;
+        const botRect = { x: p.x, y: botY, w: p.w, h: (H - GROUND_H) - botY };
+        if(collideCircleRect(bird.x,bird.y,bird.r, topRect.x,topRect.y,topRect.w,topRect.h) ||
+           collideCircleRect(bird.x,bird.y,bird.r, botRect.x,botRect.y,botRect.w,botRect.h)){
+          return endRound();
+        }
+      }
+
+      timeText.textContent = String(roundSeconds());
+    }
+
+    function draw(){
+      ctx.clearRect(0,0,W,H);
+
+      ctx.fillStyle = "rgba(234,243,255,0.9)";
+      ctx.fillRect(0,0,W,H);
+
+      ctx.globalAlpha = 0.25;
+      ctx.fillStyle = "#93c5fd";
+      for(let i=0;i<5;i++){
+        const cx = (i*150 + (frame*0.4)) % (W+200) - 100;
+        const cy = 60 + (i%3)*30;
+        ctx.beginPath();
+        ctx.ellipse(cx,cy, 40,18, 0, 0, Math.PI*2);
+        ctx.ellipse(cx+30,cy+8, 34,15, 0, 0, Math.PI*2);
+        ctx.ellipse(cx-30,cy+10, 32,14, 0, 0, Math.PI*2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
+      ctx.fillStyle = "#16a34a";
+      ctx.strokeStyle = "rgba(0,0,0,0.15)";
+      ctx.lineWidth = 2;
+      for(const p of pipes){
+        ctx.fillRect(p.x, 0, p.w, p.topH);
+        ctx.strokeRect(p.x, 0, p.w, p.topH);
+
+        const by = p.topH + p.gap;
+        const bh = (H - GROUND_H) - by;
+        ctx.fillRect(p.x, by, p.w, bh);
+        ctx.strokeRect(p.x, by, p.w, bh);
+
+        ctx.fillStyle = "#22c55e";
+        ctx.fillRect(p.x - 4, p.topH - 16, p.w + 8, 16);
+        ctx.fillRect(p.x - 4, by, p.w + 8, 16);
+        ctx.fillStyle = "#16a34a";
+      }
+
+      ctx.fillStyle = "#f59e0b";
+      ctx.fillRect(0, H-GROUND_H, W, GROUND_H);
+      ctx.fillStyle = "rgba(0,0,0,0.08)";
+      ctx.fillRect(0, H-GROUND_H, W, 8);
+
+      ctx.beginPath();
+      ctx.fillStyle = "#2563eb";
+      ctx.arc(bird.x, bird.y, bird.r, 0, Math.PI*2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.fillStyle = "#fff";
+      ctx.arc(bird.x+5, bird.y-3, 3.5, 0, Math.PI*2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.fillStyle = "#111827";
+      ctx.arc(bird.x+6, bird.y-3, 1.4, 0, Math.PI*2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.fillStyle = "#f97316";
+      ctx.moveTo(bird.x+bird.r, bird.y);
+      ctx.lineTo(bird.x+bird.r+10, bird.y+4);
+      ctx.lineTo(bird.x+bird.r, bird.y+8);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(17,24,39,0.70)";
+      ctx.font = "700 22px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      if(!running){
+        ctx.fillText("Press Start — then Space/Click to flap", W/2, H/2 - 10);
+        ctx.font = "600 14px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif";
+        ctx.fillText("Tip: harder modes have smaller gaps and faster pipes.", W/2, H/2 + 18);
+      }else if(paused){
+        ctx.fillText("Paused", W/2, H/2);
+      }else if(gameOver){
+        ctx.fillText("Game Over", W/2, H/2 - 12);
+        ctx.font = "700 16px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif";
+        ctx.fillText(`Score: ${score}  •  Time: ${roundSeconds()}s`, W/2, H/2 + 16);
+      }
+    }
+
+    let raf = null;
+    function loop(){ update(); draw(); raf = requestAnimationFrame(loop); }
+
+    function startRound(){
+      if(running && !gameOver) return;
+      running = true;
+      resetRound();
+      setButtons();
+      if(!raf) loop();
+    }
+    function restartRound(){ running = true; resetRound(); setButtons(); }
+    function togglePause(){
+      if(!running || gameOver) return;
+      paused = !paused;
+      pauseBtn.textContent = paused ? "Resume" : "Pause";
+    }
+
+    function setDiff(next){
+      if(diff === next) return;
+      diff = next;
+
+      document.querySelectorAll('button.tab[data-diff]').forEach(b=>{
+        b.classList.toggle("active", b.dataset.diff === diff);
+      });
+      document.querySelectorAll('#lbTabs .tab').forEach(t=>{
+        t.classList.toggle("active", t.dataset.diff === diff);
+      });
+
+      if(running) restartRound();
+      loadLeaderboard(diff);
+    }
+
+    document.querySelectorAll('button.tab[data-diff]').forEach(b=>{
+      b.addEventListener("click", ()=> setDiff(b.dataset.diff));
+    });
+    document.querySelectorAll('#lbTabs .tab').forEach(t=>{
+      t.addEventListener("click", ()=> setDiff(t.dataset.diff));
+    });
+
+    canvas.addEventListener("pointerdown", (e)=>{
+      e.preventDefault();
+      if(!running) startRound();
+      flap();
+    }, { passive:false });
+
+    document.addEventListener("keydown", (e)=>{
+      if(isNameModalOpen()) return;
+      if(e.code === "Space"){
+        e.preventDefault();
+        if(!running) startRound();
+        flap();
+      }
+      if(e.key === "p" || e.key === "P") togglePause();
+    }, { passive:false });
+
+    startBtn.addEventListener("click", startRound);
+    restartBtn.addEventListener("click", ()=>{ if(!running) startRound(); else restartRound(); });
+    pauseBtn.addEventListener("click", togglePause);
+
+    // ===== Modal =====
+    const overlay = document.getElementById("nameOverlay");
+    const nameInput = document.getElementById("nameInput");
+    const nameErr = document.getElementById("nameErr");
+    const nameDesc = document.getElementById("nameDesc");
+    const cancelNameBtn = document.getElementById("cancelNameBtn");
+    const submitNameBtn = document.getElementById("submitNameBtn");
+
+    function sanitizeName(s){ return (s || "").trim().slice(0, 40); }
+    function isNameModalOpen(){ return overlay.style.display === "flex"; }
+
+    function openNameModal(){
+      const secs = roundSeconds();
+      nameDesc.textContent = `Difficulty: ${diff.toUpperCase()} • Time: ${secs}s • Score: ${score}`;
+      nameErr.textContent = "";
+      nameInput.value = "";
+      overlay.style.display = "flex";
+      overlay.setAttribute("aria-hidden","false");
+      setTimeout(()=> nameInput.focus(), 0);
+    }
+    function closeNameModal(){
+      overlay.style.display = "none";
+      overlay.setAttribute("aria-hidden","true");
+    }
+
+    async function submitName(){
+      const name = sanitizeName(nameInput.value);
+      if(!name){
+        nameErr.textContent = "Name is required (not anonymous).";
+        nameInput.focus();
+        return;
+      }
+      const secs = Math.max(1, roundSeconds());
+
+      submitNameBtn.disabled = true;
+      cancelNameBtn.disabled = true;
+      nameErr.textContent = "Saving…";
+
+      const ok = await submitScore(name, secs, diff);
+      if(ok){
+        closeNameModal();
+        loadLeaderboard(diff);
+      }else{
+        nameErr.textContent = "Could not save your score. Please tell the teacher.";
+        submitNameBtn.disabled = false;
+        cancelNameBtn.disabled = false;
+      }
+    }
+
+    submitNameBtn.addEventListener("click", (e)=>{ e.preventDefault(); submitName(); });
+    cancelNameBtn.addEventListener("click", (e)=>{ e.preventDefault(); closeNameModal(); });
+
+    overlay.addEventListener("keydown", (e)=>{
+      if(e.key === "Enter"){ e.preventDefault(); submitName(); }
+      else if(e.key === "Escape"){ e.preventDefault(); closeNameModal(); }
+    });
+
+    overlay.addEventListener("pointerdown", (e)=>{ if(e.target === overlay) e.preventDefault(); });
+
+    // Init
+    setButtons();
+    draw();
+    loadLeaderboard(diff);
+  </script>
+
+  <footer>
+    © 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528. <br>
+    The STEAM Teacher is Chao Yu. For educational purposes only. All rights reserved.
+  </footer>
+</body>
+</html>

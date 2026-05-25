@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>🏆 All Games Leaderboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #07071a;
+      --panel: #0e0e28;
+      --border: #1c1c45;
+      --gold: #ffd700;
+      --silver: #b0b8d0;
+      --bronze: #cd8040;
+      --accent: #00e5ff;
+      --pink: #ff3d7f;
+      --green: #00ff9d;
+      --purple: #b060ff;
+      --text: #d0d4f0;
+      --dim: #464680;
+      --head-bg: #0b0b22;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Rajdhani', sans-serif;
+      padding: 24px 16px 48px;
+      min-height: 100vh;
+    }
+    /* scanline overlay */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px, transparent 3px,
+        rgba(0,0,0,0.07) 3px, rgba(0,0,0,0.07) 4px
+      );
+      pointer-events: none;
+      z-index: 999;
+    }
+    h1 {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(13px, 2.5vw, 22px);
+      text-align: center;
+      color: var(--gold);
+      text-shadow: 0 0 30px rgba(255,215,0,0.6), 0 0 6px rgba(255,215,0,0.3);
+      margin-bottom: 6px;
+      letter-spacing: 3px;
+    }
+    .subtitle {
+      text-align: center;
+      color: var(--dim);
+      font-size: 13px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    /* table container */
+    .scroll-wrap {
+      overflow-x: auto;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-shadow: 0 0 40px rgba(0,229,255,0.06);
+    }
+
+    table {
+      border-collapse: collapse;
+      width: max-content;
+      min-width: 100%;
+      font-size: 13px;
+    }
+
+    /* HEADER ROWS */
+    thead tr.group-row th {
+      background: #060618;
+      color: var(--purple);
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 6px 4px 4px;
+      border: 1px solid var(--border);
+    }
+    thead tr.col-row th {
+      background: var(--head-bg);
+      color: var(--accent);
+      font-size: 11px;
+      letter-spacing: 1px;
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    /* sticky rank + name */
+    th.sticky, td.sticky {
+      position: sticky;
+      background: var(--panel);
+      z-index: 3;
+    }
+    th.s0, td.s0 { left: 0; min-width: 42px; }
+    th.s1, td.s1 { left: 42px; min-width: 130px; text-align: left; }
+    thead th.sticky { background: var(--head-bg); z-index: 4; }
+
+    /* body cells */
+    tbody tr { border-bottom: 1px solid var(--border); }
+    tbody tr:nth-child(even) { background: rgba(255,255,255,0.015); }
+    tbody tr:hover td { background: rgba(0,229,255,0.06) !important; }
+
+    td {
+      padding: 7px 10px;
+      text-align: center;
+      border-right: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    td.sticky { border-right: 2px solid var(--border); }
+
+    /* rank */
+    .rank { font-family: 'Press Start 2P', monospace; font-size: 9px; }
+    .r1 { color: var(--gold); }
+    .r2 { color: var(--silver); }
+    .r3 { color: var(--bronze); }
+    .r-else { color: var(--dim); }
+
+    /* player name */
+    .pname { font-weight: 700; font-size: 14px; letter-spacing: 0.5px; }
+
+    /* total wins */
+    .total { color: var(--pink); font-weight: 700; font-size: 15px; }
+
+    /* win count cells */
+    .w0 { color: #1a1a44; font-size: 11px; }
+    .w-lo { color: var(--dim); }
+    .w-md { color: var(--accent); font-weight: 600; }
+    .w-hi { color: var(--green); font-weight: 700; }
+    .w-top { color: var(--gold); font-weight: 700; font-size: 15px; text-shadow: 0 0 8px rgba(255,215,0,0.5); }
+
+    .legend {
+      margin-top: 18px;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+      font-size: 12px;
+      color: var(--dim);
+      letter-spacing: 1px;
+    }
+    .legend span { display: flex; align-items: center; gap: 6px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  </style>
+</head>
+<body>
+<h1>🏆 PUZZLE RANK</h1>
+<p class="subtitle">All Games · All Players</p>
+
+<div class="scroll-wrap">
+  <table id="board"></table>
+</div>
+
+<div class="legend">
+  <span><span class="dot" style="background:var(--gold)"></span>50+ wins</span>
+  <span><span class="dot" style="background:var(--green)"></span>20–49</span>
+  <span><span class="dot" style="background:var(--accent)"></span>5–19</span>
+  <span><span class="dot" style="background:var(--dim)"></span>1–4</span>
+  <span><span class="dot" style="background:#1a1a44"></span>—</span>
+</div>
+
+<script>
+/* ─── RAW DATA ─────────────────────────────────────────────────────────── */
+const raw = [
+  ['wordguess','xyl',1],['wordguess','derek tsang',127],['wordguess','trevor',34],
+  ['wordguess','aiden',6],['wordguess','derek',2],['wordguess','laoshi',22],
+  ['numberguess_easy','laoshi',2],['slidingpuzzle_5x5','Eli',2],
+  ['slidingpuzzle_3x3','Eli',5],['slidingpuzzle_4x4','Eli',2],
+  ['slidingpuzzle_3x3','trevor',3],['numberguess_hard','derek tsang',3],
+  ['hittarget_easy','Cynthia',2],['wordguess','JOel',8],
+  ['hittarget_easy','Violet',1],['wordguess','River',51],
+  ['wordguess','Alaina',1],['wordguess','Eme',1],['slidingpuzzle_3x3','laoshi',2],
+  ['snake_easy','laoshi',1],['hittarget_easy','River',2],
+  ['hittarget_medium','River',1],['hittarget_hard','River',1],
+  ['numberguess_hard','laoshi',1],['slidingpuzzle_3x3','River',2],
+  ['slidingpuzzle_4x4','River',1],['slidingpuzzle_5x5','River',1],
+  ['slidingpuzzle_6x6','River',3],['chessai_easy','laoshi',1],
+  ['snake_hard','River',15],['snake_easy','River',1],['snake_medium','River',9],
+  ['chessai_easy','River',6],['chessai_hard','River',1],['chessai_medium','River',2],
+  ['numberguess_easy','River',2],['numberguess_medium','River',1],
+  ['flippingbird_easy','laoshi',4],['flippingbird_easy','xyl',1],
+  ['dishmaker_easy','laoshi',12],['snake_medium','laoshi',1],['snake_hard','laoshi',1],
+  ['fishing_easy','laoshi',7],['dishmaker_medium','laoshi',1],['dishmaker_hard','laoshi',3],
+  ['numberguess_hard','River',1],['dishmaker_easy','River',1],['fishing_easy','River',3],
+  ['chessai_easy','JOel',4],['chessai_hard','JOel',1],['slidingpuzzle_3x3','emanuel',1],
+  ['fishing_easy','emanuel',8],['chessai_easy','emanuel',1],['wordguess','joincoolkid',1],
+  ['wordguess','rainy',1],['flippingbird_easy','River',21],['flippingbird_hard','River',24],
+  ['flippingbird_hard','Joel',7],['flippingbird_easy','emanuel',2],
+  ['flippingbird_hard','emanuel',6],['dishmaker_easy','JOel',2],
+  ['fishing_hard','River',1],['dishmaker_hard','joel',2],['snake_hard','joel',43],
+  ['second_10','laoshi',21],['flippingbird_medium','River',1],
+  ['flippingbird_easy','Find who I am for $1',1],['numberguess_easy','Emanuel',1],
+  ['fishing_medium','emanuel',3],['flippingbird_medium','emanuel',1],
+  ['fishing_hard','emanuel',3],['wordguess','emanuel',2],['second_10','emanuel',2],
+  ['second_20','emanuel',1],['second_30','emanuel',1],['second_20','xy',1],
+  ['second_20','laoshi',3],['second_30','laoshi',2],['snake_easy','Eli',1],
+  ['numberguess_easy','Eli',1],['second_10','derek',37],['second_10','trevor',68],
+  ['second_20','derek',3],['second_10','Emma',13],['snake_easy','aiden',48],
+  ['snake_hard','aiden',27],['snake_hard','Emma',14],['snake_easy','Emma',4],
+  ['flippingbird_hard','Emma',11],['slidingpuzzle_5x5','trevor',1],
+  ['flippingbird_easy','Emma',7],['chessai_easy','derek',3],
+  ['snake_easy','trevor',67],['flippingbird_medium','Emma',18],
+  ['snake_easy','joincoolkid',87],['flippingbird_easy','joincoolkid',10],
+  ['flippingbird_easy','Aiden',10],['fishing_easy','trevor',19],
+  ['flippingbird_easy','trevor',6],['flippingbird_medium','trevor',4],
+  ['fishing_easy','Emma',4],['numberguess_medium','Eli',1],
+  ['second_10','Eli',3],['hittarget_easy','derek tsang',3],
+  ['flippingbird_hard','trevor',5],['second_10','Rams',19],
+  ['second_20','Rams',19],['flippingbird_easy','derek tsang',1],
+  ['flippingbird_hard','Aiden',19],['flippingbird_medium','Rams',4],
+  ['flippingbird_hard','derek tsang',1],['flippingbird_medium','derek tsang',1],
+  ['flippingbird_hard','Rams',37],['fishing_easy','derek tsang',4],
+  ['snake_easy','derek tsang',13],['dishmaker_easy','derek tsang',1],
+  ['second_10','Aiden',5],['slidingpuzzle_3x3','Rams',8],
+  ['flippingbird_easy','Rams',2],['snake_medium','trevor',12],
+  ['hittarget_medium','Emma',2],['slidingpuzzle_3x3','Aiden',10],
+  ['second_20','Eli',1],['flippingbird_easy','Ra',1],
+  ['hittarget_easy','Rams',6],['fishing_easy','Aiden',13],
+  ['snake_medium','joincoolkid',16],['chessai_easy','derek tsang',3],
+  ['second_10','derek tsang',5],['snake_hard','joincoolkid',50],
+  ['second_20','trevor',2],['flippingbird_medium','aiden',2],
+  ['flippingbird_hard','joincoolkid',1],['fishing_easy','joincoolkid',18],
+  ['fishing_medium','trevor',2],['hittarget_easy','trevor',4],
+  ['slidingpuzzle_5x5','trevor',1],['fishing_hard','trevor',3],
+  ['checkers_vs_computer','laoshi',12],['checkers_vs_computer','JOEL',3],
+  ['fishing_easy','patrick',8],['numberguess_easy','trevor',3],
+  ['checkers_vs_computer','Rams',4],['numberguess_easy','derek tsang',3],
+  ['fishing_easy','JOel',1],['wordguess','derek tsan',1],
+  ['checkers_vs_computer','Emma',1],['numberguess_easy','messi',8],
+  ['numberguess_easy','Aiden',1],['memorymatch_easy','laoshi',4],
+  ['memorymatch_medium','laoshi',2],['memorymatch_hard','laoshi',4],
+  ['mathspeedquiz_easy','laoshi',1],['mathspeedquiz_hard','laoshi',3],
+  ['mathspeedquiz_medium','laoshi',2],['mathspeedquiz_hard','trevor',6],
+  ['mathspeedquiz_hard','derek tsang',4],['hittarget_easy','messi',3],
+  ['mathspeedquiz_easy','joincoolkid',2],['mathspeedquiz_easy','trevor',3],
+  ['mathspeedquiz_easy','Emma',4],['memorymatch_easy','trevor',3],
+  ['mathspeedquiz_easy','Cynthia',1],['mathspeedquiz_hard','Cynthia',1],
+  ['mathspeedquiz_easy','emanuel',1],['memorymatch_hard','trevor',15],
+  ['memorymatch_easy','Aiden',1],['memorymatch_hard','Aiden',3],
+  ['memorymatch_easy','derek',3],['memorymatch_hard','derek',13],
+  ['memorymatch_hard','joincoolkid',3],['snake_easy','messi',19],
+  ['dishmaker_easy','messi',2],['second_10','messi',3],
+  ['wordguess6','laoshi',3],['wordguess6','derek tsang',9],
+  ['wordguess6','emma',1],['wordguess7','laoshi',2],
+  ['wordguess7','trevor',2],['wordguess7','derek tsang',6],
+  ['memorymatch_easy','joicoolkid',1],['flippingbird_hard','connor',2],
+  ['finddiff_medium','laoshi',7],['finddiff_hard','laoshi',2],
+  ['finddiff_easy','laoshi',3],['finddiff_medium','ge',2],
+  ['finddiff_easy','ge',1],['finddiff_hard','ge',1],
+  ['finddiff_medium','trevor',2],['finddiff_hard','trevor',53],
+  ['finddiff_hard','Aiden',8],['snake_hard','messi',5],
+  ['chessai_easy','messi',1],['pipes_5x5','laoshi',1],
+  ['pipes_3x3','laoshi',1],['pipes_4x4','laoshi',1],['pipes_8x8','laoshi',1],
+  ['memorymatch_easy','Emma',8],['uno_rush','laoshi',31],
+  ['uno_rush','trevor',15],['uno_rush','Aiden',6],['pipes_3x3','messi',3],
+  ['flow_links_5x5','laoshi',38],['checkers_vs_computer','emanuel',3],
+  ['hittarget_easy','emanuel',1],['hittarget_easy','Aiden',1],
+  ['uno_rush','derek tsang',1],['finddiff_easy','derek tsang',2],
+  ['finddiff_hard','derek tsang',7],['memorymatch_medium','Emma',24],
+  ['snake_medium','Emma',9],['mathspeedquiz_medium','Emma',1],
+  ['flow_links_6x6','laoshi',1],['flow_links_8x8','laoshi',28],
+  ['memorymatch_medium','Emmq',1],['memorymatch_hard','Emma',5],
+  ['finddiff_easy','Emma',12],['uno_rush','emma',1],
+  ['uno_rush','Rams',11],['flow_links_5x5','Rams',28],
+  ['flow_links_6x6','Rams',3],['flow_links_7x7','Rams',10],
+  ['flow_links_8x8','Rams',7],['memorymatch_easy','Rams',44],
+  ['memorymatch_hard','Rams',1],['finddiff_easy','Rams',1],
+  ['mathspeedquiz_easy','Rams',3],['memorymatch_medium','Rams',6],
+  ['hittarget_medium','Rams',2],['wordguess','Emma',2],
+  ['second_30','Emma',1],['finddiff_hard','Emma',39],
+  ['flow_links_5x5','Emma',22],['flow_links_8x8','Emma',13],
+  ['flow_links_7x7','Emma',8],['flow_links_6x6','Emma',2],
+  ['finddiff_medium','Emma',3],['flow_links_8x8','trevor',3],
+  ['flow_links_5x5','trevor',2],['wordguess7','Emma',1],
+  ['fishing_medium','Emma',4],['dishmaker_easy','Emma',2],
+  ['finddiff_hard','Rams',8],['flow_links_10x10','laoshi',16],
+  ['flow_links_9x9','laoshi',31],['fight_landlord','laoshi',2],
+  ['flow_links_5x5','derek tsang',2],['fight_landlord','Aiden',1],
+  ['flow_links_5x5','Aiden',6],['uno_rush','River',1],
+  ['mystery_picture','laoshi',3],['mystery_picture','derek tsang',1],
+  ['mystery_picture','Emma',11],['checkers_vs_computer','Trevor',1],
+  ['mystery_picture','Aiden',3],['wordguess','diane',1],
+  ['second_10','Emma',13],['memorymatch_easy','ivette',1],
+  ['sciencespeedquiz_easy','laoshi',11],['sciencespeedquiz_easy','ivette',1],
+  ['wordguess','ivette',1],['sciencespeedquiz_easy','derek tsang',13],
+  ['sciencespeedquiz_hard','laoshi',3],['sciencespeedquiz_medium','laoshi',5],
+  ['sciencespeedquiz_easy','Aiden',5],['sciencespeedquiz_easy','Emma',8],
+  ['finddiff_easy','yuji',1],['finddiff_hard','yuji',1],
+  ['mystery_picture','yuji',1],['flow_links_5x5','yuji',35],
+  ['flow_links_5x5','connor',8],['flow_links_10x10','max',1],
+  ['flow_links_10x10','connor',22],['flow_links_10x10','yuji',5],
+  ['flow_links_7x7','Aiden',2],['flow_links_10x10','mommy',1],
+  ['flow_links_6x6','Aiden',1],['flow_links_8x8','Aiden',1],
+  ['flow_links_10x10','Emma',6],['flow_links_9x9','Emma',1],
+  ['mystery_picture','connor',2],['checkers_vs_computer','joincoolkid',2],
+  ['mathspeedquiz_hard','Aiden',0],
+];
+
+/* ─── JUNK FILTER ─────────────────────────────────────────────────────── */
+const junk = new Set([
+  'find who i am for $1','ra','emmq','rat','37','fgk l',
+  'mmmmmmmmmmmmmmmmmm','cynthia and eme','joicoolkid','mommy',
+  'aedan swaney','aidn','eman','maessi','xy','y','s','rainy',
+  'alaina','eme','joincoolkid4','violet','diane','max',
+  'trevortrevortrevortrevortrevortrevortrev',
+]);
+
+/* ─── NAME NORMALIZATION ──────────────────────────────────────────────── */
+function normKey(n) {
+  const s = n.trim().toLowerCase();
+  if (s.startsWith('http')) return null;
+  if (s.length > 28) return null;
+  if (junk.has(s)) return null;
+  // merge typos / variants
+  const map = {
+    'laosh':'laoshi','derek tsan':'derek tsang','derek tsang4':'derek tsang',
+    'joel':'Joel','joel ':'Joel','joelr':'Joel','joel!':'Joel',
+    'joel ':'Joel','JOel':'Joel','JOEL':'Joel','joel':'Joel',
+    'emma':'Emma','trevor':'Trevor','aiden':'Aiden',
+    'eli':'Eli','river':'River','rams':'Rams',
+    'derek tsang':'derek tsang','emanuel':'Emanuel',
+    'ge':'ge','ge ':'ge','joincoolkid':'joincoolkid',
+    'patrick':'patrick','messi':'messi','connor':'connor',
+    'yuji':'yuji','cynthia':'Cynthia','ivette':'ivette',
+    'xyl':'xyl','derek':'derek',
+  };
+  return map[s] || n.trim();
+}
+
+/* ─── GAME CATEGORIES ────────────────────────────────────────────────── */
+const cats = [
+  { label: '🔤 Word',        games: ['wordguess','wordguess6','wordguess7'] },
+  { label: '🔢 Number',      games: ['numberguess_easy','numberguess_medium','numberguess_hard'] },
+  { label: '🧩 Slide',       games: ['slidingpuzzle_3x3','slidingpuzzle_4x4','slidingpuzzle_5x5','slidingpuzzle_6x6'] },
+  { label: '🐍 Snake',       games: ['snake_easy','snake_medium','snake_hard'] },
+  { label: '🎯 Hit Target',  games: ['hittarget_easy','hittarget_medium','hittarget_hard'] },
+  { label: '♟ Chess AI',    games: ['chessai_easy','chessai_medium','chessai_hard'] },
+  { label: '🐦 Bird',        games: ['flippingbird_easy','flippingbird_medium','flippingbird_hard'] },
+  { label: '🍽 Dish',        games: ['dishmaker_easy','dishmaker_medium','dishmaker_hard'] },
+  { label: '🎣 Fishing',     games: ['fishing_easy','fishing_medium','fishing_hard'] },
+  { label: '⏱ Timer',       games: ['second_10','second_20','second_30'] },
+  { label: '🃏 Memory',      games: ['memorymatch_easy','memorymatch_medium','memorymatch_hard'] },
+  { label: '➗ Math',        games: ['mathspeedquiz_easy','mathspeedquiz_medium','mathspeedquiz_hard'] },
+  { label: '🔍 Find Diff',   games: ['finddiff_easy','finddiff_medium','finddiff_hard'] },
+  { label: '🔗 Flow Links',  games: ['flow_links_5x5','flow_links_6x6','flow_links_7x7','flow_links_8x8','flow_links_9x9','flow_links_10x10'] },
+  { label: '🔧 Pipes',       games: ['pipes_3x3','pipes_4x4','pipes_5x5','pipes_8x8'] },
+  { label: '🂡 Uno',         games: ['uno_rush'] },
+  { label: '♔ Checkers',    games: ['checkers_vs_computer'] },
+  { label: '🔬 Science',     games: ['sciencespeedquiz_easy','sciencespeedquiz_medium','sciencespeedquiz_hard'] },
+  { label: '🖼 Mystery',     games: ['mystery_picture'] },
+  { label: '🀄 Fight',       games: ['fight_landlord'] },
+];
+
+const diffLabel = {
+  easy:'E', medium:'M', hard:'H',
+  '3x3':'3','4x4':'4','5x5':'5','6x6':'6','7x7':'7','8x8':'8','9x9':'9','10x10':'10',
+  '10':'10','20':'20','30':'30',
+  rush:'R',
+};
+
+function shortLabel(game) {
+  const parts = game.split('_');
+  const suffix = parts[parts.length - 1];
+  return diffLabel[suffix] || suffix.toUpperCase().slice(0,3);
+}
+
+/* ─── AGGREGATE ──────────────────────────────────────────────────────── */
+const players = {}; // key → { display, games:{game→wins} }
+raw.forEach(([game, name, wins]) => {
+  const key = normKey(name);
+  if (!key) return;
+  const dispKey = key.toLowerCase();
+  if (!players[dispKey]) players[dispKey] = { display: key, games: {} };
+  players[dispKey].games[game] = (players[dispKey].games[game] || 0) + wins;
+});
+
+// compute totals
+const allGames = cats.flatMap(c => c.games);
+const rows = Object.values(players).map(p => {
+  const total = allGames.reduce((s, g) => s + (p.games[g] || 0), 0);
+  return { ...p, total };
+}).filter(p => p.total > 0)
+  .sort((a, b) => b.total - a.total);
+
+// per-game max for coloring
+const gameMax = {};
+allGames.forEach(g => {
+  gameMax[g] = Math.max(...rows.map(r => r.games[g] || 0));
+});
+
+/* ─── RENDER ─────────────────────────────────────────────────────────── */
+const tbl = document.getElementById('board');
+
+// --- group header row ---
+const grpRow = document.createElement('tr');
+grpRow.className = 'group-row';
+// rank + name + total stubs
+['','','TOTAL'].forEach((t, i) => {
+  const th = document.createElement('th');
+  th.className = 'sticky ' + (i < 2 ? 's'+i : '');
+  th.textContent = t;
+  if (i === 2) { th.style.minWidth = '64px'; th.style.color = 'var(--pink)'; }
+  grpRow.appendChild(th);
+});
+cats.forEach(cat => {
+  const th = document.createElement('th');
+  th.colSpan = cat.games.length;
+  th.textContent = cat.label;
+  grpRow.appendChild(th);
+});
+
+// --- col header row ---
+const colRow = document.createElement('tr');
+colRow.className = 'col-row';
+['#', 'PLAYER', 'ALL'].forEach((t, i) => {
+  const th = document.createElement('th');
+  th.className = 'sticky ' + (i < 2 ? 's'+i : '');
+  th.textContent = t;
+  colRow.appendChild(th);
+});
+cats.forEach(cat => {
+  cat.games.forEach(g => {
+    const th = document.createElement('th');
+    th.textContent = shortLabel(g);
+    colRow.appendChild(th);
+  });
+});
+
+const thead = document.createElement('thead');
+thead.appendChild(grpRow);
+thead.appendChild(colRow);
+tbl.appendChild(thead);
+
+// --- body ---
+const tbody = document.createElement('tbody');
+rows.forEach((row, idx) => {
+  const tr = document.createElement('tr');
+
+  // rank
+  const rankTd = document.createElement('td');
+  rankTd.className = 'sticky s0 rank';
+  const medal = ['🥇','🥈','🥉'][idx] || `#${idx+1}`;
+  const cls = idx===0?'r1':idx===1?'r2':idx===2?'r3':'r-else';
+  rankTd.innerHTML = `<span class="${cls}">${medal}</span>`;
+  tr.appendChild(rankTd);
+
+  // name
+  const nameTd = document.createElement('td');
+  nameTd.className = 'sticky s1 pname';
+  nameTd.textContent = row.display;
+  tr.appendChild(nameTd);
+
+  // total
+  const totTd = document.createElement('td');
+  totTd.className = 'total';
+  totTd.textContent = row.total;
+  tr.appendChild(totTd);
+
+  // games
+  allGames.forEach(g => {
+    const w = row.games[g] || 0;
+    const td = document.createElement('td');
+    if (w === 0) {
+      td.className = 'w0';
+      td.textContent = '—';
+    } else {
+      const max = gameMax[g] || 1;
+      const ratio = w / max;
+      let cls;
+      if (w >= 50) cls = 'w-top';
+      else if (ratio >= 0.5 || w >= 20) cls = 'w-hi';
+      else if (w >= 5) cls = 'w-md';
+      else cls = 'w-lo';
+      td.className = cls;
+      td.textContent = w;
+    }
+    tr.appendChild(td);
+  });
+
+  tbody.appendChild(tr);
+});
+tbl.appendChild(tbody);
+</script>
+</body>
+</html>

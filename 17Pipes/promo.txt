@@ -1,0 +1,7 @@
+How to open the code input:
+
+Triple-click the 🔌 logo in the top-left of the game card, OR
+Press Ctrl + Shift + K (teacher shortcut)
+
+A small input bar slides in at the bottom-right of the screen.
+Enter the code: Type cmd and press Enter (or click Go).

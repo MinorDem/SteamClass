@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Science Speed Quiz</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f0f9ff;
+      --card: #ffffff;
+      --primary: #0ea5e9;
+      --secondary: #22c55e;
+      --accent: #fbbf24;
+      --purple: #a855f7;
+      --green: #22c55e;
+      --red: #ef4444;
+      --text: #1a1a2e;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      background-image: radial-gradient(circle at 20% 20%, #bae6fd55 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, #bbf7d055 0%, transparent 50%);
+      min-height: 100vh;
+      color: var(--text);
+      padding: 60px 16px 80px;
+    }
+    h1 { font-family:'Fredoka One',cursive; font-size:clamp(2rem,5vw,3rem); color:var(--primary); text-shadow:3px 3px 0 #0ea5e933; margin-bottom:4px; }
+    .tagline { color:var(--muted); font-size:15px; margin-bottom:20px; }
+
+    .layout { max-width:1100px; margin:0 auto; display:grid; grid-template-columns:minmax(0,1fr) 320px; gap:24px; align-items:start; }
+    @media(max-width:860px){ .layout{ grid-template-columns:1fr; } .sidebar{ position:static!important; } }
+
+    .card { background:var(--card); border-radius:20px; padding:28px; box-shadow:0 4px 24px #0000000d; border:2px solid var(--border); }
+
+    .level-row { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
+    .lvl-btn { padding:8px 18px; border-radius:999px; border:2px solid var(--border); background:white; font-family:'Nunito',sans-serif; font-weight:700; font-size:14px; cursor:pointer; transition:all .18s; }
+    .lvl-btn.active, .lvl-btn:hover { background:var(--primary); color:white; border-color:var(--primary); transform:translateY(-2px); }
+
+    .timer-wrap { margin-bottom:16px; }
+    .timer-label { font-size:13px; color:var(--muted); margin-bottom:5px; display:flex; justify-content:space-between; }
+    .timer-bar-bg { background:#f3f4f6; border-radius:999px; height:12px; overflow:hidden; }
+    .timer-bar { height:100%; border-radius:999px; background:linear-gradient(90deg,var(--secondary),var(--primary)); transition:width .25s linear, background .5s; }
+    .timer-bar.danger { background:linear-gradient(90deg,#fbbf24,var(--red)); }
+
+    .question-box {
+      background:linear-gradient(135deg,var(--primary) 0%,#38bdf8 100%);
+      border-radius:18px; padding:28px 28px 24px; text-align:center;
+      margin-bottom:20px; position:relative; overflow:hidden; min-height:130px;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+    }
+    .question-box::before { content:''; position:absolute; top:-30px; right:-30px; width:100px; height:100px; background:rgba(255,255,255,0.15); border-radius:50%; }
+    .q-number { font-size:clamp(1.2rem,3.5vw,1.7rem); font-family:'Fredoka One',cursive; color:white; text-shadow:2px 2px 0 rgba(0,0,0,0.15); line-height:1.35; z-index:1; }
+    .q-score-badge { position:absolute; top:12px; right:16px; background:rgba(255,255,255,0.25); color:white; font-weight:900; font-size:13px; padding:4px 10px; border-radius:999px; }
+    .q-category { position:absolute; top:12px; left:16px; background:rgba(255,255,255,0.25); color:white; font-size:11px; font-weight:700; padding:4px 10px; border-radius:999px; text-transform:uppercase; letter-spacing:.05em; }
+
+    /* 4-option grid */
+    .options-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+    .opt-btn {
+      padding:14px 12px; font-family:'Nunito',sans-serif; font-size:1rem; font-weight:700;
+      border:2px solid var(--border); border-radius:14px; background:white; color:var(--text);
+      cursor:pointer; transition:all .18s; text-align:left; line-height:1.3;
+    }
+    .opt-btn:hover:not(:disabled) { border-color:var(--primary); background:#f0f9ff; transform:translateY(-2px); box-shadow:0 4px 12px #0ea5e922; }
+    .opt-btn.correct { border-color:var(--green); background:#f0fdf4; color:#15803d; animation:pop .3s; pointer-events:none; }
+    .opt-btn.wrong { border-color:var(--red); background:#fef2f2; color:#b91c1c; animation:shake .35s; pointer-events:none; }
+    .opt-btn:disabled { opacity:.5; cursor:not-allowed; }
+    @keyframes pop { 0%,100%{transform:scale(1)} 50%{transform:scale(1.04)} }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-7px)} 75%{transform:translateX(7px)} }
+
+    .feedback { text-align:center; font-size:1.05rem; font-weight:700; min-height:28px; margin-bottom:8px; }
+    .feedback.correct { color:var(--green); }
+    .feedback.wrong { color:var(--red); }
+
+    .stats-strip { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:20px; }
+    .stat-pill { background:var(--bg); border:2px solid var(--border); border-radius:14px; padding:10px; text-align:center; }
+    .stat-num { font-family:'Fredoka One',cursive; font-size:1.6rem; color:var(--primary); }
+    .stat-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+
+    .ctrl-row { display:flex; gap:10px; }
+    .btn-start { flex:1; padding:14px; font-family:'Fredoka One',cursive; font-size:1.15rem; border:none; border-radius:14px; background:var(--primary); color:white; cursor:pointer; transition:all .18s; }
+    .btn-start:hover { transform:translateY(-2px); box-shadow:0 6px 20px #0ea5e955; }
+    .btn-reset { padding:14px 20px; font-family:'Fredoka One',cursive; font-size:1rem; border:2px solid var(--border); border-radius:14px; background:white; color:var(--text); cursor:pointer; transition:all .18s; }
+    .btn-reset:hover { border-color:var(--primary); color:var(--primary); }
+
+    /* game-over overlay inside card */
+    .gameover-notice { display:none; background:#fef2f2; border:2px solid var(--red); border-radius:14px; padding:14px 16px; margin-bottom:16px; text-align:center; }
+    .gameover-notice.show { display:block; }
+    .gameover-notice strong { font-family:'Fredoka One',cursive; font-size:1.1rem; color:var(--red); }
+    .gameover-notice p { font-size:13px; color:#7f1d1d; margin-top:4px; }
+
+    .sidebar { position:sticky; top:72px; max-height:calc(100vh - 96px); overflow:auto; }
+    .rank-card { background:var(--card); border-radius:20px; padding:20px; border:2px solid var(--border); box-shadow:0 4px 24px #0000000d; }
+    .rank-card h3 { font-family:'Fredoka One',cursive; font-size:1.3rem; margin-bottom:12px; }
+    .rank-section { background:var(--bg); border-radius:14px; padding:14px; margin-top:12px; }
+    .rank-section-title { font-weight:900; font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-bottom:8px; }
+    .rank-section ol { padding-left:20px; }
+    .rank-section li { font-size:14px; padding:4px 0; border-bottom:1px solid var(--border); }
+    .rank-section li:last-child { border:none; }
+    .rank-note { font-size:12px; color:var(--muted); margin-top:10px; }
+
+    .back-header { position:fixed; top:14px; left:14px; z-index:1000; }
+    .back-link { text-decoration:none; color:var(--text); font-weight:700; font-size:15px; background:white; padding:6px 12px; border-radius:999px; border:2px solid var(--border); box-shadow:0 2px 8px #0000001a; }
+    .back-link:hover { border-color:var(--primary); color:var(--primary); }
+
+    .dialog-backdrop { position:fixed; inset:0; background:rgba(17,24,39,0.5); display:none; align-items:center; justify-content:center; z-index:4000; padding:16px; }
+    .dialog-backdrop.open { display:flex; }
+    .dialog { width:100%; max-width:380px; background:white; border-radius:24px; padding:28px; box-shadow:0 24px 48px #0000002a; text-align:center; }
+    .dialog-emoji { font-size:3.5rem; margin-bottom:12px; }
+    .dialog h4 { font-family:'Fredoka One',cursive; font-size:1.8rem; color:var(--primary); margin-bottom:8px; }
+    .dialog p { color:var(--muted); font-size:14px; margin-bottom:14px; }
+    .dialog input { width:100%; padding:12px 16px; border:2px solid var(--border); border-radius:12px; font-family:'Nunito',sans-serif; font-size:16px; outline:none; margin-bottom:4px; }
+    .dialog input:focus { border-color:var(--secondary); }
+    .dialog-actions { display:flex; gap:10px; margin-top:14px; }
+    .dialog-actions button { flex:1; padding:12px; border-radius:12px; font-family:'Fredoka One',cursive; font-size:1rem; cursor:pointer; border:2px solid var(--border); background:white; color:var(--text); }
+    .dialog-actions button.primary { background:var(--primary); border-color:var(--primary); color:white; }
+    .dialog-status { font-size:13px; color:var(--muted); margin-top:8px; min-height:18px; font-weight:700; }
+
+    footer { position:fixed; bottom:0; left:0; width:100%; background:rgba(240,249,255,0.95); backdrop-filter:blur(4px); text-align:center; padding:8px 0; font-size:13px; color:var(--muted); border-top:1px solid var(--border); }
+  </style>
+</head>
+<body>
+  <header class="back-header">
+    <a class="back-link" href="/puzzle">← Back to Puzzle Home</a>
+  </header>
+
+  <div class="layout">
+    <main>
+      <div class="card">
+        <h1>🔬 Science Speed Quiz</h1>
+        <p class="tagline">Choose the correct answer! One wrong answer ends the game — survive all 60 seconds!</p>
+
+        <div class="level-row">
+          <button class="lvl-btn active" data-level="easy">🌱 Easy (Grades 3–4)</button>
+          <button class="lvl-btn" data-level="medium">⚗️ Medium (Grades 5–6)</button>
+          <button class="lvl-btn" data-level="hard">🚀 Hard (Grades 7–8)</button>
+        </div>
+
+        <div class="stats-strip">
+          <div class="stat-pill"><div class="stat-num" id="scoreDisp">0</div><div class="stat-label">Score</div></div>
+          <div class="stat-pill"><div class="stat-num" id="streakDisp">0</div><div class="stat-label">Streak 🔥</div></div>
+          <div class="stat-pill"><div class="stat-num" id="qNumDisp">0</div><div class="stat-label">Answered</div></div>
+        </div>
+
+        <div class="timer-wrap">
+          <div class="timer-label"><span>Time Remaining</span><span id="timerText">60s</span></div>
+          <div class="timer-bar-bg"><div class="timer-bar" id="timerBar" style="width:100%"></div></div>
+        </div>
+
+        <div class="question-box" id="questionBox">
+          <div class="q-category" id="qCategory">Science</div>
+          <div class="q-score-badge" id="qBadge">Question 1</div>
+          <div class="q-number" id="questionText">Press Start!</div>
+        </div>
+
+        <div class="feedback" id="feedback"></div>
+
+        <div class="gameover-notice" id="gameoverNotice">
+          <strong>💥 Wrong Answer — Game Over!</strong>
+          <p id="gameoverMsg">The correct answer was —</p>
+        </div>
+
+        <div class="options-grid" id="optionsGrid">
+          <button class="opt-btn" id="opt0" disabled></button>
+          <button class="opt-btn" id="opt1" disabled></button>
+          <button class="opt-btn" id="opt2" disabled></button>
+          <button class="opt-btn" id="opt3" disabled></button>
+        </div>
+
+        <div class="ctrl-row">
+          <button class="btn-start" id="startBtn">🚀 Start Game</button>
+          <button class="btn-reset" id="resetBtn">↺ Reset</button>
+        </div>
+      </div>
+    </main>
+
+    <aside class="sidebar">
+      <div class="rank-card">
+        <h3>🏆 Leaderboard</h3>
+        <p style="font-size:13px;color:var(--muted);">Top 10 by score, per difficulty. Survive longer = higher score!</p>
+        <div class="rank-section">
+          <div class="rank-section-title">🌱 Easy</div>
+          <ol id="rankEasy"><li>Loading…</li></ol>
+        </div>
+        <div class="rank-section">
+          <div class="rank-section-title">⚗️ Medium</div>
+          <ol id="rankMedium"><li>Loading…</li></ol>
+        </div>
+        <div class="rank-section">
+          <div class="rank-section-title">🚀 Hard</div>
+          <ol id="rankHard"><li>Loading…</li></ol>
+        </div>
+        <div class="rank-note" id="rankNote">Loading leaderboard…</div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Winner / Game-end Dialog -->
+  <div class="dialog-backdrop" id="winDialog">
+    <div class="dialog">
+      <div class="dialog-emoji" id="dialogEmoji">🎉</div>
+      <h4 id="dialogTitle">Time's Up!</h4>
+      <p id="winSummary">You scored 0 points!</p>
+      <p>Enter your name for the leaderboard:</p>
+      <input type="text" id="dialogName" placeholder="Your name" maxlength="40" autocomplete="off" />
+      <div class="dialog-actions">
+        <button id="dialogCancel">Skip</button>
+        <button class="primary" id="dialogSubmit">Submit ✓</button>
+      </div>
+      <div class="dialog-status" id="dialogStatus"></div>
+    </div>
+  </div>
+
+  <script>
+    const BASE_ID = "sciencespeedquiz";
+    const GAME_DURATION = 60;
+
+
+    // ─── Question Bank ───────────────────────────────────────────────────────
+    const QUESTIONS = {
+      easy: [
+        // ── Original 24 ──────────────────────────────────────────────────────
+        {q:"What do plants need to make their own food?",a:"Sunlight, water, and CO₂",opts:["Sunlight, water, and CO₂","Soil, salt, and oxygen","Rain, wind, and sugar","Darkness, sand, and oil"],cat:"Life Science"},
+        {q:"Which planet is closest to the Sun?",a:"Mercury",opts:["Mercury","Venus","Earth","Mars"],cat:"Space"},
+        {q:"What is the boiling point of water?",a:"100 °C",opts:["100 °C","50 °C","0 °C","200 °C"],cat:"Physical Science"},
+        {q:"How many legs does an insect have?",a:"6",opts:["6","4","8","10"],cat:"Life Science"},
+        {q:"What force pulls objects toward Earth?",a:"Gravity",opts:["Gravity","Friction","Magnetism","Wind"],cat:"Physical Science"},
+        {q:"What gas do plants release during photosynthesis?",a:"Oxygen",opts:["Oxygen","Carbon dioxide","Nitrogen","Hydrogen"],cat:"Life Science"},
+        {q:"Which is the largest organ in the human body?",a:"Skin",opts:["Skin","Liver","Heart","Brain"],cat:"Human Body"},
+        {q:"What is the center of an atom called?",a:"Nucleus",opts:["Nucleus","Electron","Proton","Shell"],cat:"Physical Science"},
+        {q:"What type of animal is a whale?",a:"Mammal",opts:["Mammal","Fish","Reptile","Amphibian"],cat:"Life Science"},
+        {q:"Which planet has rings around it?",a:"Saturn",opts:["Saturn","Jupiter","Mars","Uranus"],cat:"Space"},
+        {q:"What is the freezing point of water?",a:"0 °C",opts:["0 °C","−10 °C","10 °C","100 °C"],cat:"Physical Science"},
+        {q:"What part of the plant absorbs water from the soil?",a:"Roots",opts:["Roots","Leaves","Stem","Flowers"],cat:"Life Science"},
+        {q:"What do tadpoles grow into?",a:"Frogs",opts:["Frogs","Fish","Lizards","Snakes"],cat:"Life Science"},
+        {q:"The Sun is a…",a:"Star",opts:["Star","Planet","Moon","Comet"],cat:"Space"},
+        {q:"What is the hardest natural substance on Earth?",a:"Diamond",opts:["Diamond","Gold","Iron","Quartz"],cat:"Earth Science"},
+        {q:"What organ pumps blood through the body?",a:"Heart",opts:["Heart","Lungs","Kidney","Liver"],cat:"Human Body"},
+        {q:"What color is chlorophyll?",a:"Green",opts:["Green","Red","Blue","Yellow"],cat:"Life Science"},
+        {q:"How many bones are in an adult human body?",a:"206",opts:["206","180","250","300"],cat:"Human Body"},
+        {q:"Which sense does the nose provide?",a:"Smell",opts:["Smell","Sight","Hearing","Touch"],cat:"Human Body"},
+        {q:"What is the name of the process by which water turns to vapor?",a:"Evaporation",opts:["Evaporation","Condensation","Precipitation","Filtration"],cat:"Earth Science"},
+        {q:"What do caterpillars turn into?",a:"Butterflies or moths",opts:["Butterflies or moths","Beetles","Grasshoppers","Bees"],cat:"Life Science"},
+        {q:"What layer of gas surrounds Earth?",a:"Atmosphere",opts:["Atmosphere","Lithosphere","Hydrosphere","Exosphere"],cat:"Earth Science"},
+        {q:"Which nutrient gives us the most energy quickly?",a:"Carbohydrates",opts:["Carbohydrates","Protein","Fat","Vitamins"],cat:"Human Body"},
+        {q:"What is sound caused by?",a:"Vibrations",opts:["Vibrations","Light","Heat","Pressure"],cat:"Physical Science"},
+        // ── New 76 ───────────────────────────────────────────────────────────
+        {q:"How many planets are in our solar system?",a:"8",opts:["8","9","7","10"],cat:"Space"},
+        {q:"What type of rock is formed from cooled lava?",a:"Igneous",opts:["Igneous","Sedimentary","Metamorphic","Fossil"],cat:"Earth Science"},
+        {q:"Which animal is known as the fastest land animal?",a:"Cheetah",opts:["Cheetah","Lion","Horse","Greyhound"],cat:"Life Science"},
+        {q:"What does a thermometer measure?",a:"Temperature",opts:["Temperature","Weight","Length","Pressure"],cat:"Physical Science"},
+        {q:"How many sides does a snowflake have?",a:"6",opts:["6","4","8","12"],cat:"Earth Science"},
+        {q:"Which gas do humans breathe in to survive?",a:"Oxygen",opts:["Oxygen","Nitrogen","Carbon dioxide","Helium"],cat:"Human Body"},
+        {q:"What is the largest planet in our solar system?",a:"Jupiter",opts:["Jupiter","Saturn","Uranus","Neptune"],cat:"Space"},
+        {q:"Where does the Sun rise?",a:"East",opts:["East","West","North","South"],cat:"Earth Science"},
+        {q:"What do bees collect from flowers?",a:"Nectar",opts:["Nectar","Sap","Water","Soil"],cat:"Life Science"},
+        {q:"What is the name of the force that slows objects when they rub together?",a:"Friction",opts:["Friction","Gravity","Tension","Inertia"],cat:"Physical Science"},
+        {q:"How many days are in a year?",a:"365",opts:["365","360","370","400"],cat:"Earth Science"},
+        {q:"What is the closest star to Earth?",a:"The Sun",opts:["The Sun","Proxima Centauri","Sirius","Betelgeuse"],cat:"Space"},
+        {q:"What part of the eye controls how much light enters?",a:"Pupil",opts:["Pupil","Iris","Cornea","Retina"],cat:"Human Body"},
+        {q:"Which season comes after winter?",a:"Spring",opts:["Spring","Summer","Autumn","Winter"],cat:"Earth Science"},
+        {q:"What do we call animals that eat only plants?",a:"Herbivores",opts:["Herbivores","Carnivores","Omnivores","Decomposers"],cat:"Life Science"},
+        {q:"What is the Moon?",a:"A natural satellite of Earth",opts:["A natural satellite of Earth","A small planet","A large asteroid","A dwarf star"],cat:"Space"},
+        {q:"What color is the sky on a clear day?",a:"Blue",opts:["Blue","White","Gray","Yellow"],cat:"Earth Science"},
+        {q:"What is the name of the gas that makes up most of Earth's atmosphere?",a:"Nitrogen",opts:["Nitrogen","Oxygen","Carbon dioxide","Helium"],cat:"Earth Science"},
+        {q:"What do we call the baby form of a butterfly?",a:"Caterpillar (larva)",opts:["Caterpillar (larva)","Pupa","Cocoon","Nymph"],cat:"Life Science"},
+        {q:"How many chambers does a human heart have?",a:"4",opts:["4","2","3","6"],cat:"Human Body"},
+        {q:"What type of energy does the Sun give off?",a:"Light and heat energy",opts:["Light and heat energy","Electrical energy","Chemical energy","Nuclear fusion only"],cat:"Physical Science"},
+        {q:"What do we call the change from a caterpillar to a butterfly?",a:"Metamorphosis",opts:["Metamorphosis","Migration","Hibernation","Molting"],cat:"Life Science"},
+        {q:"Which planet is known as the Red Planet?",a:"Mars",opts:["Mars","Venus","Mercury","Jupiter"],cat:"Space"},
+        {q:"What is rain, snow, sleet, and hail called?",a:"Precipitation",opts:["Precipitation","Evaporation","Condensation","Runoff"],cat:"Earth Science"},
+        {q:"How many teeth does an adult human have (including wisdom teeth)?",a:"32",opts:["32","28","36","24"],cat:"Human Body"},
+        {q:"What is the name of the process when a solid turns directly into a gas?",a:"Sublimation",opts:["Sublimation","Melting","Evaporation","Condensation"],cat:"Physical Science"},
+        {q:"What do we call animals that eat both plants and meat?",a:"Omnivores",opts:["Omnivores","Herbivores","Carnivores","Decomposers"],cat:"Life Science"},
+        {q:"What is a group of stars forming a pattern called?",a:"Constellation",opts:["Constellation","Galaxy","Nebula","Solar system"],cat:"Space"},
+        {q:"What type of simple machine is a ramp?",a:"Inclined plane",opts:["Inclined plane","Lever","Pulley","Wedge"],cat:"Physical Science"},
+        {q:"What organ in the body filters blood and makes urine?",a:"Kidney",opts:["Kidney","Liver","Spleen","Bladder"],cat:"Human Body"},
+        {q:"What is the outer layer of the Earth called?",a:"Crust",opts:["Crust","Mantle","Core","Magma"],cat:"Earth Science"},
+        {q:"What type of animal is a shark?",a:"Fish",opts:["Fish","Mammal","Reptile","Amphibian"],cat:"Life Science"},
+        {q:"What do you call the path a planet takes around the Sun?",a:"Orbit",opts:["Orbit","Revolution","Rotation","Trajectory"],cat:"Space"},
+        {q:"What is the name of the process by which plants make food using sunlight?",a:"Photosynthesis",opts:["Photosynthesis","Respiration","Digestion","Fermentation"],cat:"Life Science"},
+        {q:"Which gas do plants absorb from the air?",a:"Carbon dioxide",opts:["Carbon dioxide","Oxygen","Nitrogen","Hydrogen"],cat:"Life Science"},
+        {q:"What does a magnet attract?",a:"Iron and steel",opts:["Iron and steel","All metals","Wood","Plastic"],cat:"Physical Science"},
+        {q:"What is the name of the tiny structures inside cells that do specific jobs?",a:"Organelles",opts:["Organelles","Molecules","Tissues","Organisms"],cat:"Life Science"},
+        {q:"How long does it take Earth to rotate once on its axis?",a:"24 hours",opts:["24 hours","12 hours","365 days","30 days"],cat:"Earth Science"},
+        {q:"What is the name of Earth's only natural satellite?",a:"The Moon",opts:["The Moon","Europa","Titan","Phobos"],cat:"Space"},
+        {q:"Which part of a plant makes seeds?",a:"Flower",opts:["Flower","Leaf","Root","Stem"],cat:"Life Science"},
+        {q:"What is the main job of red blood cells?",a:"Carry oxygen",opts:["Carry oxygen","Fight infection","Clot blood","Digest food"],cat:"Human Body"},
+        {q:"What do we call matter that has no definite shape or volume?",a:"Gas",opts:["Gas","Liquid","Solid","Plasma"],cat:"Physical Science"},
+        {q:"What is the name of the layer of Earth between the crust and core?",a:"Mantle",opts:["Mantle","Lithosphere","Asthenosphere","Mesosphere"],cat:"Earth Science"},
+        {q:"What type of animal lays eggs but feeds young with milk?",a:"Platypus (monotreme)",opts:["Platypus (monotreme)","Crocodile","Penguin","Turtle"],cat:"Life Science"},
+        {q:"What is the name of the force that keeps planets in orbit around the Sun?",a:"Gravity",opts:["Gravity","Magnetism","Friction","Tension"],cat:"Space"},
+        {q:"What is the name of the colored part of the eye?",a:"Iris",opts:["Iris","Pupil","Cornea","Lens"],cat:"Human Body"},
+        {q:"What is it called when water vapor cools and forms tiny droplets to make clouds?",a:"Condensation",opts:["Condensation","Evaporation","Precipitation","Sublimation"],cat:"Earth Science"},
+        {q:"Which of these is a producer in a food chain?",a:"Grass",opts:["Grass","Rabbit","Fox","Eagle"],cat:"Life Science"},
+        {q:"What unit do we use to measure temperature in science?",a:"Celsius (°C)",opts:["Celsius (°C)","Kilograms","Meters","Newtons"],cat:"Physical Science"},
+        {q:"What is the name of the instrument used to look at stars?",a:"Telescope",opts:["Telescope","Microscope","Periscope","Binoculars"],cat:"Space"},
+        {q:"Where does digestion begin?",a:"Mouth",opts:["Mouth","Stomach","Small intestine","Esophagus"],cat:"Human Body"},
+        {q:"What type of energy does a stretched rubber band have?",a:"Elastic potential energy",opts:["Elastic potential energy","Kinetic energy","Chemical energy","Thermal energy"],cat:"Physical Science"},
+        {q:"How many legs does a spider have?",a:"8",opts:["8","6","10","4"],cat:"Life Science"},
+        {q:"What do we call the molten rock inside the Earth?",a:"Magma",opts:["Magma","Lava","Obsidian","Granite"],cat:"Earth Science"},
+        {q:"Which planet is known for the Great Red Spot, a giant storm?",a:"Jupiter",opts:["Jupiter","Mars","Saturn","Neptune"],cat:"Space"},
+        {q:"What part of the human body produces bile to help digest fat?",a:"Liver",opts:["Liver","Pancreas","Stomach","Gallbladder"],cat:"Human Body"},
+        {q:"What is the name of the scale used to measure earthquake strength?",a:"Richter scale",opts:["Richter scale","Beaufort scale","Fahrenheit scale","Kelvin scale"],cat:"Earth Science"},
+        {q:"Which of these animals is cold-blooded?",a:"Snake",opts:["Snake","Dog","Bird","Rabbit"],cat:"Life Science"},
+        {q:"What kind of energy does food contain?",a:"Chemical energy",opts:["Chemical energy","Kinetic energy","Thermal energy","Electrical energy"],cat:"Physical Science"},
+        {q:"What is the name of the galaxy that contains our solar system?",a:"Milky Way",opts:["Milky Way","Andromeda","Triangulum","Whirlpool"],cat:"Space"},
+        {q:"What type of blood vessel carries blood away from the heart?",a:"Artery",opts:["Artery","Vein","Capillary","Vessel"],cat:"Human Body"},
+        {q:"Which material is the best conductor of electricity?",a:"Copper",opts:["Copper","Wood","Plastic","Glass"],cat:"Physical Science"},
+        {q:"What is the name of the process by which seeds sprout and begin to grow?",a:"Germination",opts:["Germination","Pollination","Fertilization","Photosynthesis"],cat:"Life Science"},
+        {q:"What kind of rock is formed when sediments are pressed together over time?",a:"Sedimentary",opts:["Sedimentary","Igneous","Metamorphic","Volcanic"],cat:"Earth Science"},
+        {q:"How many moons does Mars have?",a:"2",opts:["2","0","1","4"],cat:"Space"},
+        {q:"What do we call the smallest unit of a chemical element?",a:"Atom",opts:["Atom","Molecule","Cell","Ion"],cat:"Physical Science"},
+        {q:"What does a plant use stomata for?",a:"Gas exchange and water vapor release",opts:["Gas exchange and water vapor release","Absorbing water","Making seeds","Carrying nutrients"],cat:"Life Science"},
+        {q:"What are clouds made of?",a:"Tiny water droplets or ice crystals",opts:["Tiny water droplets or ice crystals","Water vapor only","Dust particles","Gas molecules"],cat:"Earth Science"},
+        {q:"What is the name of the tube that carries food from the mouth to the stomach?",a:"Esophagus",opts:["Esophagus","Trachea","Intestine","Pharynx"],cat:"Human Body"},
+        {q:"What type of lens is used in a magnifying glass?",a:"Convex",opts:["Convex","Concave","Flat","Prism"],cat:"Physical Science"},
+        {q:"What do we call the movement of Earth around the Sun?",a:"Revolution",opts:["Revolution","Rotation","Orbit shift","Tilt"],cat:"Space"},
+        {q:"What is the primary source of energy for almost all life on Earth?",a:"The Sun",opts:["The Sun","Geothermal heat","Wind","Chemical reactions"],cat:"Life Science"},
+        {q:"What is the name of the scale that measures wind speed?",a:"Beaufort scale",opts:["Beaufort scale","Richter scale","Celsius scale","Kelvin scale"],cat:"Earth Science"},
+      ],
+      medium: [
+        // ── Original 24 ──────────────────────────────────────────────────────
+        {q:"What organelle is known as the powerhouse of the cell?",a:"Mitochondria",opts:["Mitochondria","Nucleus","Ribosome","Vacuole"],cat:"Cell Biology"},
+        {q:"What is the chemical symbol for gold?",a:"Au",opts:["Au","Go","Gd","Ag"],cat:"Chemistry"},
+        {q:"Which gas makes up about 78% of Earth's atmosphere?",a:"Nitrogen",opts:["Nitrogen","Oxygen","Carbon dioxide","Argon"],cat:"Earth Science"},
+        {q:"What is Newton's Second Law of Motion?",a:"F = ma",opts:["F = ma","F = mv","E = mc²","P = mv"],cat:"Physics"},
+        {q:"Which blood cells carry oxygen?",a:"Red blood cells",opts:["Red blood cells","White blood cells","Platelets","Plasma"],cat:"Human Body"},
+        {q:"What process do cells use to release energy from glucose?",a:"Cellular respiration",opts:["Cellular respiration","Photosynthesis","Fermentation","Osmosis"],cat:"Cell Biology"},
+        {q:"What is the pH of a neutral solution?",a:"7",opts:["7","0","14","4"],cat:"Chemistry"},
+        {q:"Which layer of Earth is liquid?",a:"Outer core",opts:["Outer core","Inner core","Mantle","Crust"],cat:"Earth Science"},
+        {q:"What type of wave is light?",a:"Electromagnetic",opts:["Electromagnetic","Mechanical","Sound","Seismic"],cat:"Physics"},
+        {q:"What is the role of decomposers in an ecosystem?",a:"Break down dead matter",opts:["Break down dead matter","Produce food from sunlight","Hunt prey","Pollinate plants"],cat:"Ecology"},
+        {q:"What is the atomic number of carbon?",a:"6",opts:["6","12","8","14"],cat:"Chemistry"},
+        {q:"What is the name of the process by which plants lose water through leaves?",a:"Transpiration",opts:["Transpiration","Evaporation","Respiration","Excretion"],cat:"Life Science"},
+        {q:"What unit measures electrical resistance?",a:"Ohm",opts:["Ohm","Volt","Watt","Ampere"],cat:"Physics"},
+        {q:"What is the largest planet in our solar system?",a:"Jupiter",opts:["Jupiter","Saturn","Neptune","Uranus"],cat:"Space"},
+        {q:"Which part of the brain controls balance?",a:"Cerebellum",opts:["Cerebellum","Cerebrum","Brain stem","Hippocampus"],cat:"Human Body"},
+        {q:"What is the formula for water?",a:"H₂O",opts:["H₂O","CO₂","NaCl","O₂"],cat:"Chemistry"},
+        {q:"What is the process of a liquid turning into a solid called?",a:"Solidification",opts:["Solidification","Sublimation","Condensation","Evaporation"],cat:"Physical Science"},
+        {q:"Which type of rock is formed from cooled magma?",a:"Igneous",opts:["Igneous","Sedimentary","Metamorphic","Limestone"],cat:"Earth Science"},
+        {q:"What is the main source of energy for Earth's climate system?",a:"The Sun",opts:["The Sun","Earth's core","Ocean currents","Wind"],cat:"Earth Science"},
+        {q:"What is the name of the movement of tectonic plates that builds mountains?",a:"Compression",opts:["Compression","Subduction","Spreading","Faulting"],cat:"Earth Science"},
+        {q:"What does DNA stand for?",a:"Deoxyribonucleic acid",opts:["Deoxyribonucleic acid","Diribose nucleic acid","Double nitrogen acid","Dynamic nucleic array"],cat:"Cell Biology"},
+        {q:"Which organ produces insulin?",a:"Pancreas",opts:["Pancreas","Liver","Kidney","Stomach"],cat:"Human Body"},
+        {q:"What is the speed of light approximately?",a:"300,000 km/s",opts:["300,000 km/s","150,000 km/s","30,000 km/s","3,000 km/s"],cat:"Physics"},
+        {q:"What kind of bond holds two hydrogen atoms and one oxygen atom together in water?",a:"Covalent bond",opts:["Covalent bond","Ionic bond","Hydrogen bond","Metallic bond"],cat:"Chemistry"},
+        // ── New 76 ───────────────────────────────────────────────────────────
+        {q:"What is the chemical symbol for sodium?",a:"Na",opts:["Na","So","Sd","N"],cat:"Chemistry"},
+        {q:"What is the name of the process by which a cell splits into two?",a:"Cell division (mitosis)",opts:["Cell division (mitosis)","Meiosis","Budding","Binary fission"],cat:"Cell Biology"},
+        {q:"What is Newton's First Law of Motion?",a:"An object in motion stays in motion unless acted upon",opts:["An object in motion stays in motion unless acted upon","Force equals mass times acceleration","For every action there is an equal and opposite reaction","Objects fall at the same rate"],cat:"Physics"},
+        {q:"What is the chemical formula for carbon dioxide?",a:"CO₂",opts:["CO₂","O₂","CH₄","H₂O"],cat:"Chemistry"},
+        {q:"Which organelle contains the DNA of a cell?",a:"Nucleus",opts:["Nucleus","Mitochondria","Ribosome","Lysosome"],cat:"Cell Biology"},
+        {q:"What is the name of the scale used to measure the hardness of minerals?",a:"Mohs scale",opts:["Mohs scale","Richter scale","Beaufort scale","pH scale"],cat:"Earth Science"},
+        {q:"What is the unit of force in the SI system?",a:"Newton (N)",opts:["Newton (N)","Joule","Watt","Pascal"],cat:"Physics"},
+        {q:"What is the difference between a physical change and a chemical change?",a:"Chemical changes create new substances",opts:["Chemical changes create new substances","Physical changes create new substances","Both are the same","Neither creates new substances"],cat:"Chemistry"},
+        {q:"How many chromosomes do human body cells typically contain?",a:"46",opts:["46","23","48","24"],cat:"Cell Biology"},
+        {q:"What is the formula for photosynthesis?",a:"6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂",opts:["6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂","O₂ + glucose → CO₂ + H₂O","H₂O → H₂ + O₂","CO₂ + light → glucose"],cat:"Life Science"},
+        {q:"What is the name of the movement of water through a semi-permeable membrane?",a:"Osmosis",opts:["Osmosis","Diffusion","Active transport","Filtration"],cat:"Cell Biology"},
+        {q:"What is the chemical symbol for iron?",a:"Fe",opts:["Fe","Ir","In","Io"],cat:"Chemistry"},
+        {q:"Which type of electromagnetic wave has the shortest wavelength?",a:"Gamma rays",opts:["Gamma rays","X-rays","Ultraviolet","Radio waves"],cat:"Physics"},
+        {q:"What is the name of the process that changes rock type due to heat and pressure?",a:"Metamorphism",opts:["Metamorphism","Erosion","Sedimentation","Crystallization"],cat:"Earth Science"},
+        {q:"What is a food web?",a:"Interconnected food chains in an ecosystem",opts:["Interconnected food chains in an ecosystem","A single food chain","A list of what one animal eats","A map of plant growth"],cat:"Ecology"},
+        {q:"What is the charge of a proton?",a:"Positive",opts:["Positive","Negative","Neutral","Variable"],cat:"Chemistry"},
+        {q:"What type of lens corrects nearsightedness?",a:"Concave (diverging) lens",opts:["Concave (diverging) lens","Convex (converging) lens","Flat lens","Cylindrical lens"],cat:"Physics"},
+        {q:"What is the name of the scientist who developed the theory of evolution by natural selection?",a:"Charles Darwin",opts:["Charles Darwin","Gregor Mendel","Louis Pasteur","Isaac Newton"],cat:"Life Science"},
+        {q:"What is the main function of the large intestine?",a:"Absorb water and form feces",opts:["Absorb water and form feces","Digest proteins","Absorb nutrients from food","Produce bile"],cat:"Human Body"},
+        {q:"What is the chemical symbol for oxygen?",a:"O",opts:["O","Ox","Oy","Om"],cat:"Chemistry"},
+        {q:"What is an exothermic reaction?",a:"A reaction that releases heat",opts:["A reaction that releases heat","A reaction that absorbs heat","A reaction with no energy change","A reaction that only occurs at high temperature"],cat:"Chemistry"},
+        {q:"What is the name of the region around a magnet where its force acts?",a:"Magnetic field",opts:["Magnetic field","Electric field","Gravitational field","Force field"],cat:"Physics"},
+        {q:"What type of reproduction produces offspring genetically identical to the parent?",a:"Asexual reproduction",opts:["Asexual reproduction","Sexual reproduction","Budding only","Sporulation only"],cat:"Life Science"},
+        {q:"What is the name of the tectonic plate boundary where plates move apart?",a:"Divergent boundary",opts:["Divergent boundary","Convergent boundary","Transform boundary","Subduction zone"],cat:"Earth Science"},
+        {q:"What part of the eye focuses light onto the retina?",a:"Lens",opts:["Lens","Cornea","Iris","Pupil"],cat:"Human Body"},
+        {q:"What is the chemical symbol for potassium?",a:"K",opts:["K","Po","Pt","Ka"],cat:"Chemistry"},
+        {q:"What is the relationship between a shark and a remora fish called?",a:"Commensalism",opts:["Commensalism","Mutualism","Parasitism","Predation"],cat:"Ecology"},
+        {q:"What is the difference between speed and velocity?",a:"Velocity includes direction; speed does not",opts:["Velocity includes direction; speed does not","Speed includes direction; velocity does not","They are identical","Velocity is always greater"],cat:"Physics"},
+        {q:"What is the function of white blood cells?",a:"Fight infection and disease",opts:["Fight infection and disease","Carry oxygen","Clot blood","Carry nutrients"],cat:"Human Body"},
+        {q:"What is the name of the process by which nitrogen is converted into usable form by bacteria?",a:"Nitrogen fixation",opts:["Nitrogen fixation","Nitrification","Denitrification","Assimilation"],cat:"Ecology"},
+        {q:"What is kinetic energy?",a:"Energy of motion",opts:["Energy of motion","Stored energy","Energy from heat","Energy from light"],cat:"Physics"},
+        {q:"What are the building blocks of proteins?",a:"Amino acids",opts:["Amino acids","Glucose molecules","Fatty acids","Nucleotides"],cat:"Cell Biology"},
+        {q:"What is the name of Earth's longest mountain range?",a:"Mid-Ocean Ridge",opts:["Mid-Ocean Ridge","Himalayas","Andes","Alps"],cat:"Earth Science"},
+        {q:"What is the name of the process by which liquid water becomes water vapor at the surface?",a:"Evaporation",opts:["Evaporation","Condensation","Boiling","Sublimation"],cat:"Earth Science"},
+        {q:"What do we call the force needed to start or stop an object moving?",a:"Inertia",opts:["Inertia","Friction","Gravity","Tension"],cat:"Physics"},
+        {q:"What is the name of the instrument used to measure atmospheric pressure?",a:"Barometer",opts:["Barometer","Thermometer","Hygrometer","Anemometer"],cat:"Earth Science"},
+        {q:"Which of these is NOT a type of asexual reproduction?",a:"Fertilization",opts:["Fertilization","Budding","Binary fission","Fragmentation"],cat:"Life Science"},
+        {q:"What is the name of the outermost layer of the Sun?",a:"Corona",opts:["Corona","Chromosphere","Photosphere","Core"],cat:"Space"},
+        {q:"What is the chemical formula for table salt?",a:"NaCl",opts:["NaCl","KCl","MgO","CaCO₃"],cat:"Chemistry"},
+        {q:"What is potential energy?",a:"Stored energy due to position or state",opts:["Stored energy due to position or state","Energy of motion","Energy from chemical bonds only","Energy from heat"],cat:"Physics"},
+        {q:"Which layer of the atmosphere contains the ozone layer?",a:"Stratosphere",opts:["Stratosphere","Troposphere","Mesosphere","Thermosphere"],cat:"Earth Science"},
+        {q:"What is the function of the cell membrane?",a:"Control what enters and exits the cell",opts:["Control what enters and exits the cell","Produce energy","Store DNA","Build proteins"],cat:"Cell Biology"},
+        {q:"What is the term for the number of protons in an atom's nucleus?",a:"Atomic number",opts:["Atomic number","Mass number","Atomic mass","Isotope number"],cat:"Chemistry"},
+        {q:"What is the name of the process that breaks down food in the digestive system?",a:"Digestion",opts:["Digestion","Absorption","Assimilation","Excretion"],cat:"Human Body"},
+        {q:"What does a seismograph measure?",a:"Earthquake vibrations",opts:["Earthquake vibrations","Wind speed","Ocean depth","Air pressure"],cat:"Earth Science"},
+        {q:"What type of energy is stored in fossil fuels?",a:"Chemical energy",opts:["Chemical energy","Nuclear energy","Kinetic energy","Thermal energy"],cat:"Physical Science"},
+        {q:"What is the name of the organelle that packages and ships proteins in a cell?",a:"Golgi apparatus",opts:["Golgi apparatus","Ribosome","Endoplasmic reticulum","Lysosome"],cat:"Cell Biology"},
+        {q:"What is the term for a species that is at risk of extinction?",a:"Endangered",opts:["Endangered","Threatened","Vulnerable","Extinct"],cat:"Ecology"},
+        {q:"What law states that matter cannot be created or destroyed?",a:"Law of conservation of mass",opts:["Law of conservation of mass","Newton's First Law","Boyle's Law","Charles's Law"],cat:"Chemistry"},
+        {q:"What type of circuit has only one path for current to flow?",a:"Series circuit",opts:["Series circuit","Parallel circuit","Open circuit","Short circuit"],cat:"Physics"},
+        {q:"What is the name of the protein that carries oxygen in red blood cells?",a:"Hemoglobin",opts:["Hemoglobin","Myoglobin","Albumin","Fibrinogen"],cat:"Human Body"},
+        {q:"What type of galaxy is the Milky Way?",a:"Spiral galaxy",opts:["Spiral galaxy","Elliptical galaxy","Irregular galaxy","Lenticular galaxy"],cat:"Space"},
+        {q:"What is the name of the process when a gas turns directly into a solid?",a:"Deposition",opts:["Deposition","Sublimation","Condensation","Solidification"],cat:"Physical Science"},
+        {q:"What is the main difference between plant cells and animal cells?",a:"Plant cells have a cell wall and chloroplasts",opts:["Plant cells have a cell wall and chloroplasts","Animal cells have a nucleus and plant cells do not","Plant cells have no mitochondria","Animal cells have a cell wall"],cat:"Cell Biology"},
+        {q:"What is the name for the tendency of water molecules to stick together?",a:"Cohesion",opts:["Cohesion","Adhesion","Surface tension","Capillarity"],cat:"Chemistry"},
+        {q:"What is the SI unit of energy?",a:"Joule",opts:["Joule","Watt","Newton","Pascal"],cat:"Physics"},
+        {q:"What is the name of the point inside Earth where an earthquake originates?",a:"Hypocenter (focus)",opts:["Hypocenter (focus)","Epicenter","Fault line","Subduction point"],cat:"Earth Science"},
+        {q:"What is the name of the relationship where both species benefit?",a:"Mutualism",opts:["Mutualism","Commensalism","Parasitism","Competition"],cat:"Ecology"},
+        {q:"What is the function of the chloroplast?",a:"Carry out photosynthesis",opts:["Carry out photosynthesis","Produce ATP","Store DNA","Break down waste"],cat:"Cell Biology"},
+        {q:"What is Ohm's Law?",a:"V = IR",opts:["V = IR","P = IV","F = ma","E = mc²"],cat:"Physics"},
+        {q:"What is the name of the most abundant element in Earth's crust?",a:"Oxygen",opts:["Oxygen","Silicon","Iron","Aluminum"],cat:"Earth Science"},
+        {q:"What is the name of the gland that regulates metabolism through hormones?",a:"Thyroid gland",opts:["Thyroid gland","Pituitary gland","Adrenal gland","Pineal gland"],cat:"Human Body"},
+        {q:"What is the half-life of carbon-14 approximately?",a:"5,730 years",opts:["5,730 years","1,000 years","10,000 years","50,000 years"],cat:"Chemistry"},
+        {q:"What is the name of the process where rocks are broken down by weather?",a:"Weathering",opts:["Weathering","Erosion","Deposition","Sedimentation"],cat:"Earth Science"},
+        {q:"Which of these is a renewable energy source?",a:"Solar energy",opts:["Solar energy","Natural gas","Coal","Nuclear (uranium)"],cat:"Physical Science"},
+        {q:"What is the name of the process by which organisms develop resistance to antibiotics?",a:"Natural selection (evolution)",opts:["Natural selection (evolution)","Mutation only","Osmosis","Diffusion"],cat:"Life Science"},
+        {q:"What is the center of a hurricane called?",a:"Eye",opts:["Eye","Core","Nucleus","Vortex"],cat:"Earth Science"},
+        {q:"What is the formula for kinetic energy?",a:"KE = ½mv²",opts:["KE = ½mv²","KE = mv","KE = mgh","KE = Fd"],cat:"Physics"},
+        {q:"What does ATP stand for in biology?",a:"Adenosine triphosphate",opts:["Adenosine triphosphate","Amino triphosphate","Adenine transfer protein","Active transport protein"],cat:"Cell Biology"},
+        {q:"What is the name of the type of bond formed when electrons are transferred between atoms?",a:"Ionic bond",opts:["Ionic bond","Covalent bond","Metallic bond","Hydrogen bond"],cat:"Chemistry"},
+        {q:"What is the name of the force that opposes motion through a fluid?",a:"Drag (fluid resistance)",opts:["Drag (fluid resistance)","Friction","Gravity","Buoyancy"],cat:"Physics"},
+        {q:"What is the name of the process by which the ocean currents are driven by differences in water temperature and salinity?",a:"Thermohaline circulation",opts:["Thermohaline circulation","Coriolis effect","ENSO","Tidal forcing"],cat:"Earth Science"},
+        {q:"What is the term for an organism that makes its own food?",a:"Autotroph",opts:["Autotroph","Heterotroph","Decomposer","Consumer"],cat:"Ecology"},
+        {q:"What is the name of the process by which rock is worn away and carried by water or wind?",a:"Erosion",opts:["Erosion","Weathering","Deposition","Sedimentation"],cat:"Earth Science"},
+        {q:"What is the name of the substance that speeds up a chemical reaction without being consumed?",a:"Catalyst",opts:["Catalyst","Reactant","Product","Inhibitor"],cat:"Chemistry"},
+        {q:"What is the name of the part of the nervous system that controls involuntary actions?",a:"Autonomic nervous system",opts:["Autonomic nervous system","Somatic nervous system","Central nervous system","Peripheral nervous system"],cat:"Human Body"},
+      ],
+      hard: [
+        // ── Original 24 ──────────────────────────────────────────────────────
+        {q:"What is the process by which mRNA is used to build a protein?",a:"Translation",opts:["Translation","Transcription","Replication","Transduction"],cat:"Cell Biology"},
+        {q:"What is the law of conservation of energy?",a:"Energy cannot be created or destroyed",opts:["Energy cannot be created or destroyed","Energy equals mass times velocity","Energy always increases","Energy flows from cold to hot"],cat:"Physics"},
+        {q:"What does the Hardy-Weinberg principle describe?",a:"Genetic equilibrium in a population",opts:["Genetic equilibrium in a population","Rate of mutation","Natural selection pressure","Speciation speed"],cat:"Genetics"},
+        {q:"What is enthalpy a measure of?",a:"Heat content of a system",opts:["Heat content of a system","Disorder of a system","Electrical energy","Kinetic energy of molecules"],cat:"Chemistry"},
+        {q:"Which organelle is responsible for protein synthesis?",a:"Ribosome",opts:["Ribosome","Golgi apparatus","Endoplasmic reticulum","Lysosome"],cat:"Cell Biology"},
+        {q:"What is the Henderson-Hasselbalch equation used for?",a:"Calculating pH of a buffer",opts:["Calculating pH of a buffer","Measuring enzyme activity","Finding osmotic pressure","Determining bond energy"],cat:"Chemistry"},
+        {q:"In which phase of meiosis does crossing-over occur?",a:"Prophase I",opts:["Prophase I","Metaphase II","Anaphase I","Telophase II"],cat:"Cell Biology"},
+        {q:"What does the second law of thermodynamics state?",a:"Entropy of an isolated system increases",opts:["Entropy of an isolated system increases","Energy is conserved","Heat flows from cold to hot","All systems reach absolute zero"],cat:"Physics"},
+        {q:"What is the Krebs cycle also called?",a:"Citric acid cycle",opts:["Citric acid cycle","Calvin cycle","Nitrogen cycle","Urea cycle"],cat:"Biochemistry"},
+        {q:"What causes the aurora borealis?",a:"Solar particles interacting with the atmosphere",opts:["Solar particles interacting with the atmosphere","Volcanic eruptions","Electromagnetic fields from Earth's core","High-altitude lightning"],cat:"Earth Science"},
+        {q:"What type of bonding is found in metals that allows them to conduct electricity?",a:"Metallic bonding",opts:["Metallic bonding","Covalent bonding","Ionic bonding","Van der Waals forces"],cat:"Chemistry"},
+        {q:"What is the charge of a neutron?",a:"Neutral (no charge)",opts:["Neutral (no charge)","Positive","Negative","Variable"],cat:"Physics"},
+        {q:"What is CRISPR primarily used for in biology?",a:"Gene editing",opts:["Gene editing","Protein folding","Cell staining","Chromosome counting"],cat:"Biotechnology"},
+        {q:"What determines the atomic mass of an element?",a:"Protons + neutrons",opts:["Protons + neutrons","Protons only","Electrons + protons","Neutrons only"],cat:"Chemistry"},
+        {q:"What is the main product of the light-dependent reactions of photosynthesis?",a:"ATP and NADPH",opts:["ATP and NADPH","Glucose","CO₂","Water"],cat:"Biochemistry"},
+        {q:"What is the principle of superposition in geology?",a:"Older layers are beneath newer layers",opts:["Older layers are beneath newer layers","Rocks with more fossils are older","All layers form at the same rate","Minerals rise to the top over time"],cat:"Earth Science"},
+        {q:"What is the Doppler effect?",a:"Change in wave frequency due to relative motion",opts:["Change in wave frequency due to relative motion","Reflection of sound off surfaces","Amplification of waves","Interference of two waves"],cat:"Physics"},
+        {q:"Which type of RNA carries amino acids to the ribosome?",a:"tRNA",opts:["tRNA","mRNA","rRNA","snRNA"],cat:"Cell Biology"},
+        {q:"What does the electronegativity of an atom describe?",a:"Its ability to attract electrons in a bond",opts:["Its ability to attract electrons in a bond","Its number of protons","Its nuclear charge","Its ionization energy"],cat:"Chemistry"},
+        {q:"What is natural selection?",a:"Survival and reproduction of best-adapted individuals",opts:["Survival and reproduction of best-adapted individuals","Random changes in genes","Migration of species","Formation of new species only"],cat:"Evolution"},
+        {q:"What is a half-life?",a:"Time for half of a radioactive substance to decay",opts:["Time for half of a radioactive substance to decay","Half the atomic mass","Time for full nuclear fission","Half the electron spin"],cat:"Physics"},
+        {q:"What structure connects a muscle to a bone?",a:"Tendon",opts:["Tendon","Ligament","Cartilage","Fascia"],cat:"Human Body"},
+        {q:"What is the role of the sodium-potassium pump in neurons?",a:"Maintain resting membrane potential",opts:["Maintain resting membrane potential","Generate action potentials only","Destroy neurotransmitters","Transport glucose into the cell"],cat:"Human Body"},
+        {q:"What is speciation?",a:"Formation of new distinct species",opts:["Formation of new distinct species","Extinction of a species","Gene mutation only","Random mating patterns"],cat:"Evolution"},
+        // ── New 76 ───────────────────────────────────────────────────────────
+        {q:"What is the name of the enzyme that unwinds DNA during replication?",a:"Helicase",opts:["Helicase","Polymerase","Ligase","Topoisomerase"],cat:"Biochemistry"},
+        {q:"What is the Heisenberg Uncertainty Principle?",a:"You cannot simultaneously know exact position and momentum of a particle",opts:["You cannot simultaneously know exact position and momentum of a particle","Energy is quantized in discrete packets","Electrons exist in probability clouds","Wave-particle duality exists"],cat:"Physics"},
+        {q:"What is the role of the smooth endoplasmic reticulum?",a:"Lipid synthesis and detoxification",opts:["Lipid synthesis and detoxification","Protein synthesis","DNA replication","Energy production"],cat:"Cell Biology"},
+        {q:"What is Le Chatelier's Principle?",a:"A system at equilibrium resists changes by shifting to oppose them",opts:["A system at equilibrium resists changes by shifting to oppose them","Reactions always proceed forward","Catalysts change equilibrium","Heat always drives reactions forward"],cat:"Chemistry"},
+        {q:"What is the molecular basis of sickle cell anemia?",a:"A single amino acid substitution in hemoglobin",opts:["A single amino acid substitution in hemoglobin","A deletion of an entire gene","An extra chromosome 11","Failure of hemoglobin transcription"],cat:"Genetics"},
+        {q:"What is the photoelectric effect?",a:"Electrons ejected from a material when light hits it",opts:["Electrons ejected from a material when light hits it","Light bending around corners","Light splitting into colors","Electrons accelerating in a magnetic field"],cat:"Physics"},
+        {q:"What is the name of the Calvin cycle's primary CO₂ acceptor?",a:"RuBP (ribulose-1,5-bisphosphate)",opts:["RuBP (ribulose-1,5-bisphosphate)","G3P","ATP","NADPH"],cat:"Biochemistry"},
+        {q:"What is genetic drift?",a:"Random changes in allele frequency in a small population",opts:["Random changes in allele frequency in a small population","Directional change driven by selection","Gene flow between populations","Mutation rate change"],cat:"Genetics"},
+        {q:"What is the difference between mitosis and meiosis?",a:"Meiosis produces haploid gametes; mitosis produces diploid cells",opts:["Meiosis produces haploid gametes; mitosis produces diploid cells","Mitosis produces 4 cells; meiosis produces 2","Meiosis only occurs in plants","Mitosis involves crossing-over"],cat:"Cell Biology"},
+        {q:"What is activation energy in chemistry?",a:"Minimum energy required to start a reaction",opts:["Minimum energy required to start a reaction","Energy released by a reaction","Energy stored in chemical bonds","Total enthalpy of a system"],cat:"Chemistry"},
+        {q:"What is the name of the force carrier for electromagnetism in quantum field theory?",a:"Photon",opts:["Photon","Gluon","W boson","Graviton"],cat:"Physics"},
+        {q:"What is epigenetics?",a:"Changes in gene expression without altering DNA sequence",opts:["Changes in gene expression without altering DNA sequence","Mutations in germ cells only","Changes to the number of chromosomes","RNA interference only"],cat:"Genetics"},
+        {q:"What is the function of telomeres?",a:"Protect chromosome ends from degradation",opts:["Protect chromosome ends from degradation","Initiate DNA replication","Code for regulatory proteins","Attach chromosomes to the spindle"],cat:"Cell Biology"},
+        {q:"What is the Gibbs free energy equation?",a:"ΔG = ΔH − TΔS",opts:["ΔG = ΔH − TΔS","ΔG = ΔS − TΔH","ΔG = ΔH + TΔS","ΔG = T(ΔH − ΔS)"],cat:"Chemistry"},
+        {q:"What is the magnetic quantum number (m_l) in atomic theory?",a:"Orientation of the orbital in space",opts:["Orientation of the orbital in space","Energy level of the orbital","Shape of the orbital","Spin of the electron"],cat:"Chemistry"},
+        {q:"What is evo-devo (evolutionary developmental biology)?",a:"Study of how developmental processes evolve across species",opts:["Study of how developmental processes evolve across species","Study of evolution of the nervous system","Analysis of fossil development","Genetic mutation rates in embryos"],cat:"Evolution"},
+        {q:"What is the Nernst equation used for?",a:"Calculating the equilibrium potential of an ion across a membrane",opts:["Calculating the equilibrium potential of an ion across a membrane","Measuring osmotic pressure","Finding enzyme kinetics","Determining reaction rates"],cat:"Biochemistry"},
+        {q:"What is the primary mechanism behind antibiotic resistance?",a:"Natural selection of spontaneously resistant mutants",opts:["Natural selection of spontaneously resistant mutants","Bacteria learning to avoid antibiotics","Gene editing by bacteria","Transfer of resistance from viruses"],cat:"Evolution"},
+        {q:"What is quantization of energy as proposed by Planck?",a:"Energy is emitted or absorbed in discrete packets called quanta",opts:["Energy is emitted or absorbed in discrete packets called quanta","Energy is continuous and infinitely divisible","All energy is kinetic","Only nuclear reactions involve quanta"],cat:"Physics"},
+        {q:"What is the function of the p53 protein?",a:"Tumor suppressor that triggers apoptosis in damaged cells",opts:["Tumor suppressor that triggers apoptosis in damaged cells","Promote cell division","Synthesize DNA","Transport oxygen"],cat:"Cell Biology"},
+        {q:"What is redox chemistry?",a:"Transfer of electrons between substances",opts:["Transfer of electrons between substances","Transfer of protons between acids and bases","Formation of covalent bonds","Decomposition reactions only"],cat:"Chemistry"},
+        {q:"What is the difference between an exoplanet and a planet?",a:"Exoplanet orbits a star other than our Sun",opts:["Exoplanet orbits a star other than our Sun","Exoplanet is outside our galaxy","Exoplanet lacks a solid surface","Exoplanet is larger than Jupiter"],cat:"Space"},
+        {q:"What is the name of the signaling molecule that crosses the synapse between neurons?",a:"Neurotransmitter",opts:["Neurotransmitter","Hormone","Enzyme","Cytokine"],cat:"Human Body"},
+        {q:"What is allosteric regulation of an enzyme?",a:"Binding of a molecule at a non-active site changes enzyme activity",opts:["Binding of a molecule at a non-active site changes enzyme activity","Competitive inhibition of the active site","Denaturation of the enzyme","Covalent modification of the active site"],cat:"Biochemistry"},
+        {q:"What is the standard model of particle physics?",a:"Framework describing fundamental particles and forces (excluding gravity)",opts:["Framework describing fundamental particles and forces (excluding gravity)","Theory of gravity and space-time","Description of atomic orbitals","Model of the atomic nucleus only"],cat:"Physics"},
+        {q:"What is the difference between type I and type II errors in hypothesis testing?",a:"Type I rejects a true null; Type II fails to reject a false null",opts:["Type I rejects a true null; Type II fails to reject a false null","Type I accepts a false null; Type II rejects a true null","Both reject null hypotheses","Both involve p-value thresholds only"],cat:"Science Methods"},
+        {q:"What is the name of the hypothesis that life arose from non-living matter?",a:"Abiogenesis",opts:["Abiogenesis","Panspermia","Spontaneous generation","Biogenesis"],cat:"Evolution"},
+        {q:"What is the role of GTP in signal transduction?",a:"Activates G-proteins to relay signals inside the cell",opts:["Activates G-proteins to relay signals inside the cell","Provides energy for muscle contraction","Synthesizes mRNA","Transports amino acids"],cat:"Cell Biology"},
+        {q:"What is the name of the principle stating that no two electrons can have the same four quantum numbers?",a:"Pauli Exclusion Principle",opts:["Pauli Exclusion Principle","Aufbau Principle","Hund's Rule","Heisenberg Principle"],cat:"Chemistry"},
+        {q:"What is a pedigree chart used for in genetics?",a:"Tracing inheritance of traits across generations",opts:["Tracing inheritance of traits across generations","Mapping genomes","Sequencing DNA","Comparing chromosomes"],cat:"Genetics"},
+        {q:"What is the name of the phenomenon where a quantum particle passes through a barrier it classically cannot?",a:"Quantum tunneling",opts:["Quantum tunneling","Wave collapse","Superposition","Entanglement"],cat:"Physics"},
+        {q:"What is the name of the bond between complementary DNA strands?",a:"Hydrogen bonds",opts:["Hydrogen bonds","Covalent bonds","Ionic bonds","Disulfide bonds"],cat:"Biochemistry"},
+        {q:"What is the bottleneck effect in evolution?",a:"Sharp reduction in population size reducing genetic diversity",opts:["Sharp reduction in population size reducing genetic diversity","Increase in mutation rate","Gene flow from isolated population","Competition bottleneck for resources"],cat:"Genetics"},
+        {q:"What is Bernoulli's principle?",a:"Faster-moving fluid exerts less pressure",opts:["Faster-moving fluid exerts less pressure","Pressure increases with fluid velocity","Fluids always flow from high to low pressure","Viscous fluids resist Bernoulli effects"],cat:"Physics"},
+        {q:"What is RNA interference (RNAi)?",a:"A mechanism using small RNAs to silence gene expression",opts:["A mechanism using small RNAs to silence gene expression","Transcription of mRNA from DNA","Translation of protein from mRNA","Degradation of ribosomes"],cat:"Cell Biology"},
+        {q:"What is the Earth's geomagnetic field generated by?",a:"Convection currents of molten iron in the outer core",opts:["Convection currents of molten iron in the outer core","Earth's rotation alone","Interaction with the solar wind","Magnetic minerals in the crust"],cat:"Earth Science"},
+        {q:"What is Michaelis-Menten kinetics?",a:"Model describing enzyme reaction rate vs. substrate concentration",opts:["Model describing enzyme reaction rate vs. substrate concentration","Model of gene regulation","Description of osmotic pressure","Model of DNA replication speed"],cat:"Biochemistry"},
+        {q:"What is the name of the protein complex that degrades damaged or unneeded proteins?",a:"Proteasome",opts:["Proteasome","Lysosome","Ribosome","Spliceosome"],cat:"Cell Biology"},
+        {q:"What is dark matter?",a:"Undetected matter that exerts gravitational effects on visible matter",opts:["Undetected matter that exerts gravitational effects on visible matter","Matter inside black holes","Antimatter in deep space","Dense interstellar gas clouds"],cat:"Space"},
+        {q:"What is the name of the phenomenon where two species evolve in response to each other?",a:"Coevolution",opts:["Coevolution","Convergent evolution","Parallel evolution","Adaptive radiation"],cat:"Evolution"},
+        {q:"What is mass spectrometry used for?",a:"Determining the mass and composition of molecules",opts:["Determining the mass and composition of molecules","Measuring radioactivity","Analyzing light spectra","Measuring osmotic pressure"],cat:"Chemistry"},
+        {q:"What is the name of the enzyme that adds nucleotides during DNA replication?",a:"DNA polymerase",opts:["DNA polymerase","RNA polymerase","Helicase","Ligase"],cat:"Biochemistry"},
+        {q:"What is the name of the effect where massive objects bend spacetime?",a:"Gravitational lensing",opts:["Gravitational lensing","Doppler shift","Refraction","Diffraction"],cat:"Space"},
+        {q:"What is a promoter in molecular biology?",a:"A DNA sequence that initiates transcription of a gene",opts:["A DNA sequence that initiates transcription of a gene","A protein that starts translation","An enhancer molecule","A regulatory RNA"],cat:"Cell Biology"},
+        {q:"What is Avogadro's number?",a:"6.022 × 10²³ particles per mole",opts:["6.022 × 10²³ particles per mole","6.022 × 10²⁰ particles per mole","3.0 × 10⁸ per mole","1.38 × 10⁻²³ per mole"],cat:"Chemistry"},
+        {q:"What is the name of the immune response that forms memory cells after infection?",a:"Adaptive (acquired) immunity",opts:["Adaptive (acquired) immunity","Innate immunity","Passive immunity","Autoimmune response"],cat:"Human Body"},
+        {q:"What is the name of the phenomenon where identical quantum particles cannot be distinguished?",a:"Quantum indistinguishability",opts:["Quantum indistinguishability","Wave-particle duality","Superposition","Entanglement"],cat:"Physics"},
+        {q:"What does the word 'diploid' mean?",a:"Having two sets of chromosomes (2n)",opts:["Having two sets of chromosomes (2n)","Having one set of chromosomes (n)","Having four sets of chromosomes (4n)","Having no sex chromosomes"],cat:"Genetics"},
+        {q:"What is adaptive radiation?",a:"Rapid evolution of a species into many different forms to fill ecological niches",opts:["Rapid evolution of a species into many different forms to fill ecological niches","Evolution toward a single optimal form","Migration of a species to new habitats","Extinction of ancestral species"],cat:"Evolution"},
+        {q:"What is the name of the organic molecules that store hereditary information?",a:"Nucleic acids (DNA and RNA)",opts:["Nucleic acids (DNA and RNA)","Proteins","Polysaccharides","Lipids"],cat:"Biochemistry"},
+        {q:"What is the significance of the cosmic microwave background (CMB)?",a:"It is radiation left over from the Big Bang",opts:["It is radiation left over from the Big Bang","It is emitted by all stars","It is caused by black holes","It is reflected sunlight in deep space"],cat:"Space"},
+        {q:"What is the name of the Hardy-Weinberg equation?",a:"p² + 2pq + q² = 1",opts:["p² + 2pq + q² = 1","p + q = 1 only","2pq = 1","p² + q² = 1"],cat:"Genetics"},
+        {q:"What is the name of the bond that stabilizes the secondary structure of proteins?",a:"Hydrogen bonds",opts:["Hydrogen bonds","Covalent bonds","Ionic bonds","Disulfide bonds"],cat:"Biochemistry"},
+        {q:"What is the principle of competitive exclusion?",a:"Two species competing for the same resource cannot coexist indefinitely",opts:["Two species competing for the same resource cannot coexist indefinitely","Competition always leads to extinction","Stronger species always outcompete weaker ones","Resource sharing always occurs"],cat:"Ecology"},
+        {q:"What does the term 'action potential' describe in neuroscience?",a:"A rapid change in membrane electrical charge that travels along an axon",opts:["A rapid change in membrane electrical charge that travels along an axon","Release of neurotransmitters","Synaptic inhibition","Myelination of the axon"],cat:"Human Body"},
+        {q:"What is nuclear fusion?",a:"Combining of light atomic nuclei to form heavier nuclei releasing energy",opts:["Combining of light atomic nuclei to form heavier nuclei releasing energy","Splitting of heavy atomic nuclei releasing energy","Radioactive decay","Electron capture"],cat:"Physics"},
+        {q:"What is a plasmid?",a:"A small circular DNA molecule in bacteria separate from chromosomal DNA",opts:["A small circular DNA molecule in bacteria separate from chromosomal DNA","A fragment of nuclear DNA","A type of RNA","A membrane-bound organelle in bacteria"],cat:"Cell Biology"},
+        {q:"What is the difference between strong and weak nuclear forces?",a:"Strong force binds quarks in nucleons; weak force governs radioactive decay",opts:["Strong force binds quarks in nucleons; weak force governs radioactive decay","Strong force works over long range; weak force is short range","They are the same force at different energies","Weak force involves photons; strong force involves gluons only"],cat:"Physics"},
+        {q:"What is the name for the evolutionary process where unrelated species develop similar traits?",a:"Convergent evolution",opts:["Convergent evolution","Divergent evolution","Coevolution","Parallel evolution"],cat:"Evolution"},
+        {q:"What is a polymerase chain reaction (PCR) used for?",a:"Amplifying specific DNA sequences in the laboratory",opts:["Amplifying specific DNA sequences in the laboratory","Sequencing proteins","Editing genes in vivo","Synthesizing RNA from a template"],cat:"Biotechnology"},
+        {q:"What is the name of the scale used to measure the energy released by earthquakes?",a:"Moment magnitude scale (Mw)",opts:["Moment magnitude scale (Mw)","Richter scale","Mercalli scale","Beaufort scale"],cat:"Earth Science"},
+        {q:"What is the primary electron acceptor in the electron transport chain?",a:"Oxygen",opts:["Oxygen","NAD⁺","FAD","ATP"],cat:"Biochemistry"},
+        {q:"What is quantum entanglement?",a:"Two particles correlate such that one's state instantly determines the other's",opts:["Two particles correlate such that one's state instantly determines the other's","Particles occupying the same space","A particle being in two places at once","Wave functions overlapping"],cat:"Physics"},
+        {q:"What is the name of the process by which cells engulf large particles?",a:"Phagocytosis",opts:["Phagocytosis","Pinocytosis","Exocytosis","Facilitated diffusion"],cat:"Cell Biology"},
+        {q:"What does CRISPR stand for?",a:"Clustered Regularly Interspaced Short Palindromic Repeats",opts:["Clustered Regularly Interspaced Short Palindromic Repeats","Coupled RNA Interference and Splicing Protein Regulation","Chromosomal Recombination and Insertion of Short Protein Repeats","Controlled RNA Insertion and Splice Protein Replacement"],cat:"Biotechnology"},
+        {q:"What is the name of the process by which rocks are uplifted by tectonic forces?",a:"Orogeny",opts:["Orogeny","Subduction","Rifting","Isostasy"],cat:"Earth Science"},
+        {q:"What is a stem cell?",a:"An undifferentiated cell capable of developing into specialized cell types",opts:["An undifferentiated cell capable of developing into specialized cell types","A cell in the bone marrow only","A reproductive cell","A muscle cell precursor only"],cat:"Cell Biology"},
+        {q:"What is the name of the process where a virus inserts its DNA into a host cell's genome?",a:"Lysogeny",opts:["Lysogeny","Lytic cycle","Transduction","Transformation"],cat:"Cell Biology"},
+        {q:"What is the Bohr model of the atom?",a:"Electrons orbit the nucleus in fixed energy levels",opts:["Electrons orbit the nucleus in fixed energy levels","Electrons form a cloud of probability","Protons and electrons are evenly distributed","The nucleus contains all the mass and charge"],cat:"Chemistry"},
+        {q:"What is Mendel's Law of Independent Assortment?",a:"Alleles for different traits sort independently of each other during gamete formation",opts:["Alleles for different traits sort independently of each other during gamete formation","Dominant alleles always mask recessive ones","Offspring receive equal genetic contribution from each parent","Genes on the same chromosome always segregate together"],cat:"Genetics"},
+        {q:"What is the name of the geological time scale division smaller than an era?",a:"Period",opts:["Period","Epoch","Eon","Age"],cat:"Earth Science"},
+        {q:"What is the difference between a codon and an anticodon?",a:"Codons are on mRNA; anticodons are on tRNA and match them",opts:["Codons are on mRNA; anticodons are on tRNA and match them","Both are found on rRNA","Anticodons are on mRNA; codons are on tRNA","They are the same structure"],cat:"Biochemistry"},
+        {q:"What is the name of the enzyme that joins Okazaki fragments during DNA replication?",a:"DNA ligase",opts:["DNA ligase","DNA polymerase","Helicase","Primase"],cat:"Biochemistry"},
+        {q:"What is the difference between homologous and analogous structures?",a:"Homologous structures share ancestry; analogous structures share function but not ancestry",opts:["Homologous structures share ancestry; analogous structures share function but not ancestry","Analogous structures share ancestry; homologous share function","Both share ancestry and function","Neither shares ancestry nor function"],cat:"Evolution"},
+        {q:"What is the name of the law stating that the pressure and volume of a gas are inversely proportional at constant temperature?",a:"Boyle's Law",opts:["Boyle's Law","Charles's Law","Gay-Lussac's Law","Avogadro's Law"],cat:"Chemistry"},
+        {q:"What is the name of the biological process by which organisms maintain a stable internal environment?",a:"Homeostasis",opts:["Homeostasis","Metabolism","Catabolism","Anabolism"],cat:"Human Body"},
+      ]
+    };
+
+    let level = "easy";
+    let score=0, streak=0, answered=0;
+    let timeLeft=GAME_DURATION, timerId=null;
+    let running=false, finished=false;
+    let currentQ=null;
+    let usedIndices=new Set();
+
+    const scoreDisp  = document.getElementById("scoreDisp");
+    const streakDisp = document.getElementById("streakDisp");
+    const qNumDisp   = document.getElementById("qNumDisp");
+    const timerText  = document.getElementById("timerText");
+    const timerBar   = document.getElementById("timerBar");
+    const questionText = document.getElementById("questionText");
+    const qBadge     = document.getElementById("qBadge");
+    const qCategory  = document.getElementById("qCategory");
+    const feedback   = document.getElementById("feedback");
+    const optBtns    = [0,1,2,3].map(i=>document.getElementById("opt"+i));
+    const startBtn   = document.getElementById("startBtn");
+    const gameoverNotice = document.getElementById("gameoverNotice");
+    const gameoverMsg    = document.getElementById("gameoverMsg");
+
+    function gameKey(lv){ return `${BASE_ID}_${lv}`; }
+    function shuffle(arr){ return arr.slice().sort(()=>Math.random()-.5); }
+
+    function pickQuestion(){
+      const pool = QUESTIONS[level];
+      if(usedIndices.size >= pool.length) usedIndices.clear();
+      let idx;
+      do { idx = Math.floor(Math.random()*pool.length); } while(usedIndices.has(idx));
+      usedIndices.add(idx);
+      return pool[idx];
+    }
+
+    function updateUI(){
+      scoreDisp.textContent = score;
+      streakDisp.textContent = streak;
+      qNumDisp.textContent = answered;
+    }
+
+    function updateTimer(){
+      const pct = timeLeft / GAME_DURATION * 100;
+      timerBar.style.width = pct + '%';
+      timerText.textContent = timeLeft + 's';
+      timerBar.classList.toggle('danger', timeLeft <= 15);
+    }
+
+    function setOptionsDisabled(disabled){
+      optBtns.forEach(b=>{ b.disabled = disabled; });
+    }
+
+    function nextQuestion(){
+      currentQ = pickQuestion();
+      questionText.textContent = currentQ.q;
+      qCategory.textContent = currentQ.cat;
+      qBadge.textContent = 'Question ' + (answered+1);
+      feedback.textContent = '';
+      feedback.className = 'feedback';
+      gameoverNotice.classList.remove('show');
+
+      const shuffled = shuffle(currentQ.opts);
+      optBtns.forEach((b,i)=>{
+        b.textContent = shuffled[i];
+        b.className = 'opt-btn';
+        b.disabled = false;
+        b._isCorrect = (shuffled[i] === currentQ.a);
+      });
+    }
+
+    function handleOption(btn){
+      if(!running || !currentQ) return;
+      setOptionsDisabled(true);
+      answered++;
+
+      if(btn._isCorrect){
+        streak++;
+        const bonus = streak>=5 ? 3 : streak>=3 ? 2 : 1;
+        score += bonus;
+        btn.classList.add('correct');
+        feedback.textContent = streak>=3 ? `✅ Correct! 🔥×${streak} (+${bonus}pts)` : '✅ Correct!';
+        feedback.className = 'feedback correct';
+        updateUI();
+        setTimeout(nextQuestion, 500);
+      } else {
+        btn.classList.add('wrong');
+        // Highlight the correct answer
+        optBtns.forEach(b=>{ if(b._isCorrect) b.classList.add('correct'); });
+        feedback.textContent = '❌ Wrong — game over!';
+        feedback.className = 'feedback wrong';
+        updateUI();
+        gameoverMsg.textContent = `The correct answer was: ${currentQ.a}`;
+        gameoverNotice.classList.add('show');
+        setTimeout(endGame, 1000);
+      }
+    }
+
+    optBtns.forEach(b => b.addEventListener('click', ()=>handleOption(b)));
+
+    function startGame(){
+      score=0; streak=0; answered=0;
+      usedIndices.clear();
+      timeLeft=GAME_DURATION;
+      running=true; finished=false;
+      gameoverNotice.classList.remove('show');
+      updateUI(); updateTimer();
+      startBtn.textContent='⏳ Playing…';
+      startBtn.disabled=true;
+      nextQuestion();
+      timerId=setInterval(()=>{
+        timeLeft--;
+        updateTimer();
+        if(timeLeft<=0){ endGame(true); }
+      },1000);
+    }
+
+    function endGame(timeUp=false){
+      clearInterval(timerId);
+      running=false; finished=true;
+      setOptionsDisabled(true);
+      startBtn.textContent='🚀 Play Again';
+      startBtn.disabled=false;
+      if(timeUp){
+        questionText.textContent='⏰ Time\'s Up!';
+        document.getElementById("dialogEmoji").textContent='🎉';
+        document.getElementById("dialogTitle").textContent="Time's Up!";
+      } else {
+        document.getElementById("dialogEmoji").textContent='💥';
+        document.getElementById("dialogTitle").textContent="Game Over!";
+      }
+      document.getElementById("winSummary").textContent=`You scored ${score} pts on ${level.toUpperCase()} — answered ${answered} questions correctly!`;
+      setTimeout(()=>{ document.getElementById("winDialog").classList.add('open'); },900);
+    }
+
+    function resetAll(){
+      clearInterval(timerId);
+      running=false; finished=false;
+      score=0; streak=0; answered=0;
+      usedIndices.clear();
+      timeLeft=GAME_DURATION;
+      updateUI(); updateTimer();
+      questionText.textContent='Press Start!';
+      qBadge.textContent='Question 1';
+      qCategory.textContent='Science';
+      feedback.textContent='';
+      feedback.className='feedback';
+      gameoverNotice.classList.remove('show');
+      optBtns.forEach(b=>{ b.textContent=''; b.disabled=true; b.className='opt-btn'; });
+      startBtn.textContent='🚀 Start Game';
+      startBtn.disabled=false;
+    }
+
+    document.querySelectorAll('.lvl-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        document.querySelectorAll('.lvl-btn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        level=btn.dataset.level;
+        resetAll();
+      });
+    });
+
+    startBtn.addEventListener('click',()=>{ if(!running) startGame(); });
+    document.getElementById("resetBtn").addEventListener('click', resetAll);
+
+    // Dialog
+    async function submitWin(name, pts){
+      try{
+        const r=await fetch('/api/score',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({ game:gameKey(level), player_name:name, best_scores:pts })
+        });
+        const d=await r.json().catch(()=>({}));
+        return d.ok===true;
+      }catch(e){ return false; }
+    }
+
+    document.getElementById("dialogCancel").addEventListener('click',()=>{
+      document.getElementById("winDialog").classList.remove('open');
+    });
+    document.getElementById("dialogSubmit").addEventListener('click',async()=>{
+      const name=(document.getElementById("dialogName").value||"").trim();
+      if(!name){ document.getElementById("dialogStatus").textContent="Name required!"; return; }
+      document.getElementById("dialogSubmit").disabled=true;
+      document.getElementById("dialogStatus").textContent="Saving…";
+      const ok=await submitWin(name,score);
+      if(ok){
+        document.getElementById("dialogStatus").textContent="Saved ✅";
+        await loadBoards();
+        setTimeout(()=>document.getElementById("winDialog").classList.remove('open'),400);
+      } else {
+        document.getElementById("dialogStatus").textContent="Could not save. Tell your teacher!";
+      }
+      document.getElementById("dialogSubmit").disabled=false;
+    });
+    document.getElementById("dialogName").addEventListener('keydown',e=>{
+      if(e.key==='Enter') document.getElementById("dialogSubmit").click();
+    });
+
+    // Leaderboard
+    async function loadBoard(lv,listId){
+      const list=document.getElementById(listId);
+      try{
+        const r=await fetch(`/api/leaderboard?game=${encodeURIComponent(gameKey(lv))}&limit=10`,{cache:"no-store"});
+        const d=await r.json();
+        const rows=Array.isArray(d)?d:(d.rows||[]);
+        list.innerHTML = rows.length
+          ? rows.map((r,i)=>`<li>#${i+1} ${r.player_name||'Unknown'} — ${Number(r.best_scores)||0} pts (${r.win_count||0} games)</li>`).join('')
+          : '<li>No scores yet.</li>';
+      }catch(e){ list.innerHTML='<li>Could not load.</li>'; }
+    }
+    async function loadBoards(){
+      document.getElementById("rankNote").textContent="Loading…";
+      await Promise.all([loadBoard('easy','rankEasy'),loadBoard('medium','rankMedium'),loadBoard('hard','rankHard')]);
+      document.getElementById("rankNote").textContent="Updated just now.";
+    }
+    loadBoards();
+  </script>
+
+  <footer>
+    © 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528.<br>
+    The STEAM Teacher is Chao Yu. For educational purposes only. All rights reserved.
+  </footer>
+</body>
+</html>

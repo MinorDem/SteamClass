@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>All Puzzle Rankings</title>
+  <style>
+    :root {
+      --bg: #f7fbff;
+      --card: #ffffff;
+      --text: #172033;
+      --muted: #667085;
+      --line: #d9e4ef;
+      --soft: #eef7ff;
+      --accent: #2563eb;
+      --accent2: #16a34a;
+      --danger: #b91c1c;
+      --shadow: 0 14px 34px rgba(16, 24, 40, .10);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: linear-gradient(180deg, #eaf6ff 0%, var(--bg) 260px);
+      color: var(--text);
+    }
+    .wrap { max-width: 1280px; margin: 0 auto; padding: 22px; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    a.btn, button.btn {
+      display:inline-flex; align-items:center; justify-content:center; gap:8px;
+      padding:10px 14px; border:1px solid var(--line); border-radius:14px;
+      text-decoration:none; color:var(--text); background:var(--card); cursor:pointer;
+      font-weight: 700; box-shadow: 0 4px 14px rgba(16,24,40,.06);
+    }
+    button.btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    h1 { margin: 18px 0 8px; font-size: clamp(28px, 4vw, 46px); letter-spacing: -.03em; }
+    .sub { margin: 0 0 18px; color: var(--muted); line-height:1.5; }
+    .panel {
+      background: rgba(255,255,255,.92); border: 1px solid var(--line); border-radius: 22px;
+      padding: 16px; box-shadow: var(--shadow); margin: 16px 0;
+    }
+    .controls { display:grid; grid-template-columns: minmax(220px, 1fr) auto auto; gap:10px; align-items:center; }
+    input[type="search"] {
+      width:100%; padding: 13px 14px; border: 1px solid var(--line); border-radius: 14px;
+      font-size: 16px; outline: none; background:#fff;
+    }
+    input[type="search"]:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(37,99,235,.12); }
+    .summary { display:grid; grid-template-columns: repeat(4, minmax(140px, 1fr)); gap:10px; margin-top: 12px; }
+    .stat { background: var(--soft); border:1px solid var(--line); border-radius:16px; padding:12px; }
+    .stat b { display:block; font-size:22px; }
+    .stat span { color: var(--muted); font-size:13px; }
+    .searchResult { margin-top: 12px; color: var(--muted); line-height:1.45; }
+    .searchResult strong { color: var(--text); }
+    .tableWrap { overflow:auto; border: 1px solid var(--line); border-radius: 20px; background: var(--card); box-shadow: var(--shadow); max-height: 72vh; }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 980px; }
+    th, td { border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); padding: 10px 12px; text-align:center; white-space: nowrap; }
+    th { position: sticky; top: 0; background: #f4f9ff; z-index: 3; font-size: 13px; }
+    th:first-child, td:first-child { position: sticky; left: 0; z-index: 2; text-align:left; background: #fff; }
+    th:first-child { z-index: 4; background:#f4f9ff; }
+    th:nth-child(2), td:nth-child(2) { position: sticky; left: 74px; z-index: 2; background: #fff; }
+    th:nth-child(2) { z-index: 4; background:#f4f9ff; }
+    td.rank { font-weight:800; color:var(--accent); width:72px; }
+    td.name { font-weight:800; min-width:160px; }
+    td.total { font-weight:900; color:var(--accent2); }
+    .cell { display:flex; flex-direction:column; line-height:1.12; align-items:center; gap:2px; }
+    .wins { font-weight:900; }
+    .meta { font-size:11px; color: var(--muted); }
+    .empty { color:#c4cbd5; }
+    tr.match td { background: #fff7d6 !important; }
+    .note { margin-top: 10px; color: var(--muted); font-size: 13px; }
+    .err { color: var(--danger); }
+    @media (max-width: 720px) {
+      .wrap { padding: 14px; }
+      .controls { grid-template-columns: 1fr; }
+      .summary { grid-template-columns: 1fr 1fr; }
+      th, td { padding: 8px 10px; }
+      th:nth-child(2), td:nth-child(2) { left: 58px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <a class="btn" href="/puzzle">← Back to Puzzle Home</a>
+      <button class="btn primary" id="refreshBtn">Refresh live ranking</button>
+    </div>
+
+    <h1>🏆 All Game Rankings</h1>
+    <p class="sub">Rows are player names. Columns are game names. Players are ranked by <strong>total wins across all games</strong>, highest first. Each game cell shows wins and that player's rank inside that game.</p>
+
+    <section class="panel">
+      <div class="controls">
+        <input id="nameSearch" type="search" placeholder="Search player name, e.g. Aiden, Emma, laoshi" autocomplete="off" />
+        <button class="btn" id="clearBtn">Clear</button>
+        <button class="btn" id="snapshotBtn">Use SQL snapshot</button>
+      </div>
+      <div class="summary">
+        <div class="stat"><b id="playerCount">0</b><span>players</span></div>
+        <div class="stat"><b id="gameCount">0</b><span>games</span></div>
+        <div class="stat"><b id="winsCount">0</b><span>total wins</span></div>
+        <div class="stat"><b id="sourceLabel">Loading</b><span>data source</span></div>
+      </div>
+      <div id="searchResult" class="searchResult">Type a name to see that player's overall ranking and game-by-game rankings.</div>
+    </section>
+
+    <div class="tableWrap">
+      <table id="rankTable" aria-label="All puzzle rankings table"></table>
+    </div>
+    <div id="status" class="note"></div>
+  </div>
+
+  <script>
+    const GAME_IDS = ["checkers_vs_computer", "chessai_easy", "chessai_hard", "chessai_medium", "dishmaker_easy", "dishmaker_hard", "dishmaker_medium", "fight_landlord", "finddiff_easy", "finddiff_hard", "finddiff_medium", "fishing_easy", "fishing_hard", "fishing_medium", "flippingbird_easy", "flippingbird_hard", "flippingbird_medium", "flow_links_10x10", "flow_links_5x5", "flow_links_6x6", "flow_links_7x7", "flow_links_8x8", "flow_links_9x9", "hittarget_easy", "hittarget_hard", "hittarget_medium", "mathspeedquiz_easy", "mathspeedquiz_hard", "mathspeedquiz_medium", "memorymatch_easy", "memorymatch_hard", "memorymatch_medium", "mystery_picture", "numberguess_easy", "numberguess_hard", "numberguess_medium", "pipes_3x3", "pipes_4x4", "pipes_5x5", "pipes_8x8", "sciencespeedquiz_easy", "sciencespeedquiz_hard", "sciencespeedquiz_medium", "second_10", "second_20", "second_30", "slidingpuzzle_3x3", "slidingpuzzle_4x4", "slidingpuzzle_5x5", "slidingpuzzle_6x6", "snake_easy", "snake_hard", "snake_medium", "uno_rush", "wordguess", "wordguess6", "wordguess7"];
+    const GAME_LABELS = {"checkers_vs_computer": "Checkers vs Computer", "chessai_easy": "Chessai Easy", "chessai_hard": "Chessai Hard", "chessai_medium": "Chessai Medium", "dishmaker_easy": "Dishmaker Easy", "dishmaker_hard": "Dishmaker Hard", "dishmaker_medium": "Dishmaker Medium", "fight_landlord": "Fight Landlord", "finddiff_easy": "Finddiff Easy", "finddiff_hard": "Finddiff Hard", "finddiff_medium": "Finddiff Medium", "fishing_easy": "Fishing Easy", "fishing_hard": "Fishing Hard", "fishing_medium": "Fishing Medium", "flippingbird_easy": "Flippingbird Easy", "flippingbird_hard": "Flippingbird Hard", "flippingbird_medium": "Flippingbird Medium", "flow_links_10x10": "Flow Links 10x10", "flow_links_5x5": "Flow Links 5x5", "flow_links_6x6": "Flow Links 6x6", "flow_links_7x7": "Flow Links 7x7", "flow_links_8x8": "Flow Links 8x8", "flow_links_9x9": "Flow Links 9x9", "hittarget_easy": "Hittarget Easy", "hittarget_hard": "Hittarget Hard", "hittarget_medium": "Hittarget Medium", "mathspeedquiz_easy": "Mathspeedquiz Easy", "mathspeedquiz_hard": "Mathspeedquiz Hard", "mathspeedquiz_medium": "Mathspeedquiz Medium", "memorymatch_easy": "Memorymatch Easy", "memorymatch_hard": "Memorymatch Hard", "memorymatch_medium": "Memorymatch Medium", "mystery_picture": "Mystery Picture", "numberguess_easy": "Numberguess Easy", "numberguess_hard": "Numberguess Hard", "numberguess_medium": "Numberguess Medium", "pipes_3x3": "Pipes 3x3", "pipes_4x4": "Pipes 4x4", "pipes_5x5": "Pipes 5x5", "pipes_8x8": "Pipes 8x8", "sciencespeedquiz_easy": "Sciencespeedquiz Easy", "sciencespeedquiz_hard": "Sciencespeedquiz Hard", "sciencespeedquiz_medium": "Sciencespeedquiz Medium", "second_10": "Second 10", "second_20": "Second 20", "second_30": "Second 30", "slidingpuzzle_3x3": "Slidingpuzzle 3x3", "slidingpuzzle_4x4": "Slidingpuzzle 4x4", "slidingpuzzle_5x5": "Slidingpuzzle 5x5", "slidingpuzzle_6x6": "Slidingpuzzle 6x6", "snake_easy": "Snake Easy", "snake_hard": "Snake Hard", "snake_medium": "Snake Medium", "uno_rush": "Uno Rush", "wordguess": "Wordguess", "wordguess6": "Wordguess6", "wordguess7": "Wordguess7"};
+    const SQL_SNAPSHOT = [{"game":"wordguess","player_name":"xyl","win_count":1,"best_seconds":77,"best_scores":null,"last_win_at":"2026-02-17 02:37:20"},{"game":"wordguess","player_name":"derek tsang","win_count":127,"best_seconds":4,"best_scores":null,"last_win_at":"2026-04-16 19:15:43"},{"game":"wordguess","player_name":"trevor","win_count":34,"best_seconds":10,"best_scores":null,"last_win_at":"2026-03-19 22:48:45"},{"game":"wordguess","player_name":"aiden","win_count":6,"best_seconds":6,"best_scores":null,"last_win_at":"2026-02-19 20:16:42"},{"game":"wordguess","player_name":"derek","win_count":2,"best_seconds":6,"best_scores":null,"last_win_at":"2026-02-19 18:55:19"},{"game":"wordguess","player_name":"laoshi","win_count":22,"best_seconds":10,"best_scores":null,"last_win_at":"2026-04-18 16:44:18"},{"game":"numberguess_easy","player_name":"laoshi","win_count":2,"best_seconds":8,"best_scores":null,"last_win_at":"2026-02-27 19:49:38"},{"game":"slidingpuzzle_5x5","player_name":"Eli","win_count":2,"best_seconds":151,"best_scores":null,"last_win_at":"2026-02-25 18:40:29"},{"game":"slidingpuzzle_3x3","player_name":"Eli","win_count":5,"best_seconds":19,"best_scores":null,"last_win_at":"2026-03-12 13:14:44"},{"game":"slidingpuzzle_4x4","player_name":"Eli","win_count":2,"best_seconds":65,"best_scores":null,"last_win_at":"2026-02-25 18:37:37"},{"game":"slidingpuzzle_3x3","player_name":"trevor","win_count":3,"best_seconds":15,"best_scores":null,"last_win_at":"2026-04-28 15:37:53"},{"game":"numberguess_hard","player_name":"derek tsang","win_count":3,"best_seconds":28,"best_scores":null,"last_win_at":"2026-04-07 19:16:42"},{"game":"hittarget_easy","player_name":"Cynthia","win_count":2,"best_seconds":13,"best_scores":null,"last_win_at":"2026-02-20 19:36:12"},{"game":"wordguess","player_name":"JOel","win_count":8,"best_seconds":10,"best_scores":null,"last_win_at":"2026-02-20 19:43:02"},{"game":"hittarget_easy","player_name":"Violet","win_count":1,"best_seconds":14,"best_scores":null,"last_win_at":"2026-02-20 19:37:23"},{"game":"wordguess","player_name":"Cynthia and Eme","win_count":1,"best_seconds":41,"best_scores":null,"last_win_at":"2026-02-20 19:39:41"},{"game":"wordguess","player_name":"River","win_count":51,"best_seconds":8,"best_scores":null,"last_win_at":"2026-02-27 17:58:53"},{"game":"wordguess","player_name":"Alaina","win_count":1,"best_seconds":33,"best_scores":null,"last_win_at":"2026-02-20 19:40:33"},{"game":"wordguess","player_name":"Eme","win_count":1,"best_seconds":182,"best_scores":null,"last_win_at":"2026-02-20 19:42:28"},{"game":"slidingpuzzle_3x3","player_name":"laoshi","win_count":2,"best_seconds":26,"best_scores":null,"last_win_at":"2026-02-23 18:03:28"},{"game":"snake_easy","player_name":"laoshi","win_count":1,"best_seconds":null,"best_scores":2,"last_win_at":"2026-02-21 00:20:45"},{"game":"hittarget_easy","player_name":"River","win_count":2,"best_seconds":7,"best_scores":null,"last_win_at":"2026-02-21 01:23:22"},{"game":"hittarget_medium","player_name":"River","win_count":1,"best_seconds":12,"best_scores":null,"last_win_at":"2026-02-21 01:23:43"},{"game":"hittarget_hard","player_name":"River","win_count":1,"best_seconds":27,"best_scores":null,"last_win_at":"2026-02-21 01:25:20"},{"game":"numberguess_hard","player_name":"laoshi","win_count":1,"best_seconds":29,"best_scores":null,"last_win_at":"2026-02-21 15:58:34"},{"game":"slidingpuzzle_3x3","player_name":"River","win_count":2,"best_seconds":35,"best_scores":null,"last_win_at":"2026-02-21 17:18:12"},{"game":"slidingpuzzle_4x4","player_name":"River","win_count":1,"best_seconds":79,"best_scores":null,"last_win_at":"2026-02-21 17:19:48"},{"game":"slidingpuzzle_5x5","player_name":"River","win_count":1,"best_seconds":307,"best_scores":null,"last_win_at":"2026-02-21 17:25:15"},{"game":"slidingpuzzle_6x6","player_name":"River","win_count":3,"best_seconds":279,"best_scores":null,"last_win_at":"2026-02-22 13:56:16"},{"game":"chessai_easy","player_name":"laoshi","win_count":1,"best_seconds":61,"best_scores":null,"last_win_at":"2026-02-21 19:36:36"},{"game":"snake_hard","player_name":"River","win_count":15,"best_seconds":null,"best_scores":7,"last_win_at":"2026-02-27 17:48:36"},{"game":"snake_easy","player_name":"River","win_count":1,"best_seconds":null,"best_scores":7,"last_win_at":"2026-02-22 17:53:28"},{"game":"snake_medium","player_name":"River","win_count":9,"best_seconds":null,"best_scores":5,"last_win_at":"2026-02-22 17:55:13"},{"game":"chessai_easy","player_name":"River","win_count":6,"best_seconds":13,"best_scores":null,"last_win_at":"2026-02-28 15:12:23"},{"game":"chessai_hard","player_name":"River","win_count":1,"best_seconds":73,"best_scores":null,"last_win_at":"2026-02-22 18:05:32"},{"game":"chessai_medium","player_name":"River","win_count":2,"best_seconds":58,"best_scores":null,"last_win_at":"2026-02-26 15:02:34"},{"game":"numberguess_easy","player_name":"River","win_count":2,"best_seconds":9,"best_scores":null,"last_win_at":"2026-02-24 15:12:13"},{"game":"numberguess_medium","player_name":"River","win_count":1,"best_seconds":21,"best_scores":null,"last_win_at":"2026-02-22 19:11:56"},{"game":"flippingbird_easy","player_name":"laoshi","win_count":4,"best_seconds":5,"best_scores":null,"last_win_at":"2026-02-27 18:10:26"},{"game":"flippingbird_easy","player_name":"xyl","win_count":1,"best_seconds":10,"best_scores":null,"last_win_at":"2026-02-23 19:22:00"},{"game":"dishmaker_easy","player_name":"laoshi","win_count":12,"best_seconds":null,"best_scores":30,"last_win_at":"2026-02-24 03:23:52"},{"game":"snake_medium","player_name":"laoshi","win_count":1,"best_seconds":null,"best_scores":5,"last_win_at":"2026-02-24 00:29:59"},{"game":"snake_hard","player_name":"laoshi","win_count":1,"best_seconds":null,"best_scores":8,"last_win_at":"2026-02-24 00:30:41"},{"game":"fishing_easy","player_name":"laoshi","win_count":7,"best_seconds":null,"best_scores":107,"last_win_at":"2026-05-08 15:33:27"},{"game":"dishmaker_medium","player_name":"laoshi","win_count":1,"best_seconds":null,"best_scores":61,"last_win_at":"2026-02-24 03:03:33"},{"game":"dishmaker_hard","player_name":"laoshi","win_count":3,"best_seconds":null,"best_scores":13,"last_win_at":"2026-02-24 03:39:52"},{"game":"numberguess_hard","player_name":"River","win_count":1,"best_seconds":36,"best_scores":null,"last_win_at":"2026-02-24 15:25:29"},{"game":"dishmaker_easy","player_name":"River","win_count":1,"best_seconds":null,"best_scores":39,"last_win_at":"2026-02-24 22:51:14"},{"game":"fishing_easy","player_name":"River","win_count":3,"best_seconds":null,"best_scores":169,"last_win_at":"2026-02-27 19:00:06"},{"game":"chessai_easy","player_name":"JOel","win_count":4,"best_seconds":26,"best_scores":null,"last_win_at":"2026-03-05 16:02:57"},{"game":"chessai_hard","player_name":"JOel","win_count":1,"best_seconds":200,"best_scores":null,"last_win_at":"2026-02-26 14:57:51"},{"game":"slidingpuzzle_3x3","player_name":"emanuel","win_count":1,"best_seconds":29,"best_scores":null,"last_win_at":"2026-02-26 14:59:40"},{"game":"fishing_easy","player_name":"emanuel","win_count":8,"best_seconds":null,"best_scores":301,"last_win_at":"2026-04-08 12:38:41"},{"game":"chessai_easy","player_name":"emanuel","win_count":1,"best_seconds":59,"best_scores":null,"last_win_at":"2026-02-26 15:03:10"},{"game":"wordguess","player_name":"joincoolkid","win_count":1,"best_seconds":213,"best_scores":null,"last_win_at":"2026-02-26 19:56:16"},{"game":"wordguess","player_name":"rainy","win_count":1,"best_seconds":341,"best_scores":null,"last_win_at":"2026-02-26 20:16:42"},{"game":"flippingbird_easy","player_name":"River","win_count":21,"best_seconds":9,"best_scores":null,"last_win_at":"2026-02-28 14:52:43"},{"game":"flippingbird_hard","player_name":"River","win_count":24,"best_seconds":4,"best_scores":null,"last_win_at":"2026-02-28 14:48:37"},{"game":"flippingbird_hard","player_name":"Joel","win_count":7,"best_seconds":5,"best_scores":null,"last_win_at":"2026-02-27 17:47:49"},{"game":"flippingbird_easy","player_name":"emanuel","win_count":2,"best_seconds":51,"best_scores":null,"last_win_at":"2026-02-28 20:35:10"},{"game":"flippingbird_hard","player_name":"emanuel","win_count":6,"best_seconds":5,"best_scores":null,"last_win_at":"2026-03-01 22:06:11"},{"game":"dishmaker_easy","player_name":"JOel","win_count":2,"best_seconds":null,"best_scores":8,"last_win_at":"2026-02-27 19:02:55"},{"game":"fishing_hard","player_name":"River","win_count":1,"best_seconds":null,"best_scores":159,"last_win_at":"2026-02-27 19:00:48"},{"game":"dishmaker_hard","player_name":"joel","win_count":2,"best_seconds":null,"best_scores":52,"last_win_at":"2026-02-27 19:08:15"},{"game":"snake_hard","player_name":"joel","win_count":43,"best_seconds":null,"best_scores":8,"last_win_at":"2026-02-27 21:08:03"},{"game":"second_10","player_name":"laoshi","win_count":21,"best_seconds":null,"best_scores":9983,"last_win_at":"2026-04-10 00:36:57"},{"game":"flippingbird_medium","player_name":"River","win_count":1,"best_seconds":8,"best_scores":null,"last_win_at":"2026-02-27 20:14:20"},{"game":"flippingbird_easy","player_name":"Find who I am for $1","win_count":1,"best_seconds":12,"best_scores":null,"last_win_at":"2026-02-28 14:54:50"},{"game":"numberguess_easy","player_name":"Emanuel","win_count":1,"best_seconds":9,"best_scores":null,"last_win_at":"2026-02-28 20:12:04"},{"game":"fishing_medium","player_name":"emanuel","win_count":3,"best_seconds":null,"best_scores":172,"last_win_at":"2026-03-01 21:52:32"},{"game":"flippingbird_medium","player_name":"emanuel","win_count":1,"best_seconds":9,"best_scores":null,"last_win_at":"2026-02-28 20:35:39"},{"game":"fishing_hard","player_name":"emanuel","win_count":3,"best_seconds":null,"best_scores":230,"last_win_at":"2026-04-08 12:39:26"},{"game":"wordguess","player_name":"emanuel","win_count":2,"best_seconds":70,"best_scores":null,"last_win_at":"2026-04-08 13:56:17"},{"game":"second_10","player_name":"emanuel","win_count":2,"best_seconds":null,"best_scores":9967,"last_win_at":"2026-03-01 22:02:32"},{"game":"second_20","player_name":"emanuel","win_count":1,"best_seconds":null,"best_scores":19909,"last_win_at":"2026-03-01 22:03:14"},{"game":"second_30","player_name":"emanuel","win_count":1,"best_seconds":null,"best_scores":29906,"last_win_at":"2026-03-01 22:04:23"},{"game":"second_20","player_name":"xy","win_count":1,"best_seconds":null,"best_scores":19953,"last_win_at":"2026-03-03 00:18:26"},{"game":"second_20","player_name":"laoshi","win_count":3,"best_seconds":null,"best_scores":19924,"last_win_at":"2026-04-10 00:38:06"},{"game":"second_30","player_name":"laoshi","win_count":2,"best_seconds":null,"best_scores":29967,"last_win_at":"2026-03-03 00:21:53"},{"game":"snake_easy","player_name":"Eli","win_count":1,"best_seconds":null,"best_scores":1,"last_win_at":"2026-03-04 14:18:48"},{"game":"numberguess_easy","player_name":"Eli","win_count":1,"best_seconds":7,"best_scores":null,"last_win_at":"2026-03-05 18:32:36"},{"game":"second_10","player_name":"derek","win_count":37,"best_seconds":null,"best_scores":9990,"last_win_at":"2026-03-05 20:07:30"},{"game":"second_10","player_name":"trevor","win_count":68,"best_seconds":null,"best_scores":9996,"last_win_at":"2026-03-10 23:15:03"},{"game":"second_20","player_name":"derek","win_count":3,"best_seconds":null,"best_scores":19933,"last_win_at":"2026-03-05 20:07:27"},{"game":"second_10","player_name":"Emma","win_count":13,"best_seconds":null,"best_scores":9970,"last_win_at":"2026-05-05 19:11:53"},{"game":"snake_easy","player_name":"aiden","win_count":48,"best_seconds":null,"best_scores":47,"last_win_at":"2026-05-08 15:25:57"},{"game":"snake_hard","player_name":"aiden","win_count":27,"best_seconds":null,"best_scores":2,"last_win_at":"2026-04-10 16:57:58"},{"game":"snake_hard","player_name":"Emma","win_count":14,"best_seconds":null,"best_scores":31,"last_win_at":"2026-05-05 21:20:16"},{"game":"snake_easy","player_name":"Emma","win_count":4,"best_seconds":null,"best_scores":61,"last_win_at":"2026-05-04 23:21:02"},{"game":"flippingbird_hard","player_name":"Emma","win_count":11,"best_seconds":5,"best_scores":null,"last_win_at":"2026-03-06 19:56:44"},{"game":"slidingpuzzle_5x5","player_name":"trevor","win_count":1,"best_seconds":311,"best_scores":null,"last_win_at":"2026-03-05 20:11:16"},{"game":"flippingbird_easy","player_name":"Emma","win_count":7,"best_seconds":11,"best_scores":null,"last_win_at":"2026-03-06 18:07:48"},{"game":"chessai_easy","player_name":"derek","win_count":3,"best_seconds":4,"best_scores":null,"last_win_at":"2026-03-05 20:14:03"},{"game":"snake_easy","player_name":"trevor","win_count":67,"best_seconds":null,"best_scores":85,"last_win_at":"2026-04-30 19:16:57"},{"game":"flippingbird_medium","player_name":"Emma","win_count":18,"best_seconds":6,"best_scores":null,"last_win_at":"2026-03-11 23:49:37"},{"game":"snake_easy","player_name":"joincoolkid","win_count":87,"best_seconds":null,"best_scores":9,"last_win_at":"2026-05-08 16:51:09"},{"game":"flippingbird_easy","player_name":"joincoolkid","win_count":10,"best_seconds":13,"best_scores":null,"last_win_at":"2026-04-14 15:36:02"},{"game":"flippingbird_easy","player_name":"Aiden","win_count":10,"best_seconds":10,"best_scores":null,"last_win_at":"2026-03-10 15:20:40"},{"game":"fishing_easy","player_name":"trevor","win_count":19,"best_seconds":null,"best_scores":313,"last_win_at":"2026-05-04 15:38:51"},{"game":"flippingbird_easy","player_name":"trevor","win_count":6,"best_seconds":24,"best_scores":null,"last_win_at":"2026-03-10 15:07:24"},{"game":"flippingbird_medium","player_name":"trevor","win_count":4,"best_seconds":7,"best_scores":null,"last_win_at":"2026-03-06 17:58:40"},{"game":"fishing_easy","player_name":"Emma","win_count":4,"best_seconds":null,"best_scores":74,"last_win_at":"2026-05-06 00:03:13"},{"game":"numberguess_medium","player_name":"Eli","win_count":1,"best_seconds":18,"best_scores":null,"last_win_at":"2026-03-06 15:32:02"},{"game":"second_10","player_name":"Eli","win_count":3,"best_seconds":null,"best_scores":9999,"last_win_at":"2026-03-06 18:49:37"},{"game":"hittarget_easy","player_name":"derek tsang","win_count":3,"best_seconds":11,"best_scores":null,"last_win_at":"2026-03-06 17:58:05"},{"game":"flippingbird_hard","player_name":"trevor","win_count":5,"best_seconds":10,"best_scores":null,"last_win_at":"2026-03-13 17:17:00"},{"game":"second_10","player_name":"Rams","win_count":19,"best_seconds":null,"best_scores":9999,"last_win_at":"2026-05-02 20:12:45"},{"game":"second_20","player_name":"Rams","win_count":19,"best_seconds":null,"best_scores":20000,"last_win_at":"2026-05-02 20:12:56"},{"game":"flippingbird_easy","player_name":"derek tsang","win_count":1,"best_seconds":102,"best_scores":null,"last_win_at":"2026-03-06 18:03:35"},{"game":"flippingbird_hard","player_name":"Aiden","win_count":19,"best_seconds":5,"best_scores":null,"last_win_at":"2026-04-17 17:07:04"},{"game":"flippingbird_medium","player_name":"Rams","win_count":4,"best_seconds":7,"best_scores":null,"last_win_at":"2026-05-03 17:44:52"},{"game":"flippingbird_hard","player_name":"derek tsang","win_count":1,"best_seconds":84,"best_scores":null,"last_win_at":"2026-03-06 18:05:07"},{"game":"flippingbird_medium","player_name":"derek tsang","win_count":1,"best_seconds":11,"best_scores":null,"last_win_at":"2026-03-06 18:05:26"},{"game":"flippingbird_hard","player_name":"Rams","win_count":37,"best_seconds":4,"best_scores":null,"last_win_at":"2026-03-17 11:33:25"},{"game":"fishing_easy","player_name":"derek tsang","win_count":4,"best_seconds":null,"best_scores":266,"last_win_at":"2026-05-01 18:55:32"},{"game":"snake_easy","player_name":"derek tsang","win_count":13,"best_seconds":null,"best_scores":28,"last_win_at":"2026-04-23 17:52:25"},{"game":"snake_hard","player_name":"trevor","win_count":12,"best_seconds":null,"best_scores":20,"last_win_at":"2026-05-04 15:23:33"},{"game":"dishmaker_easy","player_name":"derek tsang","win_count":1,"best_seconds":null,"best_scores":99,"last_win_at":"2026-03-06 18:10:12"},{"game":"second_10","player_name":"Aiden","win_count":5,"best_seconds":null,"best_scores":9988,"last_win_at":"2026-04-10 17:08:22"},{"game":"slidingpuzzle_3x3","player_name":"Rams","win_count":8,"best_seconds":20,"best_scores":null,"last_win_at":"2026-05-02 14:32:19"},{"game":"flippingbird_easy","player_name":"Rams","win_count":2,"best_seconds":37,"best_scores":null,"last_win_at":"2026-03-07 12:31:17"},{"game":"flippingbird_hard","player_name":"Ra","win_count":1,"best_seconds":6,"best_scores":null,"last_win_at":"2026-03-06 18:16:45"},{"game":"snake_medium","player_name":"trevor","win_count":12,"best_seconds":null,"best_scores":12,"last_win_at":"2026-03-06 18:19:56"},{"game":"hittarget_medium","player_name":"Emma","win_count":2,"best_seconds":19,"best_scores":null,"last_win_at":"2026-03-06 18:18:12"},{"game":"slidingpuzzle_3x3","player_name":"Aiden","win_count":10,"best_seconds":16,"best_scores":null,"last_win_at":"2026-04-14 15:34:42"},{"game":"second_20","player_name":"Eli","win_count":1,"best_seconds":null,"best_scores":19915,"last_win_at":"2026-03-06 18:49:49"},{"game":"flippingbird_easy","player_name":"Ra","win_count":1,"best_seconds":31,"best_scores":null,"last_win_at":"2026-03-07 12:28:03"},{"game":"hittarget_easy","player_name":"Rams","win_count":6,"best_seconds":11,"best_scores":null,"last_win_at":"2026-05-05 11:24:50"},{"game":"flippingbird_hard","player_name":"37","win_count":1,"best_seconds":10,"best_scores":null,"last_win_at":"2026-03-07 14:23:52"},{"game":"flippingbird_hard","player_name":"Aedan Swaney","win_count":1,"best_seconds":10,"best_scores":null,"last_win_at":"2026-03-07 14:24:34"},{"game":"flippingbird_hard","player_name":"Rat","win_count":1,"best_seconds":5,"best_scores":null,"last_win_at":"2026-03-07 14:31:20"},{"game":"second_30","player_name":"Rams","win_count":13,"best_seconds":null,"best_scores":29997,"last_win_at":"2026-03-08 18:53:13"},{"game":"slidingpuzzle_3x3","player_name":"Rat","win_count":1,"best_seconds":37,"best_scores":null,"last_win_at":"2026-03-07 18:43:30"},{"game":"fishing_easy","player_name":"Aiden","win_count":13,"best_seconds":null,"best_scores":270,"last_win_at":"2026-03-12 19:10:50"},{"game":"snake_medium","player_name":"joincoolkid","win_count":16,"best_seconds":null,"best_scores":11,"last_win_at":"2026-05-01 17:14:15"},{"game":"chessai_easy","player_name":"derek tsang","win_count":3,"best_seconds":3,"best_scores":null,"last_win_at":"2026-05-05 19:12:01"},{"game":"second_10","player_name":"derek tsang","win_count":5,"best_seconds":null,"best_scores":9934,"last_win_at":"2026-05-05 19:09:30"},{"game":"snake_hard","player_name":"joincoolkid","win_count":50,"best_seconds":null,"best_scores":7,"last_win_at":"2026-05-01 17:19:02"},{"game":"second_20","player_name":"trevor","win_count":2,"best_seconds":null,"best_scores":19965,"last_win_at":"2026-03-10 15:21:36"},{"game":"flippingbird_medium","player_name":"aiden","win_count":2,"best_seconds":24,"best_scores":null,"last_win_at":"2026-03-10 15:23:05"},{"game":"flippingbird_hard","player_name":"joincoolkid","win_count":1,"best_seconds":5,"best_scores":null,"last_win_at":"2026-03-10 15:23:00"},{"game":"snake_easy","player_name":"trevortrevortrevortrevortrevortrevortrev","win_count":1,"best_seconds":null,"best_scores":2,"last_win_at":"2026-03-10 15:23:13"},{"game":"fishing_easy","player_name":"joincoolkid","win_count":18,"best_seconds":null,"best_scores":230,"last_win_at":"2026-04-14 15:32:17"},{"game":"fishing_medium","player_name":"trevor","win_count":2,"best_seconds":null,"best_scores":403,"last_win_at":"2026-03-13 17:19:15"},{"game":"hittarget_easy","player_name":"trevor","win_count":4,"best_seconds":12,"best_scores":null,"last_win_at":"2026-03-12 18:59:49"},{"game":"fishing_hard","player_name":"trevor","win_count":3,"best_seconds":null,"best_scores":208,"last_win_at":"2026-03-12 19:17:58"},{"game":"checkers_vs_computer","player_name":"laoshi","win_count":12,"best_seconds":0,"best_scores":null,"last_win_at":"2026-04-01 15:31:39"},{"game":"checkers_vs_computer","player_name":"JOEL","win_count":3,"best_seconds":0,"best_scores":null,"last_win_at":"2026-03-19 13:37:21"},{"game":"flippingbird_hard","player_name":"aidn","win_count":1,"best_seconds":10,"best_scores":null,"last_win_at":"2026-03-12 19:02:36"},{"game":"fishing_easy","player_name":"patrick","win_count":8,"best_seconds":null,"best_scores":327,"last_win_at":"2026-03-12 19:20:14"},{"game":"numberguess_easy","player_name":"trevor","win_count":3,"best_seconds":8,"best_scores":null,"last_win_at":"2026-05-05 19:12:18"},{"game":"checkers_vs_computer","player_name":"Rams","win_count":4,"best_seconds":0,"best_scores":null,"last_win_at":"2026-05-03 17:42:23"},{"game":"flippingbird_hard","player_name":"eman","win_count":1,"best_seconds":7,"best_scores":null,"last_win_at":"2026-03-13 16:38:03"},{"game":"numberguess_easy","player_name":"derek tsang","win_count":3,"best_seconds":9,"best_scores":null,"last_win_at":"2026-04-23 17:56:28"},{"game":"fishing_easy","player_name":"JOel","win_count":1,"best_seconds":null,"best_scores":16,"last_win_at":"2026-03-19 13:35:41"},{"game":"wordguess","player_name":"derek tsan","win_count":1,"best_seconds":39,"best_scores":null,"last_win_at":"2026-03-19 19:48:24"},{"game":"checkers_vs_computer","player_name":"Emma","win_count":1,"best_seconds":0,"best_scores":null,"last_win_at":"2026-03-20 17:05:02"},{"game":"numberguess_easy","player_name":"messi","win_count":8,"best_seconds":6,"best_scores":null,"last_win_at":"2026-04-09 18:49:16"},{"game":"numberguess_easy","player_name":"Aiden","win_count":1,"best_seconds":9,"best_scores":null,"last_win_at":"2026-04-07 15:40:03"},{"game":"numberguess_easy","player_name":"maessi","win_count":1,"best_seconds":12,"best_scores":null,"last_win_at":"2026-04-07 19:15:03"},{"game":"memorymatch_easy","player_name":"laoshi","win_count":4,"best_seconds":8,"best_scores":null,"last_win_at":"2026-04-10 14:08:42"},{"game":"memorymatch_medium","player_name":"laoshi","win_count":2,"best_seconds":14,"best_scores":null,"last_win_at":"2026-04-10 14:07:02"},{"game":"memorymatch_hard","player_name":"laoshi","win_count":4,"best_seconds":18,"best_scores":null,"last_win_at":"2026-04-14 15:19:42"},{"game":"mathspeedquiz_easy","player_name":"laoshi","win_count":1,"best_seconds":null,"best_scores":2,"last_win_at":"2026-04-10 15:17:10"},{"game":"mathspeedquiz_hard","player_name":"laoshi","win_count":3,"best_seconds":null,"best_scores":27,"last_win_at":"2026-04-10 17:11:38"},{"game":"mathspeedquiz_medium","player_name":"laoshi","win_count":2,"best_seconds":null,"best_scores":39,"last_win_at":"2026-04-10 17:16:34"},{"game":"mathspeedquiz_hard","player_name":"trevor","win_count":6,"best_seconds":null,"best_scores":15,"last_win_at":"2026-04-10 17:05:07"},{"game":"mathspeedquiz_hard","player_name":"derek tsang","win_count":4,"best_seconds":null,"best_scores":5,"last_win_at":"2026-04-10 17:00:54"},{"game":"hittarget_easy","player_name":"messi","win_count":3,"best_seconds":10,"best_scores":null,"last_win_at":"2026-04-30 19:09:19"},{"game":"mathspeedquiz_easy","player_name":"joincoolkid","win_count":2,"best_seconds":null,"best_scores":7,"last_win_at":"2026-04-10 17:10:46"},{"game":"mathspeedquiz_easy","player_name":"trevor","win_count":3,"best_seconds":null,"best_scores":14,"last_win_at":"2026-04-10 17:14:24"},{"game":"mathspeedquiz_easy","player_name":"Emma","win_count":4,"best_seconds":null,"best_scores":24,"last_win_at":"2026-05-04 00:50:57"},{"game":"memorymatch_easy","player_name":"trevor","win_count":3,"best_seconds":9,"best_scores":null,"last_win_at":"2026-04-17 17:15:27"},{"game":"mathspeedquiz_easy","player_name":"Cynthia","win_count":1,"best_seconds":null,"best_scores":28,"last_win_at":"2026-04-10 18:33:46"},{"game":"mathspeedquiz_hard","player_name":"Cynthia","win_count":1,"best_seconds":null,"best_scores":7,"last_win_at":"2026-04-10 18:34:55"},{"game":"mathspeedquiz_easy","player_name":"emanuel","win_count":1,"best_seconds":null,"best_scores":18,"last_win_at":"2026-04-11 16:05:12"},{"game":"memorymatch_hard","player_name":"trevor","win_count":15,"best_seconds":24,"best_scores":null,"last_win_at":"2026-04-14 15:33:23"},{"game":"memorymatch_easy","player_name":"Aiden","win_count":1,"best_seconds":14,"best_scores":null,"last_win_at":"2026-04-14 15:15:55"},{"game":"memorymatch_hard","player_name":"Aiden","win_count":3,"best_seconds":27,"best_scores":null,"last_win_at":"2026-04-14 15:20:58"},{"game":"memorymatch_easy","player_name":"derek","win_count":3,"best_seconds":10,"best_scores":null,"last_win_at":"2026-04-14 15:24:53"},{"game":"memorymatch_hard","player_name":"derek","win_count":13,"best_seconds":18,"best_scores":null,"last_win_at":"2026-04-14 15:39:21"},{"game":"memorymatch_hard","player_name":"joincoolkid","win_count":3,"best_seconds":22,"best_scores":null,"last_win_at":"2026-04-14 15:23:39"},{"game":"snake_easy","player_name":"messi","win_count":19,"best_seconds":null,"best_scores":10,"last_win_at":"2026-05-01 17:15:43"},{"game":"memorymatch_hard","player_name":"s","win_count":1,"best_seconds":28,"best_scores":null,"last_win_at":"2026-04-14 15:37:58"},{"game":"dishmaker_easy","player_name":"messi","win_count":2,"best_seconds":null,"best_scores":36,"last_win_at":"2026-04-30 19:27:24"},{"game":"second_10","player_name":"messi","win_count":3,"best_seconds":null,"best_scores":9961,"last_win_at":"2026-04-30 19:14:14"},{"game":"wordguess6","player_name":"laoshi","win_count":3,"best_seconds":36,"best_scores":null,"last_win_at":"2026-04-16 21:12:55"},{"game":"wordguess6","player_name":"derek tsang","win_count":9,"best_seconds":23,"best_scores":null,"last_win_at":"2026-05-07 19:04:27"},{"game":"wordguess6","player_name":"emma","win_count":1,"best_seconds":234,"best_scores":null,"last_win_at":"2026-04-16 19:24:25"},{"game":"wordguess7","player_name":"laoshi","win_count":2,"best_seconds":117,"best_scores":null,"last_win_at":"2026-04-24 15:18:07"},{"game":"wordguess7","player_name":"trevor","win_count":2,"best_seconds":19,"best_scores":null,"last_win_at":"2026-04-17 17:08:43"},{"game":"wordguess7","player_name":"derek tsang","win_count":6,"best_seconds":18,"best_scores":null,"last_win_at":"2026-04-23 17:50:38"},{"game":"memorymatch_easy","player_name":"joicoolkid","win_count":1,"best_seconds":10,"best_scores":null,"last_win_at":"2026-04-17 17:18:49"},{"game":"flippingbird_hard","player_name":"connor","win_count":2,"best_seconds":6,"best_scores":null,"last_win_at":"2026-04-23 17:53:22"},{"game":"snake_easy","player_name":"https://www.google.com/imghp?hl=en&tab=r","win_count":1,"best_seconds":null,"best_scores":11,"last_win_at":"2026-04-23 17:57:05"},{"game":"finddiff_medium","player_name":"laoshi","win_count":7,"best_seconds":1,"best_scores":null,"last_win_at":"2026-05-01 13:21:56"},{"game":"finddiff_hard","player_name":"laoshi","win_count":2,"best_seconds":5,"best_scores":null,"last_win_at":"2026-04-30 14:28:44"},{"game":"finddiff_easy","player_name":"laoshi","win_count":3,"best_seconds":1,"best_scores":null,"last_win_at":"2026-04-30 14:28:22"},{"game":"finddiff_medium","player_name":"ge","win_count":2,"best_seconds":2,"best_scores":null,"last_win_at":"2026-04-30 14:34:53"},{"game":"finddiff_easy","player_name":"ge","win_count":1,"best_seconds":6,"best_scores":null,"last_win_at":"2026-04-30 14:34:39"},{"game":"finddiff_hard","player_name":"ge","win_count":1,"best_seconds":25,"best_scores":null,"last_win_at":"2026-04-30 14:35:28"},{"game":"finddiff_medium","player_name":"trevor","win_count":2,"best_seconds":1,"best_scores":null,"last_win_at":"2026-05-05 19:11:10"},{"game":"finddiff_hard","player_name":"trevor","win_count":53,"best_seconds":0,"best_scores":null,"last_win_at":"2026-05-04 15:21:59"},{"game":"finddiff_hard","player_name":"Aiden","win_count":8,"best_seconds":3,"best_scores":null,"last_win_at":"2026-05-04 15:20:20"},{"game":"snake_hard","player_name":"messi","win_count":5,"best_seconds":null,"best_scores":1,"last_win_at":"2026-04-30 19:08:39"},{"game":"chessai_easy","player_name":"messi","win_count":1,"best_seconds":181,"best_scores":null,"last_win_at":"2026-04-30 19:12:58"},{"game":"pipes_5x5","player_name":"laoshi","win_count":1,"best_seconds":29,"best_scores":null,"last_win_at":"2026-05-01 12:13:20"},{"game":"pipes_3x3","player_name":"laoshi","win_count":1,"best_seconds":6,"best_scores":null,"last_win_at":"2026-05-01 12:17:37"},{"game":"pipes_4x4","player_name":"laoshi","win_count":1,"best_seconds":36,"best_scores":null,"last_win_at":"2026-05-01 12:18:47"},{"game":"pipes_8x8","player_name":"laoshi","win_count":1,"best_seconds":102,"best_scores":null,"last_win_at":"2026-05-01 12:25:49"},{"game":"memorymatch_easy","player_name":"Emma","win_count":8,"best_seconds":9,"best_scores":null,"last_win_at":"2026-05-02 01:35:52"},{"game":"uno_rush","player_name":"laoshi","win_count":31,"best_seconds":22,"best_scores":null,"last_win_at":"2026-05-05 17:44:37"},{"game":"uno_rush","player_name":"trevor","win_count":15,"best_seconds":16,"best_scores":null,"last_win_at":"2026-05-04 15:26:01"},{"game":"uno_rush","player_name":"Aiden","win_count":6,"best_seconds":29,"best_scores":null,"last_win_at":"2026-05-08 15:12:28"},{"game":"pipes_3x3","player_name":"messi","win_count":3,"best_seconds":14,"best_scores":null,"last_win_at":"2026-05-01 18:38:05"},{"game":"flow_links_5x5","player_name":"laoshi","win_count":38,"best_seconds":8,"best_scores":null,"last_win_at":"2026-05-04 23:44:52"},{"game":"checkers_vs_computer","player_name":"emanuel","win_count":3,"best_seconds":0,"best_scores":null,"last_win_at":"2026-05-05 19:20:48"},{"game":"hittarget_easy","player_name":"emanuel","win_count":1,"best_seconds":11,"best_scores":null,"last_win_at":"2026-05-01 18:40:24"},{"game":"hittarget_easy","player_name":"Aiden","win_count":1,"best_seconds":12,"best_scores":null,"last_win_at":"2026-05-01 18:57:32"},{"game":"uno_rush","player_name":"derek tsang","win_count":1,"best_seconds":92,"best_scores":null,"last_win_at":"2026-05-01 18:58:02"},{"game":"finddiff_easy","player_name":"derek tsang","win_count":2,"best_seconds":4,"best_scores":null,"last_win_at":"2026-05-01 19:02:21"},{"game":"finddiff_hard","player_name":"derek tsang","win_count":7,"best_seconds":1,"best_scores":null,"last_win_at":"2026-05-01 19:04:09"},{"game":"memorymatch_medium","player_name":"Emma","win_count":24,"best_seconds":14,"best_scores":null,"last_win_at":"2026-05-05 21:18:15"},{"game":"snake_medium","player_name":"Emma","win_count":9,"best_seconds":null,"best_scores":14,"last_win_at":"2026-05-01 22:23:51"},{"game":"mathspeedquiz_medium","player_name":"Emma","win_count":1,"best_seconds":null,"best_scores":16,"last_win_at":"2026-05-01 22:20:49"},{"game":"flow_links_6x6","player_name":"laoshi","win_count":1,"best_seconds":7,"best_scores":null,"last_win_at":"2026-05-01 23:03:05"},{"game":"flow_links_8x8","player_name":"laoshi","win_count":28,"best_seconds":9,"best_scores":null,"last_win_at":"2026-05-05 18:02:03"},{"game":"memorymatch_medium","player_name":"Emmq","win_count":1,"best_seconds":20,"best_scores":null,"last_win_at":"2026-05-02 00:28:39"},{"game":"memorymatch_hard","player_name":"Emma","win_count":5,"best_seconds":23,"best_scores":null,"last_win_at":"2026-05-05 00:35:17"},{"game":"finddiff_easy","player_name":"Emma","win_count":12,"best_seconds":1,"best_scores":null,"last_win_at":"2026-05-05 00:54:06"},{"game":"uno_rush","player_name":"emma","win_count":1,"best_seconds":34,"best_scores":null,"last_win_at":"2026-05-02 01:33:40"},{"game":"uno_rush","player_name":"Rams","win_count":11,"best_seconds":30,"best_scores":null,"last_win_at":"2026-05-02 18:51:51"},{"game":"flow_links_5x5","player_name":"Rams","win_count":28,"best_seconds":3,"best_scores":null,"last_win_at":"2026-05-03 17:44:05"},{"game":"flow_links_6x6","player_name":"Rams","win_count":3,"best_seconds":6,"best_scores":null,"last_win_at":"2026-05-02 14:34:54"},{"game":"flow_links_7x7","player_name":"Rams","win_count":10,"best_seconds":7,"best_scores":null,"last_win_at":"2026-05-02 14:38:37"},{"game":"flow_links_8x8","player_name":"Rams","win_count":7,"best_seconds":8,"best_scores":null,"last_win_at":"2026-05-02 14:41:32"},{"game":"memorymatch_easy","player_name":"Rams","win_count":44,"best_seconds":1,"best_scores":null,"last_win_at":"2026-05-03 17:48:18"},{"game":"memorymatch_hard","player_name":"Rams","win_count":1,"best_seconds":19,"best_scores":null,"last_win_at":"2026-05-02 14:47:58"},{"game":"finddiff_easy","player_name":"Rams","win_count":1,"best_seconds":5,"best_scores":null,"last_win_at":"2026-05-02 14:56:05"},{"game":"mathspeedquiz_easy","player_name":"Rams","win_count":3,"best_seconds":null,"best_scores":6,"last_win_at":"2026-05-02 15:05:26"},{"game":"memorymatch_medium","player_name":"Rams","win_count":6,"best_seconds":14,"best_scores":null,"last_win_at":"2026-05-03 17:51:28"},{"game":"hittarget_medium","player_name":"Rams","win_count":2,"best_seconds":18,"best_scores":null,"last_win_at":"2026-05-02 20:08:44"},{"game":"wordguess","player_name":"Emma","win_count":2,"best_seconds":153,"best_scores":null,"last_win_at":"2026-05-04 00:06:31"},{"game":"second_30","player_name":"Emma","win_count":1,"best_seconds":null,"best_scores":29900,"last_win_at":"2026-05-03 22:52:49"},{"game":"finddiff_hard","player_name":"Emma","win_count":39,"best_seconds":0,"best_scores":null,"last_win_at":"2026-05-05 10:28:29"},{"game":"flow_links_5x5","player_name":"Emma","win_count":22,"best_seconds":3,"best_scores":null,"last_win_at":"2026-05-08 16:46:03"},{"game":"flow_links_8x8","player_name":"Emma","win_count":13,"best_seconds":13,"best_scores":null,"last_win_at":"2026-05-08 15:33:11"},{"game":"flow_links_7x7","player_name":"Emma","win_count":8,"best_seconds":9,"best_scores":null,"last_win_at":"2026-05-05 01:06:08"},{"game":"flow_links_6x6","player_name":"Emma","win_count":2,"best_seconds":10,"best_scores":null,"last_win_at":"2026-05-05 00:57:17"},{"game":"finddiff_medium","player_name":"Emma","win_count":3,"best_seconds":1,"best_scores":null,"last_win_at":"2026-05-04 23:07:28"},{"game":"flow_links_8x8","player_name":"trevor","win_count":3,"best_seconds":19,"best_scores":null,"last_win_at":"2026-05-04 15:27:40"},{"game":"flow_links_5x5","player_name":"trevor","win_count":2,"best_seconds":6,"best_scores":null,"last_win_at":"2026-05-04 15:26:36"},{"game":"finddiff_medium","player_name":"https://www.google.com/search?sca_esv=29","win_count":1,"best_seconds":1,"best_scores":null,"last_win_at":"2026-05-04 15:37:33"},{"game":"memorymatch_easy","player_name":"https://www.google.com/search?sca_esv=29","win_count":1,"best_seconds":8,"best_scores":null,"last_win_at":"2026-05-04 15:39:25"},{"game":"wordguess7","player_name":"Emma","win_count":1,"best_seconds":82,"best_scores":null,"last_win_at":"2026-05-05 00:15:48"},{"game":"fishing_medium","player_name":"Emma","win_count":4,"best_seconds":null,"best_scores":87,"last_win_at":"2026-05-05 01:09:59"},{"game":"dishmaker_easy","player_name":"Emma","win_count":2,"best_seconds":null,"best_scores":62,"last_win_at":"2026-05-06 00:06:13"},{"game":"finddiff_hard","player_name":"Rams","win_count":8,"best_seconds":2,"best_scores":null,"last_win_at":"2026-05-05 11:30:58"},{"game":"finddiff_hard","player_name":"Ra","win_count":1,"best_seconds":8,"best_scores":null,"last_win_at":"2026-05-05 11:29:37"},{"game":"flow_links_10x10","player_name":"laoshi","win_count":16,"best_seconds":17,"best_scores":null,"last_win_at":"2026-05-05 18:01:41"},{"game":"flow_links_9x9","player_name":"laoshi","win_count":31,"best_seconds":16,"best_scores":null,"last_win_at":"2026-05-05 18:00:58"},{"game":"fight_landlord","player_name":"laoshi","win_count":2,"best_seconds":69,"best_scores":null,"last_win_at":"2026-05-05 18:22:30"},{"game":"flow_links_5x5","player_name":"derek tsang","win_count":2,"best_seconds":6,"best_scores":null,"last_win_at":"2026-05-05 19:03:53"},{"game":"fight_landlord","player_name":"Aiden","win_count":1,"best_seconds":184,"best_scores":null,"last_win_at":"2026-05-05 19:08:08"},{"game":"flow_links_5x5","player_name":"Aiden","win_count":6,"best_seconds":5,"best_scores":null,"last_win_at":"2026-05-08 15:35:52"},{"game":"uno_rush","player_name":"River","win_count":1,"best_seconds":56,"best_scores":null,"last_win_at":"2026-05-05 19:18:22"},{"game":"mystery_picture","player_name":"laoshi","win_count":3,"best_seconds":23,"best_scores":null,"last_win_at":"2026-05-05 19:49:55"},{"game":"mystery_picture","player_name":"derek tsang","win_count":1,"best_seconds":16,"best_scores":null,"last_win_at":"2026-05-05 19:19:44"},{"game":"mystery_picture","player_name":"Emma","win_count":11,"best_seconds":10,"best_scores":null,"last_win_at":"2026-05-08 15:19:49"},{"game":"checkers_vs_computer","player_name":"Trevor","win_count":1,"best_seconds":427,"best_scores":null,"last_win_at":"2026-05-05 19:21:12"},{"game":"mystery_picture","player_name":"Aiden","win_count":3,"best_seconds":17,"best_scores":null,"last_win_at":"2026-05-08 15:17:40"},{"game":"fight_landlord","player_name":"laosh","win_count":1,"best_seconds":84,"best_scores":null,"last_win_at":"2026-05-06 20:22:52"},{"game":"wordguess","player_name":"derek tsang4","win_count":1,"best_seconds":15,"best_scores":null,"last_win_at":"2026-05-07 18:55:15"},{"game":"flow_links_5x5","player_name":"https://www.google.com/search?sca_esv=29","win_count":1,"best_seconds":9,"best_scores":null,"last_win_at":"2026-05-07 19:11:16"},{"game":"mystery_picture","player_name":"connor","win_count":2,"best_seconds":10,"best_scores":null,"last_win_at":"2026-05-08 15:18:19"},{"game":"sciencespeedquiz_easy","player_name":"laoshi","win_count":11,"best_seconds":null,"best_scores":42,"last_win_at":"2026-05-08 18:56:53"},{"game":"sciencespeedquiz_easy","player_name":"ivette","win_count":1,"best_seconds":null,"best_scores":9,"last_win_at":"2026-05-07 19:40:53"},{"game":"memorymatch_easy","player_name":"ivette","win_count":1,"best_seconds":10,"best_scores":null,"last_win_at":"2026-05-07 19:43:24"},{"game":"wordguess","player_name":"ivette","win_count":1,"best_seconds":228,"best_scores":null,"last_win_at":"2026-05-07 19:47:30"},{"game":"sciencespeedquiz_easy","player_name":"derek tsang","win_count":13,"best_seconds":null,"best_scores":12,"last_win_at":"2026-05-08 15:07:29"},{"game":"sciencespeedquiz_hard","player_name":"laoshi","win_count":3,"best_seconds":null,"best_scores":24,"last_win_at":"2026-05-08 01:33:29"},{"game":"sciencespeedquiz_medium","player_name":"laoshi","win_count":5,"best_seconds":null,"best_scores":33,"last_win_at":"2026-05-08 01:43:07"},{"game":"sciencespeedquiz_easy","player_name":"Aiden","win_count":5,"best_seconds":null,"best_scores":6,"last_win_at":"2026-05-08 15:30:05"},{"game":"sciencespeedquiz_easy","player_name":"Emma","win_count":8,"best_seconds":null,"best_scores":2,"last_win_at":"2026-05-08 15:16:15"},{"game":"finddiff_easy","player_name":"yuji","win_count":1,"best_seconds":4,"best_scores":null,"last_win_at":"2026-05-08 15:15:28"},{"game":"finddiff_hard","player_name":"yuji","win_count":1,"best_seconds":15,"best_scores":null,"last_win_at":"2026-05-08 15:16:28"},{"game":"mystery_picture","player_name":"yuji","win_count":1,"best_seconds":29,"best_scores":null,"last_win_at":"2026-05-08 15:17:22"},{"game":"flow_links_5x5","player_name":"yuji","win_count":35,"best_seconds":3,"best_scores":null,"last_win_at":"2026-05-08 15:36:48"},{"game":"flow_links_5x5","player_name":"connor","win_count":8,"best_seconds":3,"best_scores":null,"last_win_at":"2026-05-08 15:31:56"},{"game":"flow_links_5x5","player_name":"max","win_count":1,"best_seconds":7,"best_scores":null,"last_win_at":"2026-05-08 15:21:38"},{"game":"flow_links_5x5","player_name":"mmmmmmmmmmmmmmmmmm","win_count":1,"best_seconds":9,"best_scores":null,"last_win_at":"2026-05-08 15:23:37"},{"game":"flow_links_5x5","player_name":"y","win_count":2,"best_seconds":4,"best_scores":null,"last_win_at":"2026-05-08 15:31:05"},{"game":"flow_links_5x5","player_name":"mommy","win_count":1,"best_seconds":61,"best_scores":null,"last_win_at":"2026-05-08 15:30:03"},{"game":"flow_links_10x10","player_name":"max","win_count":1,"best_seconds":44,"best_scores":null,"last_win_at":"2026-05-08 15:32:56"},{"game":"flow_links_10x10","player_name":"connor","win_count":22,"best_seconds":9,"best_scores":null,"last_win_at":"2026-05-08 16:52:27"},{"game":"flow_links_10x10","player_name":"yuji","win_count":5,"best_seconds":19,"best_scores":null,"last_win_at":"2026-05-08 15:39:11"},{"game":"flow_links_10x10","player_name":"Emma","win_count":6,"best_seconds":15,"best_scores":null,"last_win_at":"2026-05-08 16:49:58"},{"game":"flow_links_7x7","player_name":"Aiden","win_count":2,"best_seconds":10,"best_scores":null,"last_win_at":"2026-05-08 15:36:30"},{"game":"flow_links_10x10","player_name":"mommy","win_count":1,"best_seconds":137,"best_scores":null,"last_win_at":"2026-05-08 15:35:45"},{"game":"flow_links_9x9","player_name":"Emma","win_count":1,"best_seconds":28,"best_scores":null,"last_win_at":"2026-05-08 15:36:11"},{"game":"flow_links_6x6","player_name":"Aiden","win_count":1,"best_seconds":7,"best_scores":null,"last_win_at":"2026-05-08 15:36:12"},{"game":"wordguess","player_name":"diane","win_count":1,"best_seconds":195,"best_scores":null,"last_win_at":"2026-05-08 15:37:02"},{"game":"flow_links_8x8","player_name":"Aiden","win_count":1,"best_seconds":20,"best_scores":null,"last_win_at":"2026-05-08 15:37:13"},{"game":"flow_links_10x10","player_name":"fgk l","win_count":1,"best_seconds":35,"best_scores":null,"last_win_at":"2026-05-08 16:41:23"},{"game":"checkers_vs_computer","player_name":"joincoolkid","win_count":2,"best_seconds":0,"best_scores":null,"last_win_at":"2026-05-08 17:23:24"}];
+
+    let currentRows = [];
+    let model = null;
+
+    const $ = (id) => document.getElementById(id);
+
+    function cleanName(name) {
+      return String(name || "Unknown").trim() || "Unknown";
+    }
+
+    function nameKey(name) {
+      return cleanName(name).toLowerCase().replace(/\s+/g, " ");
+    }
+
+    function preferredName(oldName, newName) {
+      if (!oldName) return cleanName(newName);
+      const a = cleanName(oldName), b = cleanName(newName);
+      if (b.length < a.length && b.length >= 2) return b;
+      if (/^[a-z]/.test(a) && /^[A-Z]/.test(b)) return b;
+      return a;
+    }
+
+    function normalizeApiRows(game, rows) {
+      return (rows || []).map(r => ({
+        game,
+        player_name: r.player_name ?? r.playerName ?? r.name ?? "Unknown",
+        win_count: Number(r.win_count ?? r.wins ?? r.winCount ?? 0) || 0,
+        best_seconds: r.best_seconds ?? r.bestSeconds ?? null,
+        best_scores: r.best_scores ?? r.bestScores ?? null,
+        last_win_at: r.last_win_at ?? r.lastWinAt ?? null
+      }));
+    }
+
+    async function loadLiveRows() {
+      const collected = [];
+      let ok = 0;
+      await Promise.all(GAME_IDS.map(async (game) => {
+        try {
+          const res = await fetch(`/api/leaderboard?game=${encodeURIComponent(game)}&limit=5000`, { cache: "no-store" });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
+          const rows = Array.isArray(data) ? data : (data.rows || []);
+          if (rows.length) {
+            collected.push(...normalizeApiRows(game, rows));
+            ok++;
+          }
+        } catch (e) {
+          // Keep going; the SQL snapshot is used if live data is unavailable.
+        }
+      }));
+      if (!collected.length) throw new Error("No live leaderboard rows loaded");
+      return { rows: collected, source: `Live API (${ok} games)` };
+    }
+
+    function buildModel(rows, source) {
+      const players = new Map();
+      const perGame = new Map();
+
+      for (const r of rows) {
+        const game = r.game;
+        const key = nameKey(r.player_name);
+        const wins = Number(r.win_count || 0);
+        if (!GAME_IDS.includes(game)) continue;
+        if (!players.has(key)) {
+          players.set(key, { key, name: cleanName(r.player_name), totalWins: 0, games: {}, gamesPlayed: 0 });
+        }
+        const p = players.get(key);
+        p.name = preferredName(p.name, r.player_name);
+        p.totalWins += wins;
+        if (!p.games[game]) {
+          p.games[game] = { wins: 0, best_seconds: null, best_scores: null, rank: null };
+          p.gamesPlayed++;
+        }
+        p.games[game].wins += wins;
+        if (r.best_seconds != null) {
+          const v = Number(r.best_seconds);
+          p.games[game].best_seconds = p.games[game].best_seconds == null ? v : Math.min(p.games[game].best_seconds, v);
+        }
+        if (r.best_scores != null) {
+          const v = Number(r.best_scores);
+          p.games[game].best_scores = p.games[game].best_scores == null ? v : Math.max(p.games[game].best_scores, v);
+        }
+      }
+
+      for (const game of GAME_IDS) {
+        const list = Array.from(players.values())
+          .filter(p => p.games[game])
+          .sort((a,b) => b.games[game].wins - a.games[game].wins || a.name.localeCompare(b.name));
+        list.forEach((p, i) => p.games[game].rank = i + 1);
+        perGame.set(game, list);
+      }
+
+      const playerList = Array.from(players.values())
+        .sort((a,b) => b.totalWins - a.totalWins || b.gamesPlayed - a.gamesPlayed || a.name.localeCompare(b.name));
+      playerList.forEach((p, i) => p.overallRank = i + 1);
+
+      return { players: playerList, perGame, source };
+    }
+
+    function formatCell(entry) {
+      if (!entry) return `<span class="empty">—</span>`;
+      let meta = `#${entry.rank} in game`;
+      if (entry.best_seconds != null) meta += ` · best ${entry.best_seconds}s`;
+      if (entry.best_scores != null) meta += ` · best ${entry.best_scores}`;
+      return `<span class="cell"><span class="wins">${entry.wins}</span><span class="meta">${meta}</span></span>`;
+    }
+
+    function renderTable(filter = "") {
+      if (!model) return;
+      const q = nameKey(filter);
+      const table = $("rankTable");
+      const rows = model.players.filter(p => !q || p.key.includes(q));
+      const gameHeaders = GAME_IDS.map(g => `<th title="${g}">${GAME_LABELS[g] || g}</th>`).join("");
+      const body = rows.map(p => `
+        <tr class="${q && p.key.includes(q) ? "match" : ""}">
+          <td class="rank">#${p.overallRank}</td>
+          <td class="name">${escapeHtml(p.name)}</td>
+          <td class="total">${p.totalWins}</td>
+          ${GAME_IDS.map(g => `<td>${formatCell(p.games[g])}</td>`).join("")}
+        </tr>`).join("");
+      table.innerHTML = `<thead><tr><th>Rank</th><th>Name</th><th>Total Wins</th>${gameHeaders}</tr></thead><tbody>${body || `<tr><td colspan="${GAME_IDS.length + 3}">No matching player.</td></tr>`}</tbody>`;
+      renderSearchResult(filter);
+    }
+
+    function renderSearchResult(filter = "") {
+      const box = $("searchResult");
+      const q = nameKey(filter);
+      if (!q) {
+        box.textContent = "Type a name to see that player's overall ranking and game-by-game rankings.";
+        return;
+      }
+      const matches = model.players.filter(p => p.key.includes(q));
+      if (!matches.length) {
+        box.innerHTML = `No player matched <strong>${escapeHtml(filter)}</strong>.`;
+        return;
+      }
+      const p = matches[0];
+      const bestGames = Object.entries(p.games)
+        .sort((a,b) => b[1].wins - a[1].wins)
+        .slice(0, 6)
+        .map(([g, e]) => `${GAME_LABELS[g] || g}: ${e.wins} wins (#${e.rank})`).join("; ");
+      const more = matches.length > 1 ? ` Showing the first of ${matches.length} matches.` : "";
+      box.innerHTML = `<strong>${escapeHtml(p.name)}</strong> is ranked <strong>#${p.overallRank}</strong> overall with <strong>${p.totalWins}</strong> total wins across <strong>${p.gamesPlayed}</strong> games. Top game rankings: ${escapeHtml(bestGames)}.${more}`;
+    }
+
+    function renderSummary() {
+      const totalWins = model.players.reduce((s,p) => s + p.totalWins, 0);
+      $("playerCount").textContent = model.players.length.toLocaleString();
+      $("gameCount").textContent = GAME_IDS.length.toLocaleString();
+      $("winsCount").textContent = totalWins.toLocaleString();
+      $("sourceLabel").textContent = model.source;
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>'"]/g, ch => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;"
+      }[ch]));
+    }
+
+    async function useLive() {
+      $("status").textContent = "Loading live rankings from /api/leaderboard ...";
+      try {
+        const loaded = await loadLiveRows();
+        currentRows = loaded.rows;
+        model = buildModel(currentRows, loaded.source);
+        renderSummary();
+        renderTable($("nameSearch").value);
+        $("status").textContent = "Updated just now from the live API.";
+        $("status").classList.remove("err");
+      } catch (e) {
+        useSnapshot("Live API was not reachable, so this page is showing the SQL snapshot included in this file.");
+      }
+    }
+
+    function useSnapshot(message = "Showing SQL snapshot data embedded in this HTML file.") {
+      currentRows = SQL_SNAPSHOT;
+      model = buildModel(currentRows, "SQL snapshot");
+      renderSummary();
+      renderTable($("nameSearch").value);
+      $("status").textContent = message;
+      $("status").classList.toggle("err", message.includes("not reachable"));
+    }
+
+    $("nameSearch").addEventListener("input", (e) => renderTable(e.target.value));
+    $("clearBtn").addEventListener("click", () => { $("nameSearch").value = ""; renderTable(""); });
+    $("refreshBtn").addEventListener("click", useLive);
+    $("snapshotBtn").addEventListener("click", () => useSnapshot());
+
+    useLive();
+  </script>
+</body>
+</html>

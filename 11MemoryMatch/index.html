@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Memory Match – Emoji Edition</title>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root{
+      --bg:#f0f4ff;
+      --card:#ffffff;
+      --accent:#6366f1;
+      --accent2:#ec4899;
+      --green:#10b981;
+      --yellow:#f59e0b;
+      --text:#1e1b4b;
+      --muted:#6b7280;
+      --border:#e0e7ff;
+      --card-back:linear-gradient(135deg,#6366f1,#8b5cf6);
+    }
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    body{
+      font-family:'Quicksand',sans-serif;
+      background:var(--bg);
+      background-image:
+        radial-gradient(ellipse at 10% 50%, #c7d2fe55 0%, transparent 60%),
+        radial-gradient(ellipse at 90% 10%, #fbcfe855 0%, transparent 60%);
+      min-height:100vh;
+      color:var(--text);
+      padding:60px 16px 80px;
+    }
+    h1{ font-family:'Baloo 2',cursive; font-size:clamp(1.8rem,5vw,2.8rem); color:var(--accent); margin-bottom:4px; }
+    .tagline{ color:var(--muted); font-size:14px; margin-bottom:20px; }
+
+    .layout{ max-width:1100px; margin:0 auto; display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:24px; align-items:start; }
+    @media(max-width:800px){ .layout{ grid-template-columns:1fr; } .sidebar{ position:static!important; } }
+
+    .panel{ background:var(--card); border-radius:20px; padding:24px; border:2px solid var(--border); box-shadow:0 4px 24px #6366f10d; }
+
+    /* Level */
+    .lvl-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+    .lvl-btn{ padding:7px 16px; border-radius:999px; border:2px solid var(--border); background:white; font-family:'Quicksand',sans-serif; font-weight:700; font-size:13px; cursor:pointer; transition:all .18s; }
+    .lvl-btn.active,.lvl-btn:hover{ background:var(--accent); color:white; border-color:var(--accent); transform:translateY(-2px); }
+
+    /* Stats bar */
+    .stats-bar{ display:flex; gap:12px; margin-bottom:18px; flex-wrap:wrap; }
+    .stat-box{ background:var(--bg); border:2px solid var(--border); border-radius:14px; padding:10px 16px; text-align:center; flex:1; min-width:80px; }
+    .stat-val{ font-family:'Baloo 2',cursive; font-size:1.8rem; color:var(--accent); line-height:1; }
+    .stat-label{ font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-top:2px; }
+
+    /* Game board */
+    #board{ display:grid; gap:10px; margin-bottom:18px; }
+    .mem-card{
+      aspect-ratio:1;
+      cursor:pointer;
+      perspective:600px;
+      user-select:none;
+    }
+    .mem-card-inner{
+      width:100%; height:100%;
+      position:relative;
+      transform-style:preserve-3d;
+      transition:transform .38s cubic-bezier(.4,0,.2,1);
+      border-radius:14px;
+    }
+    .mem-card.flipped .mem-card-inner{ transform:rotateY(180deg); }
+    .mem-card.matched .mem-card-inner{ transform:rotateY(180deg); }
+    .mem-card.matched .card-front{ background:linear-gradient(135deg,#d1fae5,#a7f3d0); border-color:var(--green); }
+    .card-back,.card-front{
+      position:absolute; inset:0;
+      border-radius:14px;
+      backface-visibility:hidden;
+      display:flex; align-items:center; justify-content:center;
+      border:2px solid var(--border);
+    }
+    .card-back{
+      background:var(--card-back);
+      font-size:2rem;
+      color:rgba(255,255,255,0.5);
+    }
+    .card-front{
+      background:white;
+      transform:rotateY(180deg);
+      font-size:clamp(1.5rem,4vw,2.5rem);
+      border-color:#c7d2fe;
+    }
+    .mem-card.bounce .mem-card-inner{ animation:bounce .4s; }
+    @keyframes bounce{ 0%,100%{transform:rotateY(180deg) scale(1)} 50%{transform:rotateY(180deg) scale(1.12)} }
+    .mem-card.wrong-flash .card-front{ animation:wrongFlash .5s; }
+    @keyframes wrongFlash{ 0%,100%{background:white} 50%{background:#fee2e2; border-color:#fca5a5;} }
+
+    /* Message */
+    #gameMsg{ text-align:center; font-family:'Baloo 2',cursive; font-size:1.2rem; min-height:28px; color:var(--accent); margin-bottom:12px; }
+
+    .ctrl-row{ display:flex; gap:10px; }
+    .btn-main{ flex:1; padding:13px; font-family:'Baloo 2',cursive; font-size:1.05rem; border:none; border-radius:14px; background:var(--accent); color:white; cursor:pointer; transition:all .18s; }
+    .btn-main:hover{ transform:translateY(-2px); box-shadow:0 6px 20px #6366f155; }
+    .btn-sec{ padding:13px 18px; font-family:'Baloo 2',cursive; font-size:1rem; border:2px solid var(--border); border-radius:14px; background:white; color:var(--text); cursor:pointer; transition:all .18s; }
+    .btn-sec:hover{ border-color:var(--accent); color:var(--accent); }
+
+    /* Sidebar */
+    .sidebar{ position:sticky; top:72px; max-height:calc(100vh - 96px); overflow:auto; display:flex; flex-direction:column; gap:14px; }
+    .rank-section{ background:var(--bg); border-radius:14px; padding:12px 14px; }
+    .rank-section-title{ font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-bottom:8px; }
+    .rank-section ol{ padding-left:18px; }
+    .rank-section li{ font-size:13px; padding:3px 0; border-bottom:1px solid var(--border); }
+    .rank-section li:last-child{ border:none; }
+    .rank-note{ font-size:12px; color:var(--muted); }
+
+    /* Back */
+    .back-header{ position:fixed; top:14px; left:14px; z-index:1000; }
+    .back-link{ text-decoration:none; color:var(--text); font-weight:700; font-size:15px; background:white; padding:6px 12px; border-radius:999px; border:2px solid var(--border); box-shadow:0 2px 8px #0000001a; }
+    .back-link:hover{ border-color:var(--accent); color:var(--accent); }
+
+    /* Dialog */
+    .dialog-backdrop{ position:fixed; inset:0; background:rgba(30,27,75,0.5); display:none; align-items:center; justify-content:center; z-index:4000; padding:16px; }
+    .dialog-backdrop.open{ display:flex; }
+    .dialog{ width:100%; max-width:360px; background:white; border-radius:24px; padding:28px; box-shadow:0 24px 48px #0000002a; text-align:center; }
+    .dialog-emoji{ font-size:3.5rem; margin-bottom:10px; }
+    .dialog h4{ font-family:'Baloo 2',cursive; font-size:1.7rem; color:var(--accent); margin-bottom:8px; }
+    .dialog p{ color:var(--muted); font-size:14px; margin-bottom:12px; }
+    .dialog input{ width:100%; padding:12px; border:2px solid var(--border); border-radius:12px; font-family:'Quicksand',sans-serif; font-size:16px; outline:none; margin-bottom:4px; }
+    .dialog input:focus{ border-color:var(--accent); }
+    .dialog-actions{ display:flex; gap:10px; margin-top:12px; }
+    .dialog-actions button{ flex:1; padding:12px; border-radius:12px; font-family:'Baloo 2',cursive; font-size:1rem; cursor:pointer; border:2px solid var(--border); background:white; }
+    .dialog-actions button.primary{ background:var(--accent); border-color:var(--accent); color:white; }
+    .dialog-status{ font-size:13px; color:var(--muted); margin-top:8px; min-height:18px; font-weight:700; }
+
+    footer{ position:fixed; bottom:0; left:0; width:100%; background:rgba(240,244,255,0.95); backdrop-filter:blur(4px); text-align:center; padding:8px 0; font-size:13px; color:var(--muted); border-top:1px solid var(--border); }
+  </style>
+</head>
+<body>
+  <header class="back-header">
+    <a class="back-link" href="/puzzle">← Back to Puzzle Home</a>
+  </header>
+
+  <div class="layout">
+    <main>
+      <div class="panel">
+        <h1>🃏 Memory Match</h1>
+        <p class="tagline">Flip cards to find matching emoji pairs. Train your brain!</p>
+
+        <div class="lvl-row">
+          <button class="lvl-btn active" data-level="easy">🐣 Easy (4×3)</button>
+          <button class="lvl-btn" data-level="medium">🔥 Medium (4×4)</button>
+          <button class="lvl-btn" data-level="hard">🚀 Hard (5×4)</button>
+        </div>
+
+        <div class="stats-bar">
+          <div class="stat-box"><div class="stat-val" id="moveDisp">0</div><div class="stat-label">Moves</div></div>
+          <div class="stat-box"><div class="stat-val" id="pairDisp">0</div><div class="stat-label">Pairs Found</div></div>
+          <div class="stat-box"><div class="stat-val" id="timeDisp">0s</div><div class="stat-label">Time</div></div>
+        </div>
+
+        <div id="gameMsg">Press Start to play!</div>
+        <div id="board"></div>
+
+        <div class="ctrl-row">
+          <button class="btn-main" id="startBtn">🎮 Start Game</button>
+          <button class="btn-sec" id="resetBtn">↺ Reset</button>
+        </div>
+      </div>
+    </main>
+
+    <aside class="sidebar">
+      <div class="panel">
+        <h3 style="font-family:'Baloo 2',cursive; margin-bottom:12px;">🏆 Leaderboard</h3>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:8px;">Fewest moves wins!</p>
+        <div class="rank-section"><div class="rank-section-title">🐣 Easy</div><ol id="rankEasy"><li>Loading…</li></ol></div>
+        <div class="rank-section"><div class="rank-section-title">🔥 Medium</div><ol id="rankMedium"><li>Loading…</li></ol></div>
+        <div class="rank-section"><div class="rank-section-title">🚀 Hard</div><ol id="rankHard"><li>Loading…</li></ol></div>
+        <div class="rank-note" id="rankNote">Loading…</div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="dialog-backdrop" id="winDialog">
+    <div class="dialog">
+      <div class="dialog-emoji">🎊</div>
+      <h4>You Did It!</h4>
+      <p id="winSummary">Amazing memory!</p>
+      <p>Enter your name for the leaderboard:</p>
+      <input type="text" id="dialogName" placeholder="Your name" maxlength="40" autocomplete="off"/>
+      <div class="dialog-actions">
+        <button id="dialogCancel">Skip</button>
+        <button class="primary" id="dialogSubmit">Submit ✓</button>
+      </div>
+      <div class="dialog-status" id="dialogStatus"></div>
+    </div>
+  </div>
+
+  <script>
+    const BASE_ID="memorymatch";
+    const ALL_EMOJIS=["🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐸","🐙","🦋","🦄","🐝","🦀","🐬","🦖","🌈","⭐","🍉","🍕","🎸"];
+    const CONFIGS={ easy:{cols:4,rows:3}, medium:{cols:4,rows:4}, hard:{cols:5,rows:4} };
+
+    let level="easy";
+    let cards=[], flipped=[], matched=0, moves=0, pairs=0;
+    let locked=false, timerId=null, elapsed=0, gameRunning=false;
+
+    const board=document.getElementById("board");
+    const moveDisp=document.getElementById("moveDisp");
+    const pairDisp=document.getElementById("pairDisp");
+    const timeDisp=document.getElementById("timeDisp");
+    const gameMsg=document.getElementById("gameMsg");
+    const startBtn=document.getElementById("startBtn");
+
+    function gameKey(lv){ return `${BASE_ID}_${lv}`; }
+
+    function shuffle(arr){ return [...arr].sort(()=>Math.random()-.5); }
+
+    function buildBoard(){
+      const cfg=CONFIGS[level];
+      const total=cfg.cols*cfg.rows; // must be even
+      const need=total/2;
+      const picked=shuffle(ALL_EMOJIS).slice(0,need);
+      cards=shuffle([...picked,...picked]).map((em,i)=>({id:i,emoji:em,flipped:false,matched:false}));
+      board.style.gridTemplateColumns=`repeat(${cfg.cols},1fr)`;
+      board.innerHTML='';
+      cards.forEach((c,i)=>{
+        const el=document.createElement('div');
+        el.className='mem-card';
+        el.dataset.index=i;
+        el.innerHTML=`<div class="mem-card-inner"><div class="card-back">?</div><div class="card-front">${c.emoji}</div></div>`;
+        el.addEventListener('click',()=>onCardClick(i,el));
+        board.appendChild(el);
+      });
+    }
+
+    function onCardClick(idx,el){
+      if(!gameRunning||locked) return;
+      if(cards[idx].flipped||cards[idx].matched) return;
+      cards[idx].flipped=true;
+      el.classList.add('flipped');
+      flipped.push({idx,el});
+      if(flipped.length===2){ moves++; moveDisp.textContent=moves; checkMatch(); }
+    }
+
+    function checkMatch(){
+      locked=true;
+      const [a,b]=flipped;
+      if(cards[a.idx].emoji===cards[b.idx].emoji){
+        // match!
+        cards[a.idx].matched=true;
+        cards[b.idx].matched=true;
+        a.el.classList.add('matched','bounce');
+        b.el.classList.add('matched','bounce');
+        matched+=2; pairs++;
+        pairDisp.textContent=pairs;
+        flipped=[];
+        locked=false;
+        if(matched===cards.length) setTimeout(endGame,400);
+        else gameMsg.textContent="✅ Match! Keep going!";
+      } else {
+        gameMsg.textContent="❌ Not a match. Try again!";
+        a.el.querySelector('.card-front').parentElement.classList.add('wrong-flash');
+        b.el.querySelector('.card-front').parentElement.classList.add('wrong-flash');
+        setTimeout(()=>{
+          cards[a.idx].flipped=false;
+          cards[b.idx].flipped=false;
+          a.el.classList.remove('flipped');
+          b.el.classList.remove('flipped');
+          a.el.querySelector('.mem-card-inner').classList.remove('wrong-flash');
+          b.el.querySelector('.mem-card-inner').classList.remove('wrong-flash');
+          flipped=[];
+          locked=false;
+        },900);
+      }
+    }
+
+    function startGame(){
+      clearInterval(timerId);
+      matched=0; pairs=0; moves=0; elapsed=0; flipped=[]; locked=false; gameRunning=true;
+      moveDisp.textContent='0'; pairDisp.textContent='0'; timeDisp.textContent='0s';
+      buildBoard();
+      gameMsg.textContent="Find all the matching pairs! 🧠";
+      startBtn.textContent='🔄 Restart';
+      timerId=setInterval(()=>{ elapsed++; timeDisp.textContent=elapsed+'s'; },1000);
+    }
+
+    function endGame(){
+      clearInterval(timerId);
+      gameRunning=false;
+      gameMsg.textContent=`🎉 Done in ${moves} moves & ${elapsed}s!`;
+      document.getElementById("winSummary").textContent=`You found all pairs in ${moves} moves and ${elapsed} seconds on ${level.toUpperCase()} mode!`;
+      setTimeout(()=>document.getElementById("winDialog").classList.add('open'),600);
+    }
+
+    function resetGame(){
+      clearInterval(timerId);
+      matched=0; pairs=0; moves=0; elapsed=0; flipped=[]; locked=false; gameRunning=false;
+      moveDisp.textContent='0'; pairDisp.textContent='0'; timeDisp.textContent='0s';
+      board.innerHTML='<p style="color:var(--muted);font-size:14px;padding:20px 0;">Press Start to begin!</p>';
+      gameMsg.textContent="Press Start to play!";
+      startBtn.textContent='🎮 Start Game';
+    }
+
+    document.querySelectorAll('.lvl-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        document.querySelectorAll('.lvl-btn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        level=btn.dataset.level;
+        resetGame();
+      });
+    });
+    startBtn.addEventListener('click',startGame);
+    document.getElementById("resetBtn").addEventListener('click',resetGame);
+
+    // Dialog
+    async function submitWin(name,movesCount){
+      try{
+        const r=await fetch('/api/score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:gameKey(level),player_name:name,seconds:Math.max(1,movesCount)})});
+        const d=await r.json().catch(()=>({}));
+        return d.ok===true;
+      }catch(e){ return false; }
+    }
+    document.getElementById("dialogCancel").addEventListener('click',()=>document.getElementById("winDialog").classList.remove('open'));
+    document.getElementById("dialogSubmit").addEventListener('click',async()=>{
+      const name=(document.getElementById("dialogName").value||"").trim();
+      if(!name){ document.getElementById("dialogStatus").textContent="Name required!"; return; }
+      document.getElementById("dialogSubmit").disabled=true;
+      document.getElementById("dialogStatus").textContent="Saving…";
+      const ok=await submitWin(name,moves);
+      if(ok){ document.getElementById("dialogStatus").textContent="Saved ✅"; await loadBoards(); setTimeout(()=>document.getElementById("winDialog").classList.remove('open'),400); }
+      else{ document.getElementById("dialogStatus").textContent="Could not save. Tell your teacher!"; }
+      document.getElementById("dialogSubmit").disabled=false;
+    });
+    document.getElementById("dialogName").addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById("dialogSubmit").click(); });
+
+    async function loadBoard(lv,listId){
+      const list=document.getElementById(listId);
+      try{
+        const r=await fetch(`/api/leaderboard?game=${encodeURIComponent(gameKey(lv))}&limit=10`,{cache:"no-store"});
+        const d=await r.json();
+        const rows=Array.isArray(d)?d:(d.rows||[]);
+        list.innerHTML=rows.length?rows.map((r,i)=>`<li>#${i+1} ${r.player_name||'?'} — ${r.best_seconds||0} moves</li>`).join(''):'<li>No scores yet.</li>';
+      }catch(e){ list.innerHTML='<li>Could not load.</li>'; }
+    }
+    async function loadBoards(){
+      document.getElementById("rankNote").textContent="Loading…";
+      await Promise.all([loadBoard('easy','rankEasy'),loadBoard('medium','rankMedium'),loadBoard('hard','rankHard')]);
+      document.getElementById("rankNote").textContent="Updated just now.";
+    }
+    loadBoards();
+  </script>
+
+  <footer>
+    © 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528.<br>
+    The STEAM Teacher is Chao Yu. For educational purposes only. All rights reserved.
+  </footer>
+</body>
+</html>

@@ -1,0 +1,827 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>找不同 · Find the Different Character</title>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&display=swap');
+
+  :root {
+    --ink: #1a0a00;
+    --paper: #f5efe0;
+    --paper-dark: #e8dfc8;
+    --seal-red: #c0392b;
+    --seal-red-dark: #922b21;
+    --gold: #b5860d;
+    --correct: #1a6b2a;
+    --wrong: #c0392b;
+    --border: #8b7355;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Serif SC', 'Songti SC', 'SimSun', Georgia, serif;
+    background: var(--ink);
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(139,115,85,0.08) 39px, rgba(139,115,85,0.08) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(139,115,85,0.08) 39px, rgba(139,115,85,0.08) 40px);
+    min-height: 100vh;
+    color: var(--ink);
+    padding-bottom: 60px;
+  }
+
+  /* ── Back header ── */
+  .back-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(26,10,0,0.96);
+    border-bottom: 2px solid var(--seal-red);
+    padding: 8px 16px;
+  }
+  .back-link {
+    text-decoration: none;
+    color: var(--paper);
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.04em;
+  }
+  .back-link:hover { color: var(--gold); }
+
+  /* ── Page layout ── */
+  .page {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 16px 12px 0;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 20px;
+    align-items: start;
+  }
+
+  /* ── Paper card ── */
+  .card {
+    background: var(--paper);
+    border-radius: 4px;
+    border: 2px solid var(--border);
+    padding: 16px;
+    position: relative;
+    box-shadow: 4px 4px 0 var(--seal-red-dark), 8px 8px 20px rgba(0,0,0,0.5);
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border: 1px solid rgba(139,115,85,0.3);
+    border-radius: 2px;
+    pointer-events: none;
+  }
+
+  /* ── Title ── */
+  .game-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--border);
+  }
+  .seal {
+    background: var(--seal-red);
+    color: var(--paper);
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 900;
+    border-radius: 4px;
+    flex-shrink: 0;
+    box-shadow: 2px 2px 0 var(--seal-red-dark);
+    writing-mode: vertical-rl;
+    letter-spacing: 2px;
+  }
+  .title-text h1 {
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--ink);
+    letter-spacing: 0.05em;
+  }
+  .title-text p {
+    font-size: 13px;
+    color: #6b5b3e;
+    margin-top: 3px;
+    font-style: italic;
+  }
+
+  /* ── Controls row ── */
+  .controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .btn {
+    padding: 9px 18px;
+    border-radius: 3px;
+    border: 2px solid var(--ink);
+    background: var(--ink);
+    color: var(--paper);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 2px 2px 0 var(--seal-red-dark);
+  }
+  .btn:hover { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 var(--seal-red-dark); }
+  .btn:active { transform: translate(1px,1px); box-shadow: 1px 1px 0 var(--seal-red-dark); }
+  .btn-red {
+    background: var(--seal-red);
+    border-color: var(--seal-red-dark);
+    box-shadow: 2px 2px 0 var(--seal-red-dark);
+  }
+
+  .difficulty-label { font-size: 13px; font-weight: 700; color: #6b5b3e; }
+  select.diff-select {
+    padding: 8px 10px;
+    border: 2px solid var(--border);
+    border-radius: 3px;
+    background: var(--paper-dark);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+    cursor: pointer;
+  }
+
+  /* ── Stats bar ── */
+  .stats-bar {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    background: var(--paper-dark);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #5a4a2e;
+  }
+  .stat-item { display: flex; gap: 5px; align-items: center; }
+  .stat-val { color: var(--seal-red); font-size: 16px; }
+  .win-msg { color: var(--correct); font-weight: 900; font-size: 15px; }
+  .wrong-msg { color: var(--wrong); font-weight: 900; font-size: 15px; animation: shake 0.3s; }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+
+  /* ── Grid ── */
+  #gridWrap {
+    width: 100%;
+    overflow: auto;
+  }
+  #grid {
+    display: grid;
+    gap: 4px;
+    margin: 0 auto;
+    width: fit-content;
+  }
+
+  .cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(139,115,85,0.4);
+    border-radius: 3px;
+    cursor: pointer;
+    user-select: none;
+    font-weight: 900;
+    color: var(--ink);
+    background: var(--paper-dark);
+    transition: background 0.15s, transform 0.1s;
+    line-height: 1;
+    position: relative;
+    overflow: hidden;
+  }
+  .cell::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(139,115,85,0.04);
+    pointer-events: none;
+  }
+  .cell:hover {
+    background: #e2d5b8;
+    transform: scale(1.06);
+    z-index: 2;
+    border-color: var(--gold);
+  }
+  .cell.correct {
+    background: #d4edda;
+    border-color: var(--correct);
+    box-shadow: 0 0 0 2px var(--correct);
+    animation: pulse-green 0.4s ease;
+  }
+  .cell.wrong-click {
+    background: #fde8e8;
+    border-color: var(--wrong);
+    box-shadow: 0 0 0 2px var(--wrong);
+    animation: shake 0.3s;
+  }
+  .cell.disabled { cursor: default; pointer-events: none; }
+
+  @keyframes pulse-green {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.18); }
+    100% { transform: scale(1); }
+  }
+
+  /* ── Sidebar ── */
+  .rank-sidebar {
+    position: sticky;
+    top: 56px;
+  }
+  .rank-card {
+    background: var(--paper);
+    border: 2px solid var(--border);
+    border-radius: 4px;
+    padding: 14px;
+    box-shadow: 4px 4px 0 var(--seal-red-dark), 8px 8px 16px rgba(0,0,0,0.4);
+    position: relative;
+  }
+  .rank-card::before {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border: 1px solid rgba(139,115,85,0.3);
+    border-radius: 2px;
+    pointer-events: none;
+  }
+  .rank-card h3 {
+    font-size: 17px;
+    font-weight: 900;
+    margin-bottom: 6px;
+    color: var(--ink);
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 8px;
+    letter-spacing: 0.05em;
+  }
+  .rank-note { font-size: 12px; color: #7a6545; margin-bottom: 10px; }
+  .rank-sub {
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 8px 10px;
+    margin-bottom: 10px;
+    background: var(--paper-dark);
+  }
+  .rank-sub-title {
+    font-weight: 900;
+    font-size: 13px;
+    color: var(--seal-red);
+    margin-bottom: 5px;
+    letter-spacing: 0.05em;
+  }
+  .rank-sub ol { padding-left: 18px; }
+  .rank-sub li { font-size: 12px; margin: 4px 0; color: #4a3a1e; }
+  .rank-err { color: var(--wrong); font-size: 12px; }
+  #rankStatus { font-size: 12px; color: #7a6545; margin-top: 6px; }
+
+  /* ── Win Dialog ── */
+  #nameDialog {
+    position: fixed;
+    inset: 0;
+    background: rgba(26,10,0,0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+  }
+  .dialog-box {
+    background: var(--paper);
+    border: 3px solid var(--border);
+    border-radius: 4px;
+    padding: 24px 24px 20px;
+    max-width: 380px;
+    width: 92%;
+    box-shadow: 6px 6px 0 var(--seal-red-dark), 0 20px 40px rgba(0,0,0,0.5);
+    position: relative;
+  }
+  .dialog-box::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border: 1px solid rgba(139,115,85,0.3);
+    border-radius: 2px;
+    pointer-events: none;
+  }
+  .dialog-box h3 {
+    font-size: 20px;
+    font-weight: 900;
+    margin-bottom: 6px;
+    color: var(--seal-red);
+  }
+  .dialog-box p { font-size: 14px; color: #5a4a2e; margin-bottom: 12px; }
+  .dialog-box input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid var(--border);
+    border-radius: 3px;
+    font-size: 15px;
+    font-family: inherit;
+    background: var(--paper-dark);
+    color: var(--ink);
+    font-weight: 700;
+  }
+  .dialog-box input:focus { outline: none; border-color: var(--seal-red); }
+  .dialog-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+    justify-content: flex-end;
+  }
+  #dialogStatus { margin-top: 8px; font-size: 13px; color: var(--wrong); font-weight: 700; }
+
+  /* ── Footer ── */
+  footer {
+    position: fixed;
+    bottom: 0; left: 0;
+    width: 100%;
+    background: rgba(26,10,0,0.95);
+    border-top: 1px solid var(--seal-red);
+    text-align: center;
+    padding: 7px 0;
+    font-size: 13px;
+    color: rgba(245,239,224,0.7);
+    z-index: 50;
+  }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .rank-sidebar { position: static; }
+  }
+  @media (max-width: 520px) {
+    body { padding-bottom: 55px; }
+    .game-title { gap: 8px; }
+    .title-text h1 { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="back-header">
+  <a class="back-link" href="/puzzle">← Back to Puzzle Home</a>
+</header>
+
+<div class="page">
+  <div class="layout">
+
+    <!-- ═══ LEFT: GAME ═══ -->
+    <div>
+      <div class="card" id="app">
+
+        <div class="game-title">
+          <div class="seal">找不同</div>
+          <div class="title-text">
+            <h1>找不同 · Find the Different Character</h1>
+            <p>200 characters — 20 curated puzzles per level. Find the different one!</p>
+          </div>
+        </div>
+
+        <div class="controls">
+          <span class="difficulty-label">难度 Difficulty:</span>
+          <select class="diff-select" id="diffSelect">
+            <option value="easy">易 Easy — very different</option>
+            <option value="medium" selected>中 Medium — similar style</option>
+            <option value="hard">难 Hard — extremely close</option>
+          </select>
+          <button class="btn btn-red" id="newGameBtn">新游戏 New Game</button>
+        </div>
+
+        <div class="stats-bar">
+          <div class="stat-item">⏱ Time: <span class="stat-val" id="timeEl">0</span>s</div>
+          <div class="stat-item">❌ Wrong: <span class="stat-val" id="wrongEl">0</span></div>
+          <div id="feedbackMsg"></div>
+        </div>
+
+        <div id="gridWrap">
+          <div id="grid"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══ RIGHT: LEADERBOARD ═══ -->
+    <aside class="rank-sidebar">
+      <div class="rank-card">
+        <h3>🏆 排行榜 Leaderboard</h3>
+        <div class="rank-note">Ranking: Wins (high → low), then Best Time (low → high). Separate boards by difficulty.</div>
+
+        <div class="rank-sub">
+          <div class="rank-sub-title">易 Easy</div>
+          <ol id="rankListEasy"><li>Loading…</li></ol>
+        </div>
+        <div class="rank-sub">
+          <div class="rank-sub-title">中 Medium</div>
+          <ol id="rankListMedium"><li>Loading…</li></ol>
+        </div>
+        <div class="rank-sub">
+          <div class="rank-sub-title">难 Hard</div>
+          <ol id="rankListHard"><li>Loading…</li></ol>
+        </div>
+
+        <div id="rankStatus">Loading…</div>
+      </div>
+    </aside>
+
+  </div>
+</div>
+
+<!-- ═══ WIN DIALOG ═══ -->
+<div id="nameDialog">
+  <div class="dialog-box">
+    <h3>🎉 找到了！You found it!</h3>
+    <p id="dialogPrompt">Enter your name for the leaderboard:</p>
+    <input id="dialogNameInput" placeholder="Your name / 你的名字" maxlength="40" />
+    <div class="dialog-actions">
+      <button class="btn" id="dialogCancel">取消 Cancel</button>
+      <button class="btn btn-red" id="dialogSubmit">提交 Submit</button>
+    </div>
+    <div id="dialogStatus"></div>
+  </div>
+</div>
+
+<footer>
+  © 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528.
+  The STEAM Teacher is Chao Yu. For educational purposes only.
+</footer>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  CHARACTER PAIRS  [normal, different]
+//  Each difficulty level has its own pool.
+//  The "different" character looks similar but is distinct.
+// ═══════════════════════════════════════════════════
+const CHAR_POOLS = {
+
+  // ───────────────── EASY ─────────────────
+  // 20 puzzles: very visually obvious differences.
+  easy: [
+    ['人', '入'],
+    ['日', '目'],
+    ['大', '太'],
+    ['土', '士'],
+    ['木', '本'],
+    ['牛', '午'],
+    ['白', '自'],
+    ['口', '回'],
+    ['天', '夫'],
+    ['王', '玉'],
+    ['云', '去'],
+    ['田', '由'],
+    ['月', '用'],
+    ['刀', '力'],
+    ['了', '子'],
+    ['儿', '几'],
+    ['山', '出'],
+    ['贝', '见'],
+    ['毛', '手'],
+    ['中', '申']
+  ],
+
+  // ───────────────── MEDIUM ─────────────────
+  // 20 puzzles: similar structure / stroke placement.
+  medium: [
+    ['己', '已'],
+    ['末', '未'],
+    ['土', '士'],
+    ['戊', '戌'],
+    ['日', '曰'],
+    ['人', '入'],
+    ['千', '干'],
+    ['王', '玉'],
+    ['白', '百'],
+    ['木', '术'],
+    ['田', '甲'],
+    ['由', '甲'],
+    ['牛', '午'],
+    ['免', '兔'],
+    ['问', '间'],
+    ['休', '体'],
+    ['清', '晴'],
+    ['住', '往'],
+    ['今', '令'],
+    ['外', '处']
+  ],
+
+  // ───────────────── HARD ─────────────────
+  // 20 puzzles: tiny stroke differences / visually dangerous.
+  hard: [
+    ['己', '巳'],
+    ['末', '未'],
+    ['土', '士'],
+    ['日', '曰'],
+    ['口', '囗'],
+    ['人', '入'],
+    ['王', '玉'],
+    ['牛', '午'],
+    ['木', '术'],
+    ['千', '干'],
+    ['白', '自'],
+    ['田', '由'],
+    ['甲', '申'],
+    ['免', '兔'],
+    ['乌', '鸟'],
+    ['候', '侯'],
+    ['辨', '辩'],
+    ['睛', '晴'],
+    ['拔', '拨'],
+    ['祇', '衹']
+  ]
+};
+
+// ═══════════════════════════════════════════════════
+//  GAME STATE
+// ═══════════════════════════════════════════════════
+const TOTAL = 200;
+const COLS  = 20; // 20 × 10 = 200
+
+let diffKey     = 'medium';
+let normalChar  = '';
+let oddChar     = '';
+let oddIndex    = -1;
+let gameOver    = false;
+let wrongCount  = 0;
+let seconds     = 0;
+let timerHandle = null;
+let started     = false;
+let submitted   = false;
+
+// ═══════════════════════════════════════════════════
+//  LEADERBOARD (same API as sliding puzzle)
+// ═══════════════════════════════════════════════════
+const BASE_GAME_ID = 'finddiff';
+
+function gameId() { return `${BASE_GAME_ID}_${diffKey}`; }
+
+async function submitScore(playerName) {
+  try {
+    const res = await fetch('/api/score', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        game: gameId(),
+        player_name: playerName.trim().slice(0, 40),
+        seconds: seconds
+      })
+    });
+    if (!res.ok) return false;
+    const data = await res.json().catch(() => ({}));
+    return data.ok === true;
+  } catch { return false; }
+}
+
+async function loadRankList(diff) {
+  const listEl = document.getElementById(`rankList${diff.charAt(0).toUpperCase() + diff.slice(1)}`);
+  if (!listEl) return;
+  const game = `${BASE_GAME_ID}_${diff}`;
+  try {
+    const res = await fetch(`/api/leaderboard?game=${encodeURIComponent(game)}&limit=5`, { cache: 'no-store' });
+    const data = await res.json();
+    const rows = Array.isArray(data) ? data : (data.rows || []);
+    listEl.innerHTML = '';
+    if (!rows.length) { listEl.innerHTML = '<li>No scores yet.</li>'; return; }
+    rows.forEach((r, i) => {
+      const name = r.player_name ?? r.playerName ?? 'Unknown';
+      const wins = r.win_count ?? r.wins ?? r.winCount ?? 0;
+      const best = r.best_seconds ?? r.bestSeconds ?? null;
+      const li = document.createElement('li');
+      li.textContent = `#${i+1} ${name} — ${wins}W` + (best != null ? ` — Best: ${best}s` : '');
+      listEl.appendChild(li);
+    });
+  } catch {
+    listEl.innerHTML = "<li class='rank-err'>Could not load.</li>";
+  }
+}
+
+async function loadAllRanks() {
+  const st = document.getElementById('rankStatus');
+  if (st) { st.textContent = 'Loading…'; }
+  await Promise.all(['easy','medium','hard'].map(loadRankList));
+  if (st) st.textContent = 'Updated just now.';
+}
+
+// ═══════════════════════════════════════════════════
+//  TIMER
+// ═══════════════════════════════════════════════════
+function startTimer() {
+  if (timerHandle) return;
+  timerHandle = setInterval(() => {
+    seconds++;
+    document.getElementById('timeEl').textContent = seconds;
+  }, 1000);
+}
+
+function stopTimer() {
+  clearInterval(timerHandle);
+  timerHandle = null;
+}
+
+// ═══════════════════════════════════════════════════
+//  GAME SETUP
+// ═══════════════════════════════════════════════════
+function pickPair() {
+  const pool = CHAR_POOLS[diffKey];
+  const pair = pool[Math.floor(Math.random() * pool.length)];
+  // Make sure the two chars are actually different (guard against dupes in pool)
+  normalChar = pair[0];
+  oddChar    = pair[1];
+  if (normalChar === oddChar) {
+    // fallback
+    normalChar = '日';
+    oddChar    = '目';
+  }
+}
+
+function newGame() {
+  gameOver   = false;
+  wrongCount = 0;
+  seconds    = 0;
+  started    = true;
+  submitted  = false;
+  stopTimer();
+
+  document.getElementById('timeEl').textContent  = '0';
+  document.getElementById('wrongEl').textContent = '0';
+  document.getElementById('feedbackMsg').textContent = '';
+  document.getElementById('feedbackMsg').className   = '';
+
+  diffKey = document.getElementById('diffSelect').value;
+  pickPair();
+
+  // Place odd one at a random position
+  oddIndex = Math.floor(Math.random() * TOTAL);
+
+  renderGrid();
+  startTimer(); 
+}
+
+function renderGrid() {
+  const grid = document.getElementById('grid');
+
+  // Compute cell size responsively
+  const wrap = document.getElementById('gridWrap');
+  const maxW = wrap.clientWidth || 600;
+  const gap   = 4;
+  // 20 columns
+  const cellSize = Math.max(28, Math.floor((maxW - gap * (COLS - 1)) / COLS));
+  const fontSize = Math.max(10, Math.floor(cellSize * 0.6));
+  const rows = Math.ceil(TOTAL / COLS); // 10
+
+  grid.style.gridTemplateColumns = `repeat(${COLS}, ${cellSize}px)`;
+  grid.style.gridTemplateRows    = `repeat(${rows}, ${cellSize}px)`;
+  grid.style.gap                 = `${gap}px`;
+  grid.innerHTML                 = '';
+
+  for (let i = 0; i < TOTAL; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.style.fontSize = fontSize + 'px';
+    cell.style.width  = cellSize + 'px';
+    cell.style.height = cellSize + 'px';
+    cell.textContent = (i === oddIndex) ? oddChar : normalChar;
+    cell.dataset.idx = i;
+    cell.addEventListener('click', onCellClick);
+    grid.appendChild(cell);
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  INTERACTION
+// ═══════════════════════════════════════════════════
+function onCellClick(e) {
+  if (gameOver) return;
+
+  const idx  = Number(e.currentTarget.dataset.idx);
+  const cell = e.currentTarget;
+
+  if (idx === oddIndex) {
+    // ✅ Correct!
+    gameOver = true;
+    stopTimer();
+    cell.classList.add('correct', 'disabled');
+    // disable all cells
+    document.querySelectorAll('.cell').forEach(c => c.classList.add('disabled'));
+
+    const fb = document.getElementById('feedbackMsg');
+    fb.textContent = `🎉 Found it! Time: ${seconds}s, Wrong: ${wrongCount}`;
+    fb.className   = 'win-msg';
+
+    if (!submitted) {
+      submitted = true;
+      openWinDialog();
+    }
+  } else {
+    // ❌ Wrong
+    wrongCount++;
+    document.getElementById('wrongEl').textContent = wrongCount;
+    cell.classList.add('wrong-click');
+    setTimeout(() => cell.classList.remove('wrong-click'), 400);
+
+    const fb = document.getElementById('feedbackMsg');
+    fb.textContent = '❌ 不对！Try again…';
+    fb.className   = 'wrong-msg';
+    setTimeout(() => {
+      if (!gameOver) {
+        fb.textContent = '';
+        fb.className   = '';
+      }
+    }, 800);
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  WIN DIALOG
+// ═══════════════════════════════════════════════════
+function openWinDialog() {
+  const dialog = document.getElementById('nameDialog');
+  const prompt = document.getElementById('dialogPrompt');
+  const input  = document.getElementById('dialogNameInput');
+  const status = document.getElementById('dialogStatus');
+  const submit = document.getElementById('dialogSubmit');
+
+  prompt.textContent = `Time: ${seconds}s · Wrong clicks: ${wrongCount}. Enter your name for the leaderboard:`;
+  input.value        = '';
+  status.textContent = '';
+  submit.style.display = 'inline-block';
+  dialog.style.display = 'flex';
+  setTimeout(() => input.focus(), 60);
+}
+
+function closeWinDialog() {
+  document.getElementById('nameDialog').style.display = 'none';
+}
+
+document.getElementById('dialogCancel').onclick = closeWinDialog;
+
+document.getElementById('dialogNameInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('dialogSubmit').click(); }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && document.getElementById('nameDialog').style.display === 'flex') {
+    closeWinDialog();
+  }
+});
+
+document.getElementById('dialogSubmit').onclick = async () => {
+  const input  = document.getElementById('dialogNameInput');
+  const status = document.getElementById('dialogStatus');
+  const submit = document.getElementById('dialogSubmit');
+  const name   = input.value.trim();
+
+  if (!name) { status.textContent = 'Please enter your name! 请输入名字！'; return; }
+
+  submit.disabled = true;
+  status.textContent = 'Saving…';
+
+  const ok = await submitScore(name);
+  if (ok) {
+    closeWinDialog();
+    loadAllRanks();
+  } else {
+    status.textContent = 'Could not save. Try again. 保存失败，请重试。';
+  }
+  submit.disabled = false;
+};
+
+// ═══════════════════════════════════════════════════
+//  CONTROLS
+// ═══════════════════════════════════════════════════
+document.getElementById('newGameBtn').onclick = newGame;
+document.getElementById('diffSelect').onchange = newGame;
+
+window.addEventListener('resize', () => {
+  if (!gameOver) renderGrid();
+});
+
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+newGame();
+loadAllRanks();
+</script>
+</body>
+</html>

@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Reaction Time Challenge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root{
+      --bg:#050510;
+      --surface:#0d0d1f;
+      --surface2:#161630;
+      --neon:#00f5ff;
+      --neon2:#ff00ff;
+      --green:#39ff14;
+      --yellow:#ffff00;
+      --orange:#ff8c00;
+      --red:#ff2d55;
+      --text:#e0e8ff;
+      --muted:#5a6080;
+      --border:#1a1a3e;
+    }
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    body{
+      font-family:'Exo 2',sans-serif;
+      background:var(--bg);
+      background-image:
+        radial-gradient(ellipse at 50% 0%, #0a0a2e 0%, transparent 70%),
+        linear-gradient(180deg, #050510 0%, #080820 100%);
+      min-height:100vh;
+      color:var(--text);
+      padding:60px 16px 80px;
+      overflow-x:hidden;
+    }
+    /* Grid lines background effect */
+    body::before{
+      content:'';
+      position:fixed;
+      inset:0;
+      background-image:
+        linear-gradient(rgba(0,245,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,245,255,0.03) 1px, transparent 1px);
+      background-size:40px 40px;
+      pointer-events:none;
+    }
+    h1{ font-family:'Orbitron',monospace; font-size:clamp(1.5rem,4vw,2.5rem); color:var(--neon); text-shadow:0 0 20px var(--neon); margin-bottom:4px; }
+    .tagline{ color:var(--muted); font-size:13px; margin-bottom:20px; }
+
+    .layout{ max-width:1100px; margin:0 auto; display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:24px; align-items:start; }
+    @media(max-width:820px){ .layout{ grid-template-columns:1fr; } .sidebar{ position:static!important; } }
+
+    .panel{ background:var(--surface); border-radius:16px; padding:24px; border:1px solid var(--border); box-shadow:0 0 30px rgba(0,245,255,0.05); }
+
+    /* Mode buttons */
+    .mode-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; }
+    .mode-btn{ padding:8px 16px; border-radius:8px; border:1px solid var(--border); background:var(--surface2); color:var(--muted); font-family:'Exo 2',sans-serif; font-weight:600; font-size:13px; cursor:pointer; transition:all .18s; }
+    .mode-btn.active,.mode-btn:hover{ border-color:var(--neon); color:var(--neon); box-shadow:0 0 12px rgba(0,245,255,0.3); }
+
+    /* Stats */
+    .stats-bar{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:20px; }
+    .stat-box{ background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:10px; text-align:center; }
+    .stat-val{ font-family:'Orbitron',monospace; font-size:1.4rem; color:var(--neon); line-height:1; text-shadow:0 0 8px var(--neon); }
+    .stat-label{ font-size:10px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-top:4px; }
+
+    /* Main arena */
+    #arena{
+      width:100%;
+      min-height:280px;
+      border-radius:16px;
+      border:2px solid var(--border);
+      background:var(--surface2);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex-direction:column;
+      gap:12px;
+      cursor:pointer;
+      user-select:none;
+      position:relative;
+      overflow:hidden;
+      transition:background .15s, border-color .2s;
+      margin-bottom:18px;
+    }
+    #arena.waiting{ border-color:var(--neon2); box-shadow:0 0 30px rgba(255,0,255,0.2); }
+    #arena.go{ background:#001a00; border-color:var(--green); box-shadow:0 0 40px rgba(57,255,20,0.3), inset 0 0 40px rgba(57,255,20,0.05); animation:pulse-green .5s infinite; }
+    @keyframes pulse-green{ 0%,100%{box-shadow:0 0 40px rgba(57,255,20,0.3)} 50%{box-shadow:0 0 60px rgba(57,255,20,0.5)} }
+    #arena.toosoon{ background:#1a0000; border-color:var(--red); box-shadow:0 0 40px rgba(255,45,85,0.3); }
+
+    .arena-text{ font-family:'Orbitron',monospace; font-size:clamp(1.3rem,4vw,2.2rem); font-weight:700; text-align:center; padding:0 16px; transition:all .2s; }
+    .arena-sub{ font-size:14px; color:var(--muted); text-align:center; }
+
+    /* Color match mode */
+    #colorTarget{ font-size:clamp(1.8rem,6vw,3.5rem); font-family:'Orbitron',monospace; font-weight:900; letter-spacing:.05em; }
+    .color-opts{ display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-top:16px; }
+    .color-btn{ padding:12px 22px; border-radius:10px; border:2px solid var(--border); background:var(--surface2); font-family:'Orbitron',monospace; font-size:13px; font-weight:700; cursor:pointer; transition:all .15s; }
+    .color-btn:hover{ transform:translateY(-2px); }
+
+    /* Result feedback */
+    #resultBanner{
+      text-align:center;
+      font-family:'Orbitron',monospace;
+      font-size:1.1rem;
+      min-height:28px;
+      margin-bottom:12px;
+      transition:all .2s;
+    }
+
+    /* Best badge */
+    #bestBadge{ display:none; background:linear-gradient(135deg,#1a1a00,#2a2a00); border:1px solid var(--yellow); border-radius:12px; padding:10px 16px; text-align:center; margin-bottom:14px; }
+    #bestBadge span{ font-family:'Orbitron',monospace; color:var(--yellow); font-size:13px; text-shadow:0 0 8px var(--yellow); }
+
+    .ctrl-row{ display:flex; gap:10px; }
+    .btn-main{ flex:1; padding:13px; font-family:'Orbitron',monospace; font-size:.95rem; border:1px solid var(--neon); border-radius:12px; background:transparent; color:var(--neon); cursor:pointer; transition:all .18s; letter-spacing:.05em; }
+    .btn-main:hover{ background:rgba(0,245,255,0.1); box-shadow:0 0 20px rgba(0,245,255,0.3); }
+    .btn-sec{ padding:13px 18px; font-family:'Exo 2',sans-serif; font-weight:600; font-size:14px; border:1px solid var(--border); border-radius:12px; background:var(--surface2); color:var(--muted); cursor:pointer; transition:all .18s; }
+    .btn-sec:hover{ border-color:var(--muted); color:var(--text); }
+
+    /* History */
+    .history-row{ display:flex; gap:6px; flex-wrap:wrap; margin-top:14px; }
+    .hist-pill{ padding:4px 10px; border-radius:999px; font-size:12px; font-family:'Orbitron',monospace; }
+    .hist-pill.fast{ background:#001a00; color:var(--green); border:1px solid var(--green); }
+    .hist-pill.ok{ background:#1a1500; color:var(--yellow); border:1px solid var(--yellow); }
+    .hist-pill.slow{ background:#1a0500; color:var(--orange); border:1px solid var(--orange); }
+
+    /* Sidebar */
+    .sidebar{ position:sticky; top:72px; max-height:calc(100vh - 96px); overflow:auto; }
+    .rank-section{ background:var(--surface2); border-radius:12px; padding:12px 14px; margin-top:12px; }
+    .rank-section-title{ font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-bottom:8px; font-weight:600; }
+    .rank-section ol{ padding-left:18px; }
+    .rank-section li{ font-size:12px; padding:3px 0; border-bottom:1px solid var(--border); color:var(--text); }
+    .rank-section li:last-child{ border:none; }
+    .rank-note{ font-size:11px; color:var(--muted); margin-top:10px; }
+
+    /* Back */
+    .back-header{ position:fixed; top:14px; left:14px; z-index:1000; }
+    .back-link{ text-decoration:none; color:var(--text); font-weight:600; font-size:13px; background:var(--surface); padding:6px 12px; border-radius:8px; border:1px solid var(--border); }
+    .back-link:hover{ border-color:var(--neon); color:var(--neon); }
+
+    /* Dialog */
+    .dialog-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,0.8); display:none; align-items:center; justify-content:center; z-index:4000; padding:16px; }
+    .dialog-backdrop.open{ display:flex; }
+    .dialog{ width:100%; max-width:380px; background:var(--surface); border-radius:20px; padding:28px; border:1px solid var(--border); box-shadow:0 0 60px rgba(0,245,255,0.15); text-align:center; }
+    .dialog-emoji{ font-size:3rem; margin-bottom:10px; }
+    .dialog h4{ font-family:'Orbitron',monospace; font-size:1.5rem; color:var(--neon); margin-bottom:8px; text-shadow:0 0 12px var(--neon); }
+    .dialog p{ color:var(--muted); font-size:13px; margin-bottom:12px; }
+    .dialog input{ width:100%; padding:12px; border:1px solid var(--border); border-radius:10px; font-family:'Exo 2',sans-serif; font-size:16px; outline:none; background:var(--surface2); color:var(--text); margin-bottom:4px; }
+    .dialog input:focus{ border-color:var(--neon); }
+    .dialog-actions{ display:flex; gap:10px; margin-top:12px; }
+    .dialog-actions button{ flex:1; padding:12px; border-radius:10px; font-family:'Orbitron',monospace; font-size:.85rem; cursor:pointer; border:1px solid var(--border); background:var(--surface2); color:var(--text); }
+    .dialog-actions button.primary{ border-color:var(--neon); color:var(--neon); }
+    .dialog-status{ font-size:12px; color:var(--muted); margin-top:8px; min-height:16px; }
+
+    footer{ position:fixed; bottom:0; left:0; width:100%; background:rgba(5,5,16,0.95); backdrop-filter:blur(4px); text-align:center; padding:8px 0; font-size:12px; color:var(--muted); border-top:1px solid var(--border); }
+  </style>
+</head>
+<body>
+  <header class="back-header">
+    <a class="back-link" href="/puzzle">← Back to Puzzle Home</a>
+  </header>
+
+  <div class="layout">
+    <main>
+      <div class="panel">
+        <h1>⚡ REACTION TIME</h1>
+        <p class="tagline">Test your reflexes! How fast can you click?</p>
+
+        <div class="mode-row">
+          <button class="mode-btn active" data-mode="classic">🎯 Classic (Click on Green)</button>
+          <button class="mode-btn" data-mode="colorname">🎨 Color Name Match</button>
+        </div>
+
+        <div class="stats-bar">
+          <div class="stat-box"><div class="stat-val" id="lastDisp">—</div><div class="stat-label">Last (ms)</div></div>
+          <div class="stat-box"><div class="stat-val" id="bestDisp">—</div><div class="stat-label">Best (ms)</div></div>
+          <div class="stat-box"><div class="stat-val" id="avgDisp">—</div><div class="stat-label">Avg (ms)</div></div>
+          <div class="stat-box"><div class="stat-val" id="trialsDisp">0</div><div class="stat-label">Trials</div></div>
+        </div>
+
+        <!-- Classic mode arena -->
+        <div id="arena" onclick="handleArenaClick()">
+          <div class="arena-text" id="arenaText" style="color:var(--muted)">CLICK START</div>
+          <div class="arena-sub" id="arenaSub">Press the button below to begin</div>
+        </div>
+
+        <!-- Color name mode -->
+        <div id="colorNamePanel" style="display:none; margin-bottom:18px;">
+          <div style="text-align:center; margin-bottom:12px;">
+            <div style="font-size:13px;color:var(--muted);margin-bottom:6px;">What COLOR is this word written in?</div>
+            <div id="colorTarget" style="color:var(--neon)">RED</div>
+          </div>
+          <div class="color-opts" id="colorOpts"></div>
+        </div>
+
+        <div id="bestBadge"><span>🏆 NEW PERSONAL BEST!</span></div>
+        <div id="resultBanner"></div>
+
+        <div id="historyRow" class="history-row"></div>
+
+        <div class="ctrl-row" style="margin-top:14px;">
+          <button class="btn-main" id="startBtn" onclick="startTrial()">▶ START TRIAL</button>
+          <button class="btn-sec" id="resetBtn" onclick="resetAll()">↺ RESET</button>
+        </div>
+      </div>
+    </main>
+
+    <aside class="sidebar">
+      <div class="panel">
+        <h3 style="font-family:'Orbitron',monospace;color:var(--neon);text-shadow:0 0 8px var(--neon);margin-bottom:4px;font-size:1rem;">LEADERBOARD</h3>
+        <p style="font-size:12px;color:var(--muted);">Fastest average reaction time wins!</p>
+        <div class="rank-section">
+          <div class="rank-section-title">🎯 Classic</div>
+          <ol id="rankClassic"><li>Loading…</li></ol>
+        </div>
+        <div class="rank-section">
+          <div class="rank-section-title">🎨 Color Match</div>
+          <ol id="rankColor"><li>Loading…</li></ol>
+        </div>
+        <div class="rank-note" id="rankNote">Loading…</div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="dialog-backdrop" id="winDialog">
+    <div class="dialog">
+      <div class="dialog-emoji">⚡</div>
+      <h4>SESSION COMPLETE</h4>
+      <p id="winSummary">Great reactions!</p>
+      <p>Enter your name for the leaderboard:</p>
+      <input type="text" id="dialogName" placeholder="Your callsign" maxlength="40" autocomplete="off"/>
+      <div class="dialog-actions">
+        <button id="dialogCancel">Skip</button>
+        <button class="primary" id="dialogSubmit">Submit</button>
+      </div>
+      <div class="dialog-status" id="dialogStatus"></div>
+    </div>
+  </div>
+
+  <script>
+    const BASE_ID="reactiontime";
+    const COLORS={ RED:"#ff2d55", BLUE:"#60a5fa", GREEN:"#39ff14", YELLOW:"#ffff00", PURPLE:"#bf5af2", ORANGE:"#ff9f0a" };
+    const COLOR_NAMES=Object.keys(COLORS);
+    const ROUNDS=5;
+
+    let mode="classic";
+    let state="idle"; // idle | waiting | ready | done
+    let waitTimer=null, startTime=0;
+    let times=[], bestTime=Infinity;
+    let colorWord="", colorColor="";
+    let canClick=false;
+
+    function gameKey(m){ return `${BASE_ID}_${m}`; }
+
+    // Classic mode
+    function startTrial(){
+      if(state==="waiting"||state==="ready") return;
+      state="waiting";
+      canClick=false;
+      const arena=document.getElementById("arena");
+      arena.className="arena waiting";
+      document.getElementById("arenaText").textContent="WAIT FOR GREEN...";
+      document.getElementById("arenaText").style.color="var(--neon2)";
+      document.getElementById("arenaSub").textContent="Don't click yet!";
+      document.getElementById("resultBanner").textContent="";
+      document.getElementById("bestBadge").style.display="none";
+
+      if(mode==="colorname"){
+        document.getElementById("arena").style.display="none";
+        document.getElementById("colorNamePanel").style.display="none";
+        // show waiting in a different way
+        document.getElementById("resultBanner").textContent="⏳ Get ready…";
+        document.getElementById("resultBanner").style.color="var(--neon2)";
+      }
+
+      const delay=Math.random()*3000+1500;
+      waitTimer=setTimeout(showGo, delay);
+    }
+
+    function showGo(){
+      state="ready";
+      startTime=performance.now();
+      canClick=true;
+      if(mode==="classic"){
+        const arena=document.getElementById("arena");
+        arena.className="arena go";
+        document.getElementById("arenaText").textContent="CLICK NOW!";
+        document.getElementById("arenaText").style.color="var(--green)";
+        document.getElementById("arenaSub").textContent="Click as fast as you can!";
+      } else {
+        // Color name mode
+        colorWord=COLOR_NAMES[Math.floor(Math.random()*COLOR_NAMES.length)];
+        // Ink color ≠ word (Stroop effect)
+        const others=COLOR_NAMES.filter(c=>c!==colorWord);
+        colorColor=COLORS[others[Math.floor(Math.random()*others.length)]];
+        document.getElementById("colorTarget").textContent=colorWord;
+        document.getElementById("colorTarget").style.color=colorColor;
+        // Build buttons shuffled
+        const opts=document.getElementById("colorOpts");
+        opts.innerHTML='';
+        const shuffled=[...COLOR_NAMES].sort(()=>Math.random()-.5).slice(0,4);
+        if(!shuffled.includes(colorWord)) shuffled[0]=colorWord;
+        shuffled.sort(()=>Math.random()-.5).forEach(name=>{
+          const btn=document.createElement('button');
+          btn.className='color-btn';
+          btn.textContent=name;
+          btn.style.color=COLORS[name];
+          btn.style.borderColor=COLORS[name]+'55';
+          btn.addEventListener('click',()=>handleColorAnswer(name));
+          opts.appendChild(btn);
+        });
+        document.getElementById("colorNamePanel").style.display="block";
+        document.getElementById("resultBanner").textContent="";
+      }
+    }
+
+    function handleArenaClick(){
+      if(mode!=="classic") return;
+      if(state==="waiting"){
+        clearTimeout(waitTimer);
+        state="idle";
+        const arena=document.getElementById("arena");
+        arena.className="arena toosoon";
+        document.getElementById("arenaText").textContent="TOO SOON! 🚫";
+        document.getElementById("arenaText").style.color="var(--red)";
+        document.getElementById("arenaSub").textContent="Wait for green! Try again.";
+        setTimeout(resetArena,1200);
+        return;
+      }
+      if(state!=="ready"||!canClick) return;
+      recordTime();
+    }
+
+    function handleColorAnswer(chosen){
+      if(state!=="ready"||!canClick) return;
+      canClick=false;
+      document.getElementById("colorNamePanel").style.display="none";
+      const correct=chosen===colorWord;
+      const rt=performance.now()-startTime;
+      if(correct){
+        recordTime(rt);
+      } else {
+        document.getElementById("resultBanner").textContent=`❌ Wrong! The word said ${colorWord}. No time recorded.`;
+        document.getElementById("resultBanner").style.color="var(--red)";
+        state="idle";
+      }
+    }
+
+    function recordTime(rt){
+      const reaction=rt||Math.round(performance.now()-startTime);
+      canClick=false;
+      times.push(reaction);
+      const isNew=reaction<bestTime;
+      if(isNew) bestTime=reaction;
+      updateStats();
+
+      const arena=document.getElementById("arena");
+      if(mode==="classic"){
+        arena.className="arena";
+        document.getElementById("arenaText").textContent=reaction+"ms";
+        document.getElementById("arenaText").style.color="var(--neon)";
+        document.getElementById("arenaSub").textContent=rateText(reaction);
+      }
+
+      addHistPill(reaction);
+      if(isNew) document.getElementById("bestBadge").style.display="block";
+
+      document.getElementById("resultBanner").textContent=`⚡ ${reaction}ms — ${rateText(reaction)}`;
+      document.getElementById("resultBanner").style.color=rateColor(reaction);
+
+      state="idle";
+      resetArena(false);
+
+      if(times.length>=ROUNDS) setTimeout(endSession,600);
+    }
+
+    function rateText(ms){
+      if(ms<200) return "LIGHTNING FAST! 🔥";
+      if(ms<300) return "Excellent! ⚡";
+      if(ms<400) return "Good! 👍";
+      if(ms<550) return "Average";
+      return "Keep practicing!";
+    }
+    function rateColor(ms){
+      if(ms<200) return "var(--green)";
+      if(ms<300) return "var(--yellow)";
+      if(ms<400) return "var(--orange)";
+      return "var(--red)";
+    }
+
+    function addHistPill(ms){
+      const row=document.getElementById("historyRow");
+      const pill=document.createElement('div');
+      const cls=ms<250?"fast":ms<400?"ok":"slow";
+      pill.className=`hist-pill ${cls}`;
+      pill.textContent=ms+"ms";
+      row.appendChild(pill);
+    }
+
+    function resetArena(full=true){
+      if(full){
+        document.getElementById("arenaText").textContent="CLICK START";
+        document.getElementById("arenaText").style.color="var(--muted)";
+        document.getElementById("arenaSub").textContent="Press the button below to begin";
+        document.getElementById("arena").className="arena";
+      }
+    }
+
+    function updateStats(){
+      document.getElementById("lastDisp").textContent=times[times.length-1]||"—";
+      document.getElementById("bestDisp").textContent=bestTime<Infinity?bestTime:"—";
+      document.getElementById("trialsDisp").textContent=times.length;
+      if(times.length){
+        const avg=Math.round(times.reduce((a,b)=>a+b,0)/times.length);
+        document.getElementById("avgDisp").textContent=avg;
+      }
+    }
+
+    function endSession(){
+      const avg=Math.round(times.reduce((a,b)=>a+b,0)/times.length);
+      document.getElementById("winSummary").textContent=`Your average reaction time: ${avg}ms! Best: ${bestTime}ms. (${ROUNDS} trials, ${mode} mode)`;
+      document.getElementById("winDialog").classList.add('open');
+    }
+
+    function resetAll(){
+      clearTimeout(waitTimer);
+      times=[]; bestTime=Infinity;
+      state="idle"; canClick=false;
+      updateStats();
+      document.getElementById("lastDisp").textContent="—";
+      document.getElementById("bestDisp").textContent="—";
+      document.getElementById("avgDisp").textContent="—";
+      document.getElementById("historyRow").innerHTML="";
+      document.getElementById("resultBanner").textContent="";
+      document.getElementById("bestBadge").style.display="none";
+      document.getElementById("colorNamePanel").style.display="none";
+      document.getElementById("arena").style.display="flex";
+      resetArena(true);
+    }
+
+    document.querySelectorAll('.mode-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        mode=btn.dataset.mode;
+        if(mode==="classic") document.getElementById("arena").style.display="flex";
+        resetAll();
+      });
+    });
+
+    // Dialog
+    async function submitWin(name,avgMs){
+      try{
+        const r=await fetch('/api/score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:gameKey(mode),player_name:name,seconds:Math.max(1,avgMs)})});
+        const d=await r.json().catch(()=>({}));
+        return d.ok===true;
+      }catch(e){ return false; }
+    }
+    document.getElementById("dialogCancel").addEventListener('click',()=>{ document.getElementById("winDialog").classList.remove('open'); resetAll(); });
+    document.getElementById("dialogSubmit").addEventListener('click',async()=>{
+      const name=(document.getElementById("dialogName").value||"").trim();
+      if(!name){ document.getElementById("dialogStatus").textContent="Name required!"; return; }
+      document.getElementById("dialogSubmit").disabled=true;
+      document.getElementById("dialogStatus").textContent="Saving…";
+      const avg=Math.round(times.reduce((a,b)=>a+b,0)/times.length);
+      const ok=await submitWin(name,avg);
+      if(ok){ document.getElementById("dialogStatus").textContent="Saved ✅"; await loadBoards(); setTimeout(()=>{ document.getElementById("winDialog").classList.remove('open'); resetAll(); },400); }
+      else{ document.getElementById("dialogStatus").textContent="Could not save. Tell your teacher!"; }
+      document.getElementById("dialogSubmit").disabled=false;
+    });
+    document.getElementById("dialogName").addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById("dialogSubmit").click(); });
+
+    async function loadBoard(m,listId){
+      const list=document.getElementById(listId);
+      try{
+        const r=await fetch(`/api/leaderboard?game=${encodeURIComponent(gameKey(m))}&limit=10`,{cache:"no-store"});
+        const d=await r.json();
+        const rows=Array.isArray(d)?d:(d.rows||[]);
+        list.innerHTML=rows.length?rows.map((r,i)=>`<li>#${i+1} ${r.player_name||'?'} — ${r.best_seconds||0}ms avg</li>`).join(''):'<li>No records yet.</li>';
+      }catch(e){ list.innerHTML='<li>Could not load.</li>'; }
+    }
+    async function loadBoards(){
+      document.getElementById("rankNote").textContent="Loading…";
+      await Promise.all([loadBoard('classic','rankClassic'),loadBoard('colorname','rankColor')]);
+      document.getElementById("rankNote").textContent="Updated just now.";
+    }
+    loadBoards();
+  </script>
+
+  <footer>
+    © 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528.<br>
+    The STEAM Teacher is Chao Yu. For educational purposes only. All rights reserved.
+  </footer>
+</body>
+</html>

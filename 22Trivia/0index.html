@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Science Speed Quiz</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f0f9ff;
+      --card: #ffffff;
+      --primary: #0ea5e9;
+      --secondary: #22c55e;
+      --accent: #fbbf24;
+      --purple: #a855f7;
+      --green: #22c55e;
+      --red: #ef4444;
+      --text: #1a1a2e;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      background-image: radial-gradient(circle at 20% 20%, #bae6fd55 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, #bbf7d055 0%, transparent 50%);
+      min-height: 100vh;
+      color: var(--text);
+      padding: 60px 16px 80px;
+    }
+    h1 { font-family:'Fredoka One',cursive; font-size:clamp(2rem,5vw,3rem); color:var(--primary); text-shadow:3px 3px 0 #0ea5e933; margin-bottom:4px; }
+    .tagline { color:var(--muted); font-size:15px; margin-bottom:20px; }
+
+    .layout { max-width:1100px; margin:0 auto; display:grid; grid-template-columns:minmax(0,1fr) 320px; gap:24px; align-items:start; }
+    @media(max-width:860px){ .layout{ grid-template-columns:1fr; } .sidebar{ position:static!important; } }
+
+    .card { background:var(--card); border-radius:20px; padding:28px; box-shadow:0 4px 24px #0000000d; border:2px solid var(--border); }
+
+    .level-row { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
+    .lvl-btn { padding:8px 18px; border-radius:999px; border:2px solid var(--border); background:white; font-family:'Nunito',sans-serif; font-weight:700; font-size:14px; cursor:pointer; transition:all .18s; }
+    .lvl-btn.active, .lvl-btn:hover { background:var(--primary); color:white; border-color:var(--primary); transform:translateY(-2px); }
+
+    .timer-wrap { margin-bottom:16px; }
+    .timer-label { font-size:13px; color:var(--muted); margin-bottom:5px; display:flex; justify-content:space-between; }
+    .timer-bar-bg { background:#f3f4f6; border-radius:999px; height:12px; overflow:hidden; }
+    .timer-bar { height:100%; border-radius:999px; background:linear-gradient(90deg,var(--secondary),var(--primary)); transition:width .25s linear, background .5s; }
+    .timer-bar.danger { background:linear-gradient(90deg,#fbbf24,var(--red)); }
+
+    .question-box {
+      background:linear-gradient(135deg,var(--primary) 0%,#38bdf8 100%);
+      border-radius:18px; padding:28px 28px 24px; text-align:center;
+      margin-bottom:20px; position:relative; overflow:hidden; min-height:130px;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+    }
+    .question-box::before { content:''; position:absolute; top:-30px; right:-30px; width:100px; height:100px; background:rgba(255,255,255,0.15); border-radius:50%; }
+    .q-number { font-size:clamp(1.2rem,3.5vw,1.7rem); font-family:'Fredoka One',cursive; color:white; text-shadow:2px 2px 0 rgba(0,0,0,0.15); line-height:1.35; z-index:1; }
+    .q-score-badge { position:absolute; top:12px; right:16px; background:rgba(255,255,255,0.25); color:white; font-weight:900; font-size:13px; padding:4px 10px; border-radius:999px; }
+    .q-category { position:absolute; top:12px; left:16px; background:rgba(255,255,255,0.25); color:white; font-size:11px; font-weight:700; padding:4px 10px; border-radius:999px; text-transform:uppercase; letter-spacing:.05em; }
+
+    /* 4-option grid */
+    .options-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+    .opt-btn {
+      padding:14px 12px; font-family:'Nunito',sans-serif; font-size:1rem; font-weight:700;
+      border:2px solid var(--border); border-radius:14px; background:white; color:var(--text);
+      cursor:pointer; transition:all .18s; text-align:left; line-height:1.3;
+    }
+    .opt-btn:hover:not(:disabled) { border-color:var(--primary); background:#f0f9ff; transform:translateY(-2px); box-shadow:0 4px 12px #0ea5e922; }
+    .opt-btn.correct { border-color:var(--green); background:#f0fdf4; color:#15803d; animation:pop .3s; pointer-events:none; }
+    .opt-btn.wrong { border-color:var(--red); background:#fef2f2; color:#b91c1c; animation:shake .35s; pointer-events:none; }
+    .opt-btn:disabled { opacity:.5; cursor:not-allowed; }
+    @keyframes pop { 0%,100%{transform:scale(1)} 50%{transform:scale(1.04)} }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-7px)} 75%{transform:translateX(7px)} }
+
+    .feedback { text-align:center; font-size:1.05rem; font-weight:700; min-height:28px; margin-bottom:8px; }
+    .feedback.correct { color:var(--green); }
+    .feedback.wrong { color:var(--red); }
+
+    .stats-strip { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:20px; }
+    .stat-pill { background:var(--bg); border:2px solid var(--border); border-radius:14px; padding:10px; text-align:center; }
+    .stat-num { font-family:'Fredoka One',cursive; font-size:1.6rem; color:var(--primary); }
+    .stat-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+
+    .ctrl-row { display:flex; gap:10px; }
+    .btn-start { flex:1; padding:14px; font-family:'Fredoka One',cursive; font-size:1.15rem; border:none; border-radius:14px; background:var(--primary); color:white; cursor:pointer; transition:all .18s; }
+    .btn-start:hover { transform:translateY(-2px); box-shadow:0 6px 20px #0ea5e955; }
+    .btn-reset { padding:14px 20px; font-family:'Fredoka One',cursive; font-size:1rem; border:2px solid var(--border); border-radius:14px; background:white; color:var(--text); cursor:pointer; transition:all .18s; }
+    .btn-reset:hover { border-color:var(--primary); color:var(--primary); }
+
+    /* game-over overlay inside card */
+    .gameover-notice { display:none; background:#fef2f2; border:2px solid var(--red); border-radius:14px; padding:14px 16px; margin-bottom:16px; text-align:center; }
+    .gameover-notice.show { display:block; }
+    .gameover-notice strong { font-family:'Fredoka One',cursive; font-size:1.1rem; color:var(--red); }
+    .gameover-notice p { font-size:13px; color:#7f1d1d; margin-top:4px; }
+
+    .sidebar { position:sticky; top:72px; max-height:calc(100vh - 96px); overflow:auto; }
+    .rank-card { background:var(--card); border-radius:20px; padding:20px; border:2px solid var(--border); box-shadow:0 4px 24px #0000000d; }
+    .rank-card h3 { font-family:'Fredoka One',cursive; font-size:1.3rem; margin-bottom:12px; }
+    .rank-section { background:var(--bg); border-radius:14px; padding:14px; margin-top:12px; }
+    .rank-section-title { font-weight:900; font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-bottom:8px; }
+    .rank-section ol { padding-left:20px; }
+    .rank-section li { font-size:14px; padding:4px 0; border-bottom:1px solid var(--border); }
+    .rank-section li:last-child { border:none; }
+    .rank-note { font-size:12px; color:var(--muted); margin-top:10px; }
+
+    .back-header { position:fixed; top:14px; left:14px; z-index:1000; }
+    .back-link { text-decoration:none; color:var(--text); font-weight:700; font-size:15px; background:white; padding:6px 12px; border-radius:999px; border:2px solid var(--border); box-shadow:0 2px 8px #0000001a; }
+    .back-link:hover { border-color:var(--primary); color:var(--primary); }
+
+    .dialog-backdrop { position:fixed; inset:0; background:rgba(17,24,39,0.5); display:none; align-items:center; justify-content:center; z-index:4000; padding:16px; }
+    .dialog-backdrop.open { display:flex; }
+    .dialog { width:100%; max-width:380px; background:white; border-radius:24px; padding:28px; box-shadow:0 24px 48px #0000002a; text-align:center; }
+    .dialog-emoji { font-size:3.5rem; margin-bottom:12px; }
+    .dialog h4 { font-family:'Fredoka One',cursive; font-size:1.8rem; color:var(--primary); margin-bottom:8px; }
+    .dialog p { color:var(--muted); font-size:14px; margin-bottom:14px; }
+    .dialog input { width:100%; padding:12px 16px; border:2px solid var(--border); border-radius:12px; font-family:'Nunito',sans-serif; font-size:16px; outline:none; margin-bottom:4px; }
+    .dialog input:focus { border-color:var(--secondary); }
+    .dialog-actions { display:flex; gap:10px; margin-top:14px; }
+    .dialog-actions button { flex:1; padding:12px; border-radius:12px; font-family:'Fredoka One',cursive; font-size:1rem; cursor:pointer; border:2px solid var(--border); background:white; color:var(--text); }
+    .dialog-actions button.primary { background:var(--primary); border-color:var(--primary); color:white; }
+    .dialog-status { font-size:13px; color:var(--muted); margin-top:8px; min-height:18px; font-weight:700; }
+
+    footer { position:fixed; bottom:0; left:0; width:100%; background:rgba(240,249,255,0.95); backdrop-filter:blur(4px); text-align:center; padding:8px 0; font-size:13px; color:var(--muted); border-top:1px solid var(--border); }
+  </style>
+</head>
+<body>
+  <header class="back-header">
+    <a class="back-link" href="/puzzle">← Back to Puzzle Home</a>
+  </header>
+
+  <div class="layout">
+    <main>
+      <div class="card">
+        <h1>🔬 Science Speed Quiz</h1>
+        <p class="tagline">Choose the correct answer! One wrong answer ends the game — survive all 60 seconds!</p>
+
+        <div class="level-row">
+          <button class="lvl-btn active" data-level="easy">🌱 Easy (Grades 3–4)</button>
+          <button class="lvl-btn" data-level="medium">⚗️ Medium (Grades 5–6)</button>
+          <button class="lvl-btn" data-level="hard">🚀 Hard (Grades 7–8)</button>
+        </div>
+
+        <div class="stats-strip">
+          <div class="stat-pill"><div class="stat-num" id="scoreDisp">0</div><div class="stat-label">Score</div></div>
+          <div class="stat-pill"><div class="stat-num" id="streakDisp">0</div><div class="stat-label">Streak 🔥</div></div>
+          <div class="stat-pill"><div class="stat-num" id="qNumDisp">0</div><div class="stat-label">Answered</div></div>
+        </div>
+
+        <div class="timer-wrap">
+          <div class="timer-label"><span>Time Remaining</span><span id="timerText">60s</span></div>
+          <div class="timer-bar-bg"><div class="timer-bar" id="timerBar" style="width:100%"></div></div>
+        </div>
+
+        <div class="question-box" id="questionBox">
+          <div class="q-category" id="qCategory">Science</div>
+          <div class="q-score-badge" id="qBadge">Question 1</div>
+          <div class="q-number" id="questionText">Press Start!</div>
+        </div>
+
+        <div class="feedback" id="feedback"></div>
+
+        <div class="gameover-notice" id="gameoverNotice">
+          <strong>💥 Wrong Answer — Game Over!</strong>
+          <p id="gameoverMsg">The correct answer was —</p>
+        </div>
+
+        <div class="options-grid" id="optionsGrid">
+          <button class="opt-btn" id="opt0" disabled></button>
+          <button class="opt-btn" id="opt1" disabled></button>
+          <button class="opt-btn" id="opt2" disabled></button>
+          <button class="opt-btn" id="opt3" disabled></button>
+        </div>
+
+        <div class="ctrl-row">
+          <button class="btn-start" id="startBtn">🚀 Start Game</button>
+          <button class="btn-reset" id="resetBtn">↺ Reset</button>
+        </div>
+      </div>
+    </main>
+
+    <aside class="sidebar">
+      <div class="rank-card">
+        <h3>🏆 Leaderboard</h3>
+        <p style="font-size:13px;color:var(--muted);">Top 10 by score, per difficulty. Survive longer = higher score!</p>
+        <div class="rank-section">
+          <div class="rank-section-title">🌱 Easy</div>
+          <ol id="rankEasy"><li>Loading…</li></ol>
+        </div>
+        <div class="rank-section">
+          <div class="rank-section-title">⚗️ Medium</div>
+          <ol id="rankMedium"><li>Loading…</li></ol>
+        </div>
+        <div class="rank-section">
+          <div class="rank-section-title">🚀 Hard</div>
+          <ol id="rankHard"><li>Loading…</li></ol>
+        </div>
+        <div class="rank-note" id="rankNote">Loading leaderboard…</div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Winner / Game-end Dialog -->
+  <div class="dialog-backdrop" id="winDialog">
+    <div class="dialog">
+      <div class="dialog-emoji" id="dialogEmoji">🎉</div>
+      <h4 id="dialogTitle">Time's Up!</h4>
+      <p id="winSummary">You scored 0 points!</p>
+      <p>Enter your name for the leaderboard:</p>
+      <input type="text" id="dialogName" placeholder="Your name" maxlength="40" autocomplete="off" />
+      <div class="dialog-actions">
+        <button id="dialogCancel">Skip</button>
+        <button class="primary" id="dialogSubmit">Submit ✓</button>
+      </div>
+      <div class="dialog-status" id="dialogStatus"></div>
+    </div>
+  </div>
+
+  <script>
+    const BASE_ID = "sciencespeedquiz";
+    const GAME_DURATION = 60;
+
+    // ─── Question Bank ───────────────────────────────────────────────────────
+    const QUESTIONS = {
+      easy: [
+        {q:"What do plants need to make their own food?",a:"Sunlight, water, and CO₂",opts:["Sunlight, water, and CO₂","Soil, salt, and oxygen","Rain, wind, and sugar","Darkness, sand, and oil"],cat:"Life Science"},
+        {q:"Which planet is closest to the Sun?",a:"Mercury",opts:["Mercury","Venus","Earth","Mars"],cat:"Space"},
+        {q:"What is the boiling point of water?",a:"100 °C",opts:["100 °C","50 °C","0 °C","200 °C"],cat:"Physical Science"},
+        {q:"How many legs does an insect have?",a:"6",opts:["6","4","8","10"],cat:"Life Science"},
+        {q:"What force pulls objects toward Earth?",a:"Gravity",opts:["Gravity","Friction","Magnetism","Wind"],cat:"Physical Science"},
+        {q:"What gas do plants release during photosynthesis?",a:"Oxygen",opts:["Oxygen","Carbon dioxide","Nitrogen","Hydrogen"],cat:"Life Science"},
+        {q:"Which is the largest organ in the human body?",a:"Skin",opts:["Skin","Liver","Heart","Brain"],cat:"Human Body"},
+        {q:"What is the center of an atom called?",a:"Nucleus",opts:["Nucleus","Electron","Proton","Shell"],cat:"Physical Science"},
+        {q:"What type of animal is a whale?",a:"Mammal",opts:["Mammal","Fish","Reptile","Amphibian"],cat:"Life Science"},
+        {q:"Which planet has rings around it?",a:"Saturn",opts:["Saturn","Jupiter","Mars","Uranus"],cat:"Space"},
+        {q:"What is the freezing point of water?",a:"0 °C",opts:["0 °C","−10 °C","10 °C","100 °C"],cat:"Physical Science"},
+        {q:"What part of the plant absorbs water from the soil?",a:"Roots",opts:["Roots","Leaves","Stem","Flowers"],cat:"Life Science"},
+        {q:"What do tadpoles grow into?",a:"Frogs",opts:["Frogs","Fish","Lizards","Snakes"],cat:"Life Science"},
+        {q:"The Sun is a…",a:"Star",opts:["Star","Planet","Moon","Comet"],cat:"Space"},
+        {q:"What is the hardest natural substance on Earth?",a:"Diamond",opts:["Diamond","Gold","Iron","Quartz"],cat:"Earth Science"},
+        {q:"What organ pumps blood through the body?",a:"Heart",opts:["Heart","Lungs","Kidney","Liver"],cat:"Human Body"},
+        {q:"What color is chlorophyll?",a:"Green",opts:["Green","Red","Blue","Yellow"],cat:"Life Science"},
+        {q:"How many bones are in an adult human body?",a:"206",opts:["206","180","250","300"],cat:"Human Body"},
+        {q:"Which sense does the nose provide?",a:"Smell",opts:["Smell","Sight","Hearing","Touch"],cat:"Human Body"},
+        {q:"What is the name of the process by which water turns to vapor?",a:"Evaporation",opts:["Evaporation","Condensation","Precipitation","Filtration"],cat:"Earth Science"},
+        {q:"What do caterpillars turn into?",a:"Butterflies or moths",opts:["Butterflies or moths","Beetles","Grasshoppers","Bees"],cat:"Life Science"},
+        {q:"What layer of gas surrounds Earth?",a:"Atmosphere",opts:["Atmosphere","Lithosphere","Hydrosphere","Exosphere"],cat:"Earth Science"},
+        {q:"Which nutrient gives us the most energy quickly?",a:"Carbohydrates",opts:["Carbohydrates","Protein","Fat","Vitamins"],cat:"Human Body"},
+        {q:"What is sound caused by?",a:"Vibrations",opts:["Vibrations","Light","Heat","Pressure"],cat:"Physical Science"},
+      ],
+      medium: [
+        {q:"What organelle is known as the powerhouse of the cell?",a:"Mitochondria",opts:["Mitochondria","Nucleus","Ribosome","Vacuole"],cat:"Cell Biology"},
+        {q:"What is the chemical symbol for gold?",a:"Au",opts:["Au","Go","Gd","Ag"],cat:"Chemistry"},
+        {q:"Which gas makes up about 78% of Earth's atmosphere?",a:"Nitrogen",opts:["Nitrogen","Oxygen","Carbon dioxide","Argon"],cat:"Earth Science"},
+        {q:"What is Newton's Second Law of Motion?",a:"F = ma",opts:["F = ma","F = mv","E = mc²","P = mv"],cat:"Physics"},
+        {q:"Which blood cells carry oxygen?",a:"Red blood cells",opts:["Red blood cells","White blood cells","Platelets","Plasma"],cat:"Human Body"},
+        {q:"What process do cells use to release energy from glucose?",a:"Cellular respiration",opts:["Cellular respiration","Photosynthesis","Fermentation","Osmosis"],cat:"Cell Biology"},
+        {q:"What is the pH of a neutral solution?",a:"7",opts:["7","0","14","4"],cat:"Chemistry"},
+        {q:"Which layer of Earth is liquid?",a:"Outer core",opts:["Outer core","Inner core","Mantle","Crust"],cat:"Earth Science"},
+        {q:"What type of wave is light?",a:"Electromagnetic",opts:["Electromagnetic","Mechanical","Sound","Seismic"],cat:"Physics"},
+        {q:"What is the role of decomposers in an ecosystem?",a:"Break down dead matter",opts:["Break down dead matter","Produce food from sunlight","Hunt prey","Pollinate plants"],cat:"Ecology"},
+        {q:"What is the atomic number of carbon?",a:"6",opts:["6","12","8","14"],cat:"Chemistry"},
+        {q:"What is the name of the process by which plants lose water through leaves?",a:"Transpiration",opts:["Transpiration","Evaporation","Respiration","Excretion"],cat:"Life Science"},
+        {q:"What unit measures electrical resistance?",a:"Ohm",opts:["Ohm","Volt","Watt","Ampere"],cat:"Physics"},
+        {q:"What is the largest planet in our solar system?",a:"Jupiter",opts:["Jupiter","Saturn","Neptune","Uranus"],cat:"Space"},
+        {q:"Which part of the brain controls balance?",a:"Cerebellum",opts:["Cerebellum","Cerebrum","Brain stem","Hippocampus"],cat:"Human Body"},
+        {q:"What is the formula for water?",a:"H₂O",opts:["H₂O","CO₂","NaCl","O₂"],cat:"Chemistry"},
+        {q:"What is the process of a liquid turning into a solid called?",a:"Solidification",opts:["Solidification","Sublimation","Condensation","Evaporation"],cat:"Physical Science"},
+        {q:"Which type of rock is formed from cooled magma?",a:"Igneous",opts:["Igneous","Sedimentary","Metamorphic","Limestone"],cat:"Earth Science"},
+        {q:"What is the main source of energy for Earth's climate system?",a:"The Sun",opts:["The Sun","Earth's core","Ocean currents","Wind"],cat:"Earth Science"},
+        {q:"What is the name of the movement of tectonic plates that builds mountains?",a:"Compression",opts:["Compression","Subduction","Spreading","Faulting"],cat:"Earth Science"},
+        {q:"What does DNA stand for?",a:"Deoxyribonucleic acid",opts:["Deoxyribonucleic acid","Diribose nucleic acid","Double nitrogen acid","Dynamic nucleic array"],cat:"Cell Biology"},
+        {q:"Which organ produces insulin?",a:"Pancreas",opts:["Pancreas","Liver","Kidney","Stomach"],cat:"Human Body"},
+        {q:"What is the speed of light approximately?",a:"300,000 km/s",opts:["300,000 km/s","150,000 km/s","30,000 km/s","3,000 km/s"],cat:"Physics"},
+        {q:"What kind of bond holds two hydrogen atoms and one oxygen atom together in water?",a:"Covalent bond",opts:["Covalent bond","Ionic bond","Hydrogen bond","Metallic bond"],cat:"Chemistry"},
+      ],
+      hard: [
+        {q:"What is the process by which mRNA is used to build a protein?",a:"Translation",opts:["Translation","Transcription","Replication","Transduction"],cat:"Cell Biology"},
+        {q:"What is the law of conservation of energy?",a:"Energy cannot be created or destroyed",opts:["Energy cannot be created or destroyed","Energy equals mass times velocity","Energy always increases","Energy flows from cold to hot"],cat:"Physics"},
+        {q:"What does the Hardy-Weinberg principle describe?",a:"Genetic equilibrium in a population",opts:["Genetic equilibrium in a population","Rate of mutation","Natural selection pressure","Speciation speed"],cat:"Genetics"},
+        {q:"What is enthalpy a measure of?",a:"Heat content of a system",opts:["Heat content of a system","Disorder of a system","Electrical energy","Kinetic energy of molecules"],cat:"Chemistry"},
+        {q:"Which organelle is responsible for protein synthesis?",a:"Ribosome",opts:["Ribosome","Golgi apparatus","Endoplasmic reticulum","Lysosome"],cat:"Cell Biology"},
+        {q:"What is the Henderson-Hasselbalch equation used for?",a:"Calculating pH of a buffer",opts:["Calculating pH of a buffer","Measuring enzyme activity","Finding osmotic pressure","Determining bond energy"],cat:"Chemistry"},
+        {q:"In which phase of meiosis does crossing-over occur?",a:"Prophase I",opts:["Prophase I","Metaphase II","Anaphase I","Telophase II"],cat:"Cell Biology"},
+        {q:"What does the second law of thermodynamics state?",a:"Entropy of an isolated system increases",opts:["Entropy of an isolated system increases","Energy is conserved","Heat flows from cold to hot","All systems reach absolute zero"],cat:"Physics"},
+        {q:"What is the Krebs cycle also called?",a:"Citric acid cycle",opts:["Citric acid cycle","Calvin cycle","Nitrogen cycle","Urea cycle"],cat:"Biochemistry"},
+        {q:"What causes the aurora borealis?",a:"Solar particles interacting with the atmosphere",opts:["Solar particles interacting with the atmosphere","Volcanic eruptions","Electromagnetic fields from Earth's core","High-altitude lightning"],cat:"Earth Science"},
+        {q:"What type of bonding is found in metals that allows them to conduct electricity?",a:"Metallic bonding",opts:["Metallic bonding","Covalent bonding","Ionic bonding","Van der Waals forces"],cat:"Chemistry"},
+        {q:"What is the charge of a neutron?",a:"Neutral (no charge)",opts:["Neutral (no charge)","Positive","Negative","Variable"],cat:"Physics"},
+        {q:"What is CRISPR primarily used for in biology?",a:"Gene editing",opts:["Gene editing","Protein folding","Cell staining","Chromosome counting"],cat:"Biotechnology"},
+        {q:"What determines the atomic mass of an element?",a:"Protons + neutrons",opts:["Protons + neutrons","Protons only","Electrons + protons","Neutrons only"],cat:"Chemistry"},
+        {q:"What is the main product of the light-dependent reactions of photosynthesis?",a:"ATP and NADPH",opts:["ATP and NADPH","Glucose","CO₂","Water"],cat:"Biochemistry"},
+        {q:"What is the principle of superposition in geology?",a:"Older layers are beneath newer layers",opts:["Older layers are beneath newer layers","Rocks with more fossils are older","All layers form at the same rate","Minerals rise to the top over time"],cat:"Earth Science"},
+        {q:"What is the Doppler effect?",a:"Change in wave frequency due to relative motion",opts:["Change in wave frequency due to relative motion","Reflection of sound off surfaces","Amplification of waves","Interference of two waves"],cat:"Physics"},
+        {q:"Which type of RNA carries amino acids to the ribosome?",a:"tRNA",opts:["tRNA","mRNA","rRNA","snRNA"],cat:"Cell Biology"},
+        {q:"What does the electronegativity of an atom describe?",a:"Its ability to attract electrons in a bond",opts:["Its ability to attract electrons in a bond","Its number of protons","Its nuclear charge","Its ionization energy"],cat:"Chemistry"},
+        {q:"What is natural selection?",a:"Survival and reproduction of best-adapted individuals",opts:["Survival and reproduction of best-adapted individuals","Random changes in genes","Migration of species","Formation of new species only"],cat:"Evolution"},
+        {q:"What is a half-life?",a:"Time for half of a radioactive substance to decay",opts:["Time for half of a radioactive substance to decay","Half the atomic mass","Time for full nuclear fission","Half the electron spin"],cat:"Physics"},
+        {q:"What structure connects a muscle to a bone?",a:"Tendon",opts:["Tendon","Ligament","Cartilage","Fascia"],cat:"Human Body"},
+        {q:"What is the role of the sodium-potassium pump in neurons?",a:"Maintain resting membrane potential",opts:["Maintain resting membrane potential","Generate action potentials only","Destroy neurotransmitters","Transport glucose into the cell"],cat:"Human Body"},
+        {q:"What is speciation?",a:"Formation of new distinct species",opts:["Formation of new distinct species","Extinction of a species","Gene mutation only","Random mating patterns"],cat:"Evolution"},
+      ]
+    };
+
+    let level = "easy";
+    let score=0, streak=0, answered=0;
+    let timeLeft=GAME_DURATION, timerId=null;
+    let running=false, finished=false;
+    let currentQ=null;
+    let usedIndices=new Set();
+
+    const scoreDisp  = document.getElementById("scoreDisp");
+    const streakDisp = document.getElementById("streakDisp");
+    const qNumDisp   = document.getElementById("qNumDisp");
+    const timerText  = document.getElementById("timerText");
+    const timerBar   = document.getElementById("timerBar");
+    const questionText = document.getElementById("questionText");
+    const qBadge     = document.getElementById("qBadge");
+    const qCategory  = document.getElementById("qCategory");
+    const feedback   = document.getElementById("feedback");
+    const optBtns    = [0,1,2,3].map(i=>document.getElementById("opt"+i));
+    const startBtn   = document.getElementById("startBtn");
+    const gameoverNotice = document.getElementById("gameoverNotice");
+    const gameoverMsg    = document.getElementById("gameoverMsg");
+
+    function gameKey(lv){ return `${BASE_ID}_${lv}`; }
+    function shuffle(arr){ return arr.slice().sort(()=>Math.random()-.5); }
+
+    function pickQuestion(){
+      const pool = QUESTIONS[level];
+      if(usedIndices.size >= pool.length) usedIndices.clear();
+      let idx;
+      do { idx = Math.floor(Math.random()*pool.length); } while(usedIndices.has(idx));
+      usedIndices.add(idx);
+      return pool[idx];
+    }
+
+    function updateUI(){
+      scoreDisp.textContent = score;
+      streakDisp.textContent = streak;
+      qNumDisp.textContent = answered;
+    }
+
+    function updateTimer(){
+      const pct = timeLeft / GAME_DURATION * 100;
+      timerBar.style.width = pct + '%';
+      timerText.textContent = timeLeft + 's';
+      timerBar.classList.toggle('danger', timeLeft <= 15);
+    }
+
+    function setOptionsDisabled(disabled){
+      optBtns.forEach(b=>{ b.disabled = disabled; });
+    }
+
+    function nextQuestion(){
+      currentQ = pickQuestion();
+      questionText.textContent = currentQ.q;
+      qCategory.textContent = currentQ.cat;
+      qBadge.textContent = 'Question ' + (answered+1);
+      feedback.textContent = '';
+      feedback.className = 'feedback';
+      gameoverNotice.classList.remove('show');
+
+      const shuffled = shuffle(currentQ.opts);
+      optBtns.forEach((b,i)=>{
+        b.textContent = shuffled[i];
+        b.className = 'opt-btn';
+        b.disabled = false;
+        b._isCorrect = (shuffled[i] === currentQ.a);
+      });
+    }
+
+    function handleOption(btn){
+      if(!running || !currentQ) return;
+      setOptionsDisabled(true);
+      answered++;
+
+      if(btn._isCorrect){
+        streak++;
+        const bonus = streak>=5 ? 3 : streak>=3 ? 2 : 1;
+        score += bonus;
+        btn.classList.add('correct');
+        feedback.textContent = streak>=3 ? `✅ Correct! 🔥×${streak} (+${bonus}pts)` : '✅ Correct!';
+        feedback.className = 'feedback correct';
+        updateUI();
+        setTimeout(nextQuestion, 500);
+      } else {
+        btn.classList.add('wrong');
+        // Highlight the correct answer
+        optBtns.forEach(b=>{ if(b._isCorrect) b.classList.add('correct'); });
+        feedback.textContent = '❌ Wrong — game over!';
+        feedback.className = 'feedback wrong';
+        updateUI();
+        gameoverMsg.textContent = `The correct answer was: ${currentQ.a}`;
+        gameoverNotice.classList.add('show');
+        setTimeout(endGame, 1000);
+      }
+    }
+
+    optBtns.forEach(b => b.addEventListener('click', ()=>handleOption(b)));
+
+    function startGame(){
+      score=0; streak=0; answered=0;
+      usedIndices.clear();
+      timeLeft=GAME_DURATION;
+      running=true; finished=false;
+      gameoverNotice.classList.remove('show');
+      updateUI(); updateTimer();
+      startBtn.textContent='⏳ Playing…';
+      startBtn.disabled=true;
+      nextQuestion();
+      timerId=setInterval(()=>{
+        timeLeft--;
+        updateTimer();
+        if(timeLeft<=0){ endGame(true); }
+      },1000);
+    }
+
+    function endGame(timeUp=false){
+      clearInterval(timerId);
+      running=false; finished=true;
+      setOptionsDisabled(true);
+      startBtn.textContent='🚀 Play Again';
+      startBtn.disabled=false;
+      if(timeUp){
+        questionText.textContent='⏰ Time\'s Up!';
+        document.getElementById("dialogEmoji").textContent='🎉';
+        document.getElementById("dialogTitle").textContent="Time's Up!";
+      } else {
+        document.getElementById("dialogEmoji").textContent='💥';
+        document.getElementById("dialogTitle").textContent="Game Over!";
+      }
+      document.getElementById("winSummary").textContent=`You scored ${score} pts on ${level.toUpperCase()} — answered ${answered} questions correctly!`;
+      setTimeout(()=>{ document.getElementById("winDialog").classList.add('open'); },900);
+    }
+
+    function resetAll(){
+      clearInterval(timerId);
+      running=false; finished=false;
+      score=0; streak=0; answered=0;
+      usedIndices.clear();
+      timeLeft=GAME_DURATION;
+      updateUI(); updateTimer();
+      questionText.textContent='Press Start!';
+      qBadge.textContent='Question 1';
+      qCategory.textContent='Science';
+      feedback.textContent='';
+      feedback.className='feedback';
+      gameoverNotice.classList.remove('show');
+      optBtns.forEach(b=>{ b.textContent=''; b.disabled=true; b.className='opt-btn'; });
+      startBtn.textContent='🚀 Start Game';
+      startBtn.disabled=false;
+    }
+
+    document.querySelectorAll('.lvl-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        document.querySelectorAll('.lvl-btn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        level=btn.dataset.level;
+        resetAll();
+      });
+    });
+
+    startBtn.addEventListener('click',()=>{ if(!running) startGame(); });
+    document.getElementById("resetBtn").addEventListener('click', resetAll);
+
+    // Dialog
+    async function submitWin(name, pts){
+      try{
+        const r=await fetch('/api/score',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({ game:gameKey(level), player_name:name, best_scores:pts })
+        });
+        const d=await r.json().catch(()=>({}));
+        return d.ok===true;
+      }catch(e){ return false; }
+    }
+
+    document.getElementById("dialogCancel").addEventListener('click',()=>{
+      document.getElementById("winDialog").classList.remove('open');
+    });
+    document.getElementById("dialogSubmit").addEventListener('click',async()=>{
+      const name=(document.getElementById("dialogName").value||"").trim();
+      if(!name){ document.getElementById("dialogStatus").textContent="Name required!"; return; }
+      document.getElementById("dialogSubmit").disabled=true;
+      document.getElementById("dialogStatus").textContent="Saving…";
+      const ok=await submitWin(name,score);
+      if(ok){
+        document.getElementById("dialogStatus").textContent="Saved ✅";
+        await loadBoards();
+        setTimeout(()=>document.getElementById("winDialog").classList.remove('open'),400);
+      } else {
+        document.getElementById("dialogStatus").textContent="Could not save. Tell your teacher!";
+      }
+      document.getElementById("dialogSubmit").disabled=false;
+    });
+    document.getElementById("dialogName").addEventListener('keydown',e=>{
+      if(e.key==='Enter') document.getElementById("dialogSubmit").click();
+    });
+
+    // Leaderboard
+    async function loadBoard(lv,listId){
+      const list=document.getElementById(listId);
+      try{
+        const r=await fetch(`/api/leaderboard?game=${encodeURIComponent(gameKey(lv))}&limit=10`,{cache:"no-store"});
+        const d=await r.json();
+        const rows=Array.isArray(d)?d:(d.rows||[]);
+        list.innerHTML = rows.length
+          ? rows.map((r,i)=>`<li>#${i+1} ${r.player_name||'Unknown'} — ${Number(r.best_scores)||0} pts (${r.win_count||0} games)</li>`).join('')
+          : '<li>No scores yet.</li>';
+      }catch(e){ list.innerHTML='<li>Could not load.</li>'; }
+    }
+    async function loadBoards(){
+      document.getElementById("rankNote").textContent="Loading…";
+      await Promise.all([loadBoard('easy','rankEasy'),loadBoard('medium','rankMedium'),loadBoard('hard','rankHard')]);
+      document.getElementById("rankNote").textContent="Updated just now.";
+    }
+    loadBoards();
+  </script>
+
+  <footer>
+    © 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528.<br>
+    The STEAM Teacher is Chao Yu. For educational purposes only. All rights reserved.
+  </footer>
+</body>
+</html>

@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Roma Aeterna — Trivia</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --stone:#f5efe6;
+  --parchment:#fdf6e3;
+  --marble:#e8ddd0;
+  --ink:#2b1f14;
+  --rust:#8b2500;
+  --gold:#c9922a;
+  --gold-light:#e8b84b;
+  --laurel:#3b5e2b;
+  --shadow:rgba(43,31,20,.22);
+  --card:#fffaf3;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+
+body{
+  font-family:'EB Garamond',Georgia,serif;
+  background:var(--stone);
+  color:var(--ink);
+  min-height:100vh;
+  overflow-x:hidden;
+  position:relative;
+}
+
+/* Marble texture background */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(201,146,42,.08) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 80% 90%, rgba(139,37,0,.07) 0%, transparent 55%),
+    repeating-linear-gradient(
+      17deg,
+      transparent,
+      transparent 38px,
+      rgba(139,37,0,.025) 38px,
+      rgba(139,37,0,.025) 39px
+    );
+  pointer-events:none;z-index:0;
+}
+
+.wrap{position:relative;z-index:1;max-width:780px;margin:0 auto;padding:24px 16px 60px}
+
+/* ─── HEADER ─── */
+.site-header{text-align:center;margin-bottom:32px;animation:fadeDown .8s ease both}
+.laurel-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:2px}
+.laurel-row svg{width:48px;opacity:.7}
+.laurel-row svg.flip{transform:scaleX(-1)}
+.title{font-family:'Cinzel Decorative',serif;font-size:clamp(22px,6vw,44px);font-weight:900;
+  color:var(--rust);letter-spacing:.04em;
+  text-shadow:2px 3px 0 rgba(139,37,0,.15);line-height:1.1}
+.subtitle{font-family:'Cinzel',serif;font-size:13px;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin-top:6px}
+.divider{width:100%;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:18px 0;border:none}
+
+/* ─── CARD ─── */
+.card{
+  background:var(--card);
+  border:1px solid rgba(201,146,42,.35);
+  border-radius:4px;
+  box-shadow:0 8px 32px var(--shadow),inset 0 0 0 1px rgba(255,255,255,.6);
+  padding:28px 28px 24px;
+  margin-bottom:22px;
+  position:relative;
+  overflow:hidden;
+}
+.card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--rust),var(--gold),var(--rust));
+}
+.card-corner{position:absolute;font-size:22px;opacity:.12;font-family:'Cinzel Decorative',serif;font-weight:900}
+.card-corner.tl{top:8px;left:10px}
+.card-corner.tr{top:8px;right:10px}
+.card-corner.bl{bottom:8px;left:10px}
+.card-corner.br{bottom:8px;right:10px}
+
+/* ─── CONTROLS ─── */
+.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+label{font-family:'Cinzel',serif;font-size:13px;font-weight:600;color:var(--ink)}
+select{
+  font-family:'Cinzel',serif;font-size:12px;
+  padding:8px 12px;border-radius:3px;
+  border:1px solid rgba(201,146,42,.5);
+  background:var(--parchment);color:var(--ink);
+  cursor:pointer;
+}
+.btn{
+  font-family:'Cinzel',serif;font-size:12px;font-weight:700;
+  padding:10px 20px;border-radius:3px;cursor:pointer;
+  border:1px solid var(--rust);
+  background:linear-gradient(160deg,var(--rust),#6b1a00);
+  color:#fdf6e3;letter-spacing:.06em;
+  text-transform:uppercase;
+  transition:transform .12s,box-shadow .12s,filter .12s;
+  box-shadow:0 3px 10px rgba(139,37,0,.3);
+}
+.btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(139,37,0,.4)}
+.btn:active{transform:translateY(0)}
+.btn.gold{
+  background:linear-gradient(160deg,var(--gold),#a0721a);
+  border-color:var(--gold);box-shadow:0 3px 10px rgba(201,146,42,.35);
+}
+.btn:disabled{opacity:.45;pointer-events:none}
+
+/* ─── PROGRESS ─── */
+.progress-row{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.progress-bar{flex:1;height:8px;background:var(--marble);border-radius:4px;overflow:hidden;border:1px solid rgba(201,146,42,.2)}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:4px;transition:width .4s ease}
+.progress-label{font-family:'Cinzel',serif;font-size:11px;color:var(--gold);white-space:nowrap}
+.score-badge{
+  font-family:'Cinzel',serif;font-size:12px;font-weight:700;
+  background:var(--parchment);border:1px solid var(--gold);
+  border-radius:3px;padding:4px 10px;color:var(--gold);
+  white-space:nowrap;
+}
+
+/* ─── CATEGORY BADGE ─── */
+.q-category{
+  font-family:'Cinzel',serif;font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--gold);background:rgba(201,146,42,.1);
+  border:1px solid rgba(201,146,42,.3);border-radius:3px;
+  display:inline-block;padding:3px 10px;margin-bottom:12px;
+}
+/* ─── QUESTION ─── */
+.q-number{font-family:'Cinzel',serif;font-size:12px;color:var(--rust);margin-bottom:8px;letter-spacing:.08em}
+.q-text{font-size:18px;line-height:1.6;margin-bottom:22px;font-style:italic;color:var(--ink)}
+
+/* ─── OPTIONS ─── */
+.options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+@media(max-width:500px){.options{grid-template-columns:1fr}}
+.opt{
+  font-family:'EB Garamond',serif;font-size:15px;
+  padding:13px 16px;border-radius:3px;cursor:pointer;
+  border:1px solid rgba(201,146,42,.3);
+  background:var(--parchment);color:var(--ink);
+  text-align:left;line-height:1.4;
+  transition:background .15s,border-color .15s,transform .12s;
+  position:relative;
+}
+.opt:hover:not(:disabled){background:rgba(201,146,42,.12);border-color:var(--gold);transform:translateX(2px)}
+.opt.correct{background:#d4edda;border-color:#3b5e2b;color:#1a3d15;font-weight:600}
+.opt.wrong{background:#fde8e8;border-color:var(--rust);color:#6b1a00}
+.opt:disabled{cursor:default}
+.opt .letter{
+  display:inline-block;width:22px;height:22px;line-height:22px;text-align:center;
+  background:rgba(201,146,42,.15);border-radius:2px;
+  font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:var(--gold);
+  margin-right:8px;flex-shrink:0;vertical-align:middle;
+}
+
+/* ─── FEEDBACK ─── */
+.feedback{
+  font-size:14px;line-height:1.6;
+  padding:12px 16px;border-radius:3px;
+  border-left:3px solid var(--gold);
+  background:rgba(201,146,42,.07);
+  color:var(--ink);
+  margin-top:4px;
+  animation:slideIn .25s ease;
+}
+.feedback .verdict{font-family:'Cinzel',serif;font-size:12px;font-weight:700;letter-spacing:.1em;margin-bottom:4px}
+.feedback .verdict.v-ok{color:var(--laurel)}
+.feedback .verdict.v-bad{color:var(--rust)}
+
+/* ─── RESULTS ─── */
+.result-section{text-align:center}
+.result-title{font-family:'Cinzel Decorative',serif;font-size:28px;color:var(--rust);margin-bottom:6px}
+.result-score{font-family:'Cinzel',serif;font-size:52px;font-weight:700;color:var(--gold);line-height:1;margin:10px 0}
+.result-sub{font-size:15px;font-style:italic;color:var(--muted,#5c4a30);margin-bottom:18px}
+.result-rank{font-family:'Cinzel',serif;font-size:13px;color:var(--rust);letter-spacing:.1em;margin-bottom:22px}
+
+/* ─── LEADERBOARD ─── */
+.lb-title{font-family:'Cinzel',serif;font-size:14px;font-weight:700;letter-spacing:.1em;color:var(--rust);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.lb-grid{display:grid;grid-template-columns:auto auto 1fr auto;gap:4px 12px;align-items:center}
+.lb-rank{font-family:'Cinzel',serif;font-size:12px;color:var(--gold);font-weight:700}
+.lb-medal{font-size:16px}
+.lb-name{font-size:14px;font-style:italic}
+.lb-pts{font-family:'Cinzel',serif;font-size:12px;color:var(--rust);font-weight:700}
+.lb-empty{font-size:13px;font-style:italic;color:#9a8060;grid-column:1/-1;padding:6px 0}
+
+/* ─── DIALOG ─── */
+#submitDialog{
+  position:fixed;inset:0;background:rgba(43,31,20,.55);
+  display:none;align-items:center;justify-content:center;z-index:99;
+  backdrop-filter:blur(3px);
+}
+.dialog-box{
+  background:var(--card);border:1px solid rgba(201,146,42,.5);
+  border-radius:4px;padding:28px;max-width:400px;width:92%;
+  box-shadow:0 24px 60px rgba(43,31,20,.35);
+  animation:popIn .25s ease both;
+}
+.dialog-box::before{content:'';display:block;width:100%;height:2px;background:linear-gradient(90deg,var(--rust),var(--gold),var(--rust));margin-bottom:18px}
+.dialog-box h3{font-family:'Cinzel Decorative',serif;font-size:18px;color:var(--rust);margin-bottom:6px}
+.dialog-box p{font-size:14px;font-style:italic;color:#5c4a30;margin-bottom:14px}
+.dialog-box input{
+  width:100%;font-family:'EB Garamond',serif;font-size:16px;
+  padding:10px 14px;border-radius:3px;
+  border:1px solid rgba(201,146,42,.4);background:var(--parchment);color:var(--ink);
+  margin-bottom:14px;
+}
+.dialog-box input:focus{outline:none;border-color:var(--gold)}
+.dialog-actions{display:flex;gap:10px;justify-content:flex-end}
+.dialog-msg{font-family:'Cinzel',serif;font-size:12px;margin-top:8px;text-align:center}
+.dialog-msg.ok{color:var(--laurel)}.dialog-msg.err{color:var(--rust)}
+
+/* ─── ANIMATIONS ─── */
+@keyframes fadeDown{from{opacity:0;transform:translateY(-18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+@keyframes popIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+@keyframes shimmer{0%,100%{opacity:1}50%{opacity:.65}}
+
+.hidden{display:none!important}
+
+footer{position:fixed;bottom:0;left:0;width:100%;background:rgba(253,246,227,.95);border-top:1px solid rgba(201,146,42,.25);text-align:center;padding:7px;font-size:11px;color:#9a8060;font-style:italic}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="laurel-row">
+      <!-- laurel branch SVG -->
+      <svg viewBox="0 0 60 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5 24 Q12 10 28 8" stroke="#3b5e2b" stroke-width="2" fill="none"/>
+        <ellipse cx="10" cy="20" rx="5" ry="3" fill="#3b5e2b" transform="rotate(-30 10 20)"/>
+        <ellipse cx="16" cy="15" rx="5" ry="3" fill="#4a7a37" transform="rotate(-40 16 15)"/>
+        <ellipse cx="22" cy="11" rx="5" ry="3" fill="#3b5e2b" transform="rotate(-50 22 11)"/>
+        <ellipse cx="28" cy="9" rx="5" ry="3" fill="#4a7a37" transform="rotate(-55 28 9)"/>
+      </svg>
+      <span class="title">Roma Aeterna</span>
+      <svg class="flip" viewBox="0 0 60 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5 24 Q12 10 28 8" stroke="#3b5e2b" stroke-width="2" fill="none"/>
+        <ellipse cx="10" cy="20" rx="5" ry="3" fill="#3b5e2b" transform="rotate(-30 10 20)"/>
+        <ellipse cx="16" cy="15" rx="5" ry="3" fill="#4a7a37" transform="rotate(-40 16 15)"/>
+        <ellipse cx="22" cy="11" rx="5" ry="3" fill="#3b5e2b" transform="rotate(-50 22 11)"/>
+        <ellipse cx="28" cy="9" rx="5" ry="3" fill="#4a7a37" transform="rotate(-55 28 9)"/>
+      </svg>
+    </div>
+    <div class="subtitle">Ancient World Trivia · Ranked</div>
+  </header>
+
+  <hr class="divider"/>
+
+  <!-- MAIN GAME CARD -->
+  <div class="card" id="gameCard">
+    <span class="card-corner tl">SPQR</span>
+    <span class="card-corner tr">⚔</span>
+    <span class="card-corner bl">🏛</span>
+    <span class="card-corner br">SPQR</span>
+
+    <!-- Controls -->
+    <div class="controls">
+      <label for="diffSel">Difficulty:</label>
+      <select id="diffSel">
+        <option value="easy">Easy (10 Q)</option>
+        <option value="medium" selected>Medium (15 Q)</option>
+        <option value="hard">Hard (20 Q)</option>
+      </select>
+      <button class="btn" id="newBtn">⚔ New Game</button>
+    </div>
+
+    <!-- Idle / Start -->
+    <div id="idleArea" style="text-align:center;padding:30px 0">
+      <div style="font-size:44px;margin-bottom:12px">🏛</div>
+      <div style="font-family:'Cinzel',serif;font-size:16px;color:var(--rust);margin-bottom:6px">Ave, Scholar!</div>
+      <div style="font-size:14px;font-style:italic;color:#7a5c3a">Choose your difficulty and press <strong>New Game</strong> to begin.</div>
+    </div>
+
+    <!-- Question Area -->
+    <div id="questionArea" class="hidden">
+      <div class="progress-row">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+        <span class="progress-label" id="progressLabel">0 / 0</span>
+        <span class="score-badge">⚡ <span id="scoreEl">0</span> pts</span>
+      </div>
+      <div class="q-category" id="qCategory"></div>
+      <div class="q-number" id="qNumber"></div>
+      <div class="q-text" id="qText"></div>
+      <div class="options" id="optionsGrid"></div>
+      <div id="feedbackBox" class="feedback hidden"></div>
+      <div style="text-align:right;margin-top:14px">
+        <button class="btn gold hidden" id="nextBtn">Next →</button>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="resultsArea" class="hidden result-section">
+      <div class="result-title" id="resultTitle"></div>
+      <div class="result-score" id="resultScore"></div>
+      <div class="result-sub" id="resultSub"></div>
+      <div class="result-rank" id="resultRank"></div>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:10px">
+        <button class="btn gold" id="submitBtn">🏆 Submit Score</button>
+        <button class="btn" id="playAgainBtn">↺ Play Again</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEADERBOARD CARD -->
+  <div class="card">
+    <span class="card-corner tl">🏆</span>
+    <div class="lb-title">🏆 Hall of Fame</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+      <div>
+        <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.1em;color:var(--gold);text-transform:uppercase;margin-bottom:6px">Easy</div>
+        <div class="lb-grid" id="lbEasy"><div class="lb-empty">No scores yet</div></div>
+      </div>
+      <div>
+        <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.1em;color:var(--gold);text-transform:uppercase;margin-bottom:6px">Medium</div>
+        <div class="lb-grid" id="lbMedium"><div class="lb-empty">No scores yet</div></div>
+      </div>
+      <div>
+        <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.1em;color:var(--gold);text-transform:uppercase;margin-bottom:6px">Hard</div>
+        <div class="lb-grid" id="lbHard"><div class="lb-empty">No scores yet</div></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+
+<!-- SUBMIT DIALOG -->
+<div id="submitDialog">
+  <div class="dialog-box">
+    <h3>🏆 Submit Score</h3>
+    <p id="dPrompt"></p>
+    <input id="dName" placeholder="Enter your name…" maxlength="40"/>
+    <div class="dialog-actions">
+      <button class="btn" id="dCancel">Cancel</button>
+      <button class="btn gold" id="dSubmit">Submit</button>
+    </div>
+    <div id="dMsg" class="dialog-msg"></div>
+  </div>
+</div>
+
+<footer>© 2026 Yinghua International School · Made by Science & STEAM Teacher Chao Yu · For educational use only</footer>
+
+<script>
+// ── QUESTION BANK ──────────────────────────────────────────
+const ALL_QUESTIONS = [
+  // ── GALILEO ──
+  {cat:"Galileo",q:"Galileo Galilei was born in which Italian city in 1564?",opts:["Pisa","Rome","Florence","Venice"],ans:0,fact:"Galileo was born in Pisa, though he later worked in Florence and Padua."},
+  {cat:"Galileo",q:"Galileo improved which instrument to make groundbreaking astronomical observations?",opts:["The compass","The telescope","The microscope","The thermometer"],ans:1,fact:"Galileo improved the Dutch telescope and used it to observe the moon, Jupiter's moons, and sunspots."},
+  {cat:"Galileo",q:"Which of these did Galileo NOT discover or observe with his telescope?",opts:["Moons of Jupiter","The rings of Saturn (clearly)","Mountains on the Moon","Craters on the Moon"],ans:1,fact:"Galileo saw Saturn's rings but his telescope was not strong enough to resolve them clearly — he thought Saturn had 'ears'."},
+  {cat:"Galileo",q:"Galileo was forced to recant his support of which scientific model?",opts:["Geocentric model","Heliocentric model","Flat-earth model","Tidal model"],ans:1,fact:"The Catholic Inquisition forced Galileo to renounce the Copernican heliocentric model in 1633."},
+  {cat:"Galileo",q:"What famous experiment is Galileo said to have performed from the Leaning Tower of Pisa?",opts:["Measuring the speed of sound","Dropping balls of different masses","Timing a pendulum","Refracting light through prisms"],ans:1,fact:"Legend holds that Galileo dropped balls of different masses to show they fall at the same rate — contradicting Aristotle."},
+  {cat:"Galileo",q:"Galileo discovered four large moons of Jupiter. What are they collectively called?",opts:["The Galilean Moons","The Roman Moons","The Medicean Stars","The Jovian Four"],ans:2,fact:"Galileo named them the Medicean Stars after his patron Cosimo II de' Medici; today they are also called the Galilean moons."},
+  {cat:"Galileo",q:"Galileo spent the last years of his life under house arrest. Who ordered this?",opts:["King of Spain","The Roman Inquisition","The Venetian Republic","Emperor Ferdinand II"],ans:1,fact:"After his 1633 trial, the Roman Inquisition sentenced Galileo to indefinite house arrest at his villa near Florence."},
+  {cat:"Galileo",q:"Which branch of physics did Galileo help found by studying motion and falling objects?",opts:["Thermodynamics","Optics","Kinematics / Mechanics","Electromagnetism"],ans:2,fact:"Galileo's systematic study of motion laid the groundwork for classical mechanics, which Newton later formalized."},
+
+  // ── JULIUS CAESAR ──
+  {cat:"Julius Caesar",q:"In what year was Julius Caesar assassinated?",opts:["63 BC","44 BC","31 BC","14 AD"],ans:1,fact:"Caesar was assassinated on the Ides of March (March 15), 44 BC, by a group of senators led by Brutus and Cassius."},
+  {cat:"Julius Caesar",q:"Caesar's famous phrase 'Alea iacta est' (The die is cast) was said when he crossed which river?",opts:["Tiber","Rhine","Danube","Rubicon"],ans:3,fact:"By crossing the Rubicon with his army in 49 BC, Caesar broke Roman law and triggered a civil war."},
+  {cat:"Julius Caesar",q:"Which Gallic chieftain was Caesar's most famous opponent in the Gallic Wars?",opts:["Vercingetorix","Ambiorix","Boudica","Arminius"],ans:0,fact:"Vercingetorix united the Gallic tribes and defeated Caesar at Gergovia before being defeated at Alesia in 52 BC."},
+  {cat:"Julius Caesar",q:"What title did Caesar hold that made him effectively dictator of Rome?",opts:["Consul for life","Dictator perpetuo","Pontifex Maximus","Tribune of the Plebs"],ans:1,fact:"The Senate gave Caesar the title Dictator perpetuo (Dictator in perpetuity) shortly before his assassination."},
+  {cat:"Julius Caesar",q:"Which famous queen did Julius Caesar form a romantic alliance with?",opts:["Cleopatra VII","Nefertiti","Dido","Berenice"],ans:0,fact:"Caesar and Cleopatra VII of Egypt became close allies and lovers; she bore a son called Caesarion."},
+
+  // ── AUGUSTUS ──
+  {cat:"Augustus",q:"What was Augustus's original name before becoming emperor?",opts:["Tiberius Nero","Gaius Octavius","Marcus Agrippa","Lucius Cornelius"],ans:1,fact:"Born Gaius Octavius (Octavian), he was renamed Gaius Julius Caesar after adoption, then given the honorific 'Augustus' by the Senate."},
+  {cat:"Augustus",q:"The long period of peace and prosperity during Augustus's reign is called what?",opts:["Pax Romana","Pax Augusta","The Golden Age","The Roman Peace"],ans:0,fact:"The Pax Romana (Roman Peace) began with Augustus's reign and lasted about 200 years of relative stability."},
+  {cat:"Augustus",q:"Which battle gave Augustus (Octavian) complete control of the Roman world in 31 BC?",opts:["Battle of Actium","Battle of Philippi","Battle of Zama","Battle of Cannae"],ans:0,fact:"At the Battle of Actium, Octavian's forces defeated Antony and Cleopatra's fleet, ending the last challenge to his power."},
+  {cat:"Augustus",q:"Augustus famously boasted he found Rome a city of _____ and left it a city of _____.",opts:["Wood — Marble","Mud — Stone","Stone — Gold","Brick — Silver"],ans:0,fact:"He transformed Rome's public architecture, building temples, forums, and monuments in marble."},
+
+  // ── ROMAN REPUBLIC & EMPIRE ──
+  {cat:"Roman Republic",q:"The Roman Republic was traditionally founded in which year?",opts:["753 BC","509 BC","264 BC","27 BC"],ans:1,fact:"Roman tradition dated the founding of the Republic to 509 BC, when the last king Tarquin the Proud was expelled."},
+  {cat:"Roman Republic",q:"The Roman Senate met in which famous building?",opts:["The Pantheon","The Curia Julia","The Colosseum","The Forum of Trajan"],ans:1,fact:"The Curia Julia (built by Caesar) was the meeting house of the Roman Senate in the Roman Forum."},
+  {cat:"Roman Republic",q:"What were the two chief magistrates of the Roman Republic called?",opts:["Praetors","Tribunes","Consuls","Censors"],ans:2,fact:"Two Consuls were elected annually and held supreme civil and military authority — each could veto the other."},
+  {cat:"Roman Republic",q:"The Punic Wars were fought between Rome and which North African city-state?",opts:["Alexandria","Carthage","Numidia","Cyrene"],ans:1,fact:"Three Punic Wars (264–146 BC) pitted Rome against Carthage; Rome's victory made it the dominant Mediterranean power."},
+  {cat:"Roman Republic",q:"Which general led Carthaginian forces (with war elephants) across the Alps to invade Italy?",opts:["Hamilcar Barca","Hasdrubal","Hannibal","Scipio"],ans:2,fact:"Hannibal Barca crossed the Alps in 218 BC and won stunning victories at Trebia, Lake Trasimene, and Cannae."},
+
+  // ── ROMAN SOCIETY & CULTURE ──
+  {cat:"Roman Culture",q:"What language did educated Romans use for literature and law?",opts:["Greek","Aramaic","Latin","Oscan"],ans:2,fact:"Latin was Rome's official language; it evolved into the Romance languages (Italian, French, Spanish, Portuguese, Romanian)."},
+  {cat:"Roman Culture",q:"What was the name of Rome's great outdoor entertainment arena, completed around 80 AD?",opts:["The Circus Maximus","The Pantheon","The Colosseum","The Forum"],ans:2,fact:"The Colosseum (Flavian Amphitheatre) could hold 50,000–80,000 spectators for gladiatorial contests and public spectacles."},
+  {cat:"Roman Culture",q:"Roman gladiators who fought in heavy armour with a sword and shield were called what?",opts:["Retiarius","Secutor","Murmillo","Thraex"],ans:2,fact:"The Murmillo (fish-man) wore a Gallic helmet, carried an oblong shield, and fought with a gladius short sword."},
+  {cat:"Roman Culture",q:"Romans used a calendar reformed by Julius Caesar. What is it called?",opts:["Gregorian Calendar","Julian Calendar","Republican Calendar","Pontiff Calendar"],ans:1,fact:"The Julian Calendar (46 BC) introduced a 365-day year with a leap year every four years — used in Europe until the 1500s."},
+  {cat:"Roman Culture",q:"Roman engineers built long stone channels to carry water to cities. What were these called?",opts:["Viaducts","Aqueducts","Catacombs","Insulae"],ans:1,fact:"Rome's aqueducts supplied the city with millions of gallons of fresh water daily through gravity-fed stone channels."},
+  {cat:"Roman Culture",q:"What material did the Romans popularize for construction, revolutionizing architecture?",opts:["Steel","Concrete (opus caementicium)","Fired clay bricks","Cut marble"],ans:1,fact:"Roman concrete (pozzolanic cement mixed with volcanic ash) allowed domes, vaults, and massive walls that have survived 2,000 years."},
+
+  // ── ROMAN EMPERORS ──
+  {cat:"Roman Emperors",q:"Which emperor oversaw the construction of the Colosseum?",opts:["Augustus","Nero","Vespasian","Trajan"],ans:2,fact:"Emperor Vespasian began the Colosseum (Flavian Amphitheatre) around 70–72 AD on the site of Nero's artificial lake."},
+  {cat:"Roman Emperors",q:"The Roman Emperor Nero is infamous for supposedly doing what during the Great Fire of Rome (64 AD)?",opts:["Fleeing the city","Playing the fiddle (lyre)","Ordering the fire","Sleeping through it"],ans:1,fact:"Legend says Nero 'fiddled while Rome burned' — while historically inaccurate, it reflects his reputation for indifference and cruelty."},
+  {cat:"Roman Emperors",q:"Which 'Five Good Emperors' is famous for writing 'Meditations', a work of Stoic philosophy?",opts:["Hadrian","Trajan","Antoninus Pius","Marcus Aurelius"],ans:3,fact:"Marcus Aurelius wrote Meditations as private reflections on Stoic philosophy — it remains widely read today."},
+  {cat:"Roman Emperors",q:"Emperor Constantine is remembered for doing what regarding Christianity?",opts:["Outlawing it","Making it the only legal religion","Issuing the Edict of Milan allowing tolerance","Executing all bishops"],ans:2,fact:"The 313 AD Edict of Milan granted religious tolerance throughout the empire, effectively ending persecution of Christians."},
+  {cat:"Roman Emperors",q:"Which emperor built a famous wall across northern Britain to defend against northern tribes?",opts:["Trajan","Hadrian","Claudius","Caracalla"],ans:1,fact:"Hadrian's Wall (begun 122 AD) stretched 73 miles across northern Britain and is still one of Britain's greatest Roman monuments."},
+
+  // ── ROMAN RELIGION & MYTHOLOGY ──
+  {cat:"Roman Religion",q:"Which Roman god was the ruler of the gods, equivalent to the Greek Zeus?",opts:["Mars","Neptune","Jupiter","Saturn"],ans:2,fact:"Jupiter was king of the gods, god of sky and thunder, and patron deity of Rome — the Capitoline temple was dedicated to him."},
+  {cat:"Roman Religion",q:"Mars was the Roman god of what?",opts:["The Sea","War","The Underworld","Fire"],ans:1,fact:"Mars (equivalent to Greek Ares) was the god of war and also an agricultural guardian — he was revered as the father of Romulus."},
+  {cat:"Roman Religion",q:"What were the sacred fire-tending priestesses of Rome called?",opts:["Sibyllines","Vestals","Augures","Flamines"],ans:1,fact:"The Vestal Virgins tended the eternal flame of Vesta in the Roman Forum for 30 years of service."},
+  {cat:"Roman Religion",q:"According to legend, who founded Rome by killing his twin brother?",opts:["Remus","Romulus","Aeneas","Numa"],ans:1,fact:"Romulus killed Remus in a dispute and became Rome's first king, according to Roman founding legend."},
+
+  // ── ROMAN MILITARY ──
+  {cat:"Roman Military",q:"What was the basic unit of the Roman army called?",opts:["Cohort","Century","Legion","Maniple"],ans:2,fact:"A Roman legion consisted of roughly 5,000 soldiers and was the backbone of Rome's military power."},
+  {cat:"Roman Military",q:"Roman soldiers carried a short thrusting sword called what?",opts:["Pilum","Gladius","Spatha","Scutum"],ans:1,fact:"The gladius was the standard Roman infantry sword — it gave its name to gladiators and the word 'gladiolus'."},
+  {cat:"Roman Military",q:"What was the Roman military formation where soldiers locked shields above and around them?",opts:["Phalanx","Wedge","Testudo","Orb"],ans:2,fact:"The testudo (tortoise) formation had soldiers lock shields on all sides and overhead for protection against missiles."},
+  {cat:"Roman Military",q:"The Roman term 'veni, vidi, vici' (I came, I saw, I conquered) was said by whom?",opts:["Scipio Africanus","Pompey","Julius Caesar","Augustus"],ans:2,fact:"Caesar reportedly sent this three-word dispatch to the Senate after his swift victory over Pharnaces II of Pontus in 47 BC."},
+];
+
+// ── GAME STATE ──
+const DIFF_COUNT = {easy:10,medium:15,hard:20};
+let deck=[], qIdx=0, score=0, totalQ=0, answered=false, gameActive=false, scoreSubmitted=false, submitting=false;
+const GAME_ID = diff => `roman_trivia_${diff}`;
+
+// ── UTILS ──
+const $ = id => document.getElementById(id);
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function setHidden(id,h){$(id).classList.toggle('hidden',h)}
+
+// ── BUILD DECK ──
+function buildDeck(diff){
+  // Group by category, pick at least 2 Galileo, rest random
+  const galileo = shuffle(ALL_QUESTIONS.filter(q=>q.cat==='Galileo'));
+  const others  = shuffle(ALL_QUESTIONS.filter(q=>q.cat!=='Galileo'));
+  const count   = DIFF_COUNT[diff];
+  const galCount = diff==='easy'?2:diff==='medium'?3:4;
+  const picked  = [...galileo.slice(0,galCount), ...others].slice(0,count);
+  return shuffle(picked);
+}
+
+// ── RENDER QUESTION ──
+function renderQuestion(){
+  const q = deck[qIdx];
+  const diff = $('diffSel').value;
+  const pct  = (qIdx/totalQ)*100;
+  $('progressFill').style.width = pct+'%';
+  $('progressLabel').textContent = `${qIdx+1} / ${totalQ}`;
+  $('scoreEl').textContent = score;
+  $('qCategory').textContent = q.cat;
+  $('qNumber').textContent   = `Question ${qIdx+1} of ${totalQ}`;
+  $('qText').textContent     = q.q;
+  $('feedbackBox').classList.add('hidden');
+  $('nextBtn').classList.add('hidden');
+  answered = false;
+
+  const letters = ['A','B','C','D'];
+  const grid = $('optionsGrid');
+  grid.innerHTML = '';
+  q.opts.forEach((opt,i)=>{
+    const b = document.createElement('button');
+    b.className = 'opt';
+    b.innerHTML = `<span class="letter">${letters[i]}</span>${opt}`;
+    b.onclick = ()=>pick(i);
+    grid.appendChild(b);
+  });
+}
+
+// ── PICK ANSWER ──
+function pick(idx){
+  if(!gameActive||answered)return;
+  answered = true;
+  const q = deck[qIdx];
+  const correct = idx===q.ans;
+  const pts = correct?10:0;
+  score += pts;
+  $('scoreEl').textContent = score;
+
+  // colour options
+  const opts = $('optionsGrid').querySelectorAll('.opt');
+  opts.forEach((b,i)=>{
+    b.disabled=true;
+    if(i===q.ans)b.classList.add('correct');
+    else if(i===idx&&!correct)b.classList.add('wrong');
+  });
+
+  // feedback
+  const fb=$('feedbackBox');
+  fb.classList.remove('hidden');
+  fb.innerHTML=`<div class="verdict ${correct?'v-ok':'v-bad'}">${correct?'✅ Correct! +10 pts':'❌ Incorrect'}</div>${q.fact}`;
+
+  $('nextBtn').classList.remove('hidden');
+  $('nextBtn').focus();
+}
+
+// ── NEXT ──
+$('nextBtn').onclick = ()=>{
+  qIdx++;
+  if(qIdx>=totalQ) showResults();
+  else renderQuestion();
+};
+
+// ── START GAME ──
+function newGame(){
+  const diff = $('diffSel').value;
+  deck = buildDeck(diff);
+  totalQ = deck.length;
+  qIdx=0; score=0; answered=false; gameActive=true; scoreSubmitted=false; submitting=false;
+  setHidden('idleArea',true);
+  setHidden('resultsArea',true);
+  setHidden('questionArea',false);
+  renderQuestion();
+}
+
+// ── RESULTS ──
+function showResults(){
+  gameActive=false;
+  setHidden('questionArea',true);
+  setHidden('resultsArea',false);
+  const diff=$('diffSel').value;
+  const maxPts = totalQ*10;
+  const pct = Math.round((score/maxPts)*100);
+
+  const titles=[
+    [90,'🏛 Optimus Senator!','Your knowledge of Rome is worthy of the Senate.'],
+    [70,'⚔ Tribune of the Plebs','A solid performance — Rome salutes you.'],
+    [50,'🛡 Legionary','You fought well. Train harder, soldier.'],
+    [0,'📜 Roman Novice','Study your scrolls and return to battle.'],
+  ];
+  const [,t,s]=titles.find(([p])=>pct>=p);
+
+  $('resultTitle').textContent=t;
+  $('resultScore').textContent=`${score}/${maxPts}`;
+  $('resultSub').textContent=s;
+  $('resultRank').textContent=`${pct}% · ${diff.toUpperCase()} · ${totalQ} questions`;
+
+  $('submitBtn').disabled=false;
+  $('submitBtn').textContent='🏆 Submit Score';
+  loadAllRanks();
+}
+
+// ── SUBMIT DIALOG ──
+$('submitBtn').onclick=()=>{
+  if(scoreSubmitted){$('dMsg').textContent='Already submitted!';$('dMsg').className='dialog-msg err';return;}
+  const diff=$('diffSel').value;
+  $('dPrompt').textContent=`Score: ${score} pts · ${diff.toUpperCase()}. Enter your name:`;
+  $('dName').value='';
+  $('dMsg').textContent='';
+  $('dMsg').className='dialog-msg';
+  $('dName').disabled=false;
+  $('dSubmit').disabled=false;
+  $('dSubmit').textContent='Submit';
+  $('submitDialog').style.display='flex';
+  setTimeout(()=>$('dName').focus(),50);
+};
+$('dCancel').onclick=()=>$('submitDialog').style.display='none';
+$('dSubmit').onclick=async()=>{
+  if(scoreSubmitted||submitting)return;
+  const name=$('dName').value.trim();
+  if(!name){$('dMsg').textContent='Please enter your name.';$('dMsg').className='dialog-msg err';return;}
+  submitting=true;
+  $('dSubmit').disabled=true;
+  $('dName').disabled=true;
+  $('dMsg').textContent='Saving…';$('dMsg').className='dialog-msg';
+  const ok=await submitScore(name);
+  submitting=false;
+  if(ok){
+    scoreSubmitted=true;
+    $('dMsg').textContent='✅ Saved!';$('dMsg').className='dialog-msg ok';
+    $('dSubmit').textContent='✅ Submitted';
+    $('submitBtn').disabled=true;$('submitBtn').textContent='✅ Submitted';
+    loadAllRanks();
+    setTimeout(()=>$('submitDialog').style.display='none',700);
+  } else {
+    $('dName').disabled=false;
+    $('dSubmit').disabled=false;
+    $('dMsg').textContent='Could not save — tell your teacher.';$('dMsg').className='dialog-msg err';
+  }
+};
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')$('submitDialog').style.display='none';
+  if(e.key==='Enter'&&$('submitDialog').style.display==='flex')$('dSubmit').click();
+});
+
+// ── API ──
+async function submitScore(name){
+  const diff=$('diffSel').value;
+  try{
+    const res=await fetch('/api/score',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({game:GAME_ID(diff),player_name:name.slice(0,40),best_scores:score})});
+    if(!res.ok)return false;
+    const d=await res.json().catch(()=>({}));
+    return d.ok===true||d.success===true||d.status==='ok'||Object.keys(d).length===0;
+  }catch{return false}
+}
+async function loadRankList(diff){
+  const el=$(`lb${diff[0].toUpperCase()+diff.slice(1)}`);
+  if(!el)return;
+  try{
+    const res=await fetch(`/api/leaderboard?game=${encodeURIComponent(GAME_ID(diff))}&limit=5`,{cache:'no-store'});
+    const data=await res.json();
+    const rows=Array.isArray(data)?data:(data.rows||[]);
+    el.innerHTML='';
+    if(!rows.length){el.innerHTML='<div class="lb-empty">No scores yet</div>';return;}
+    const medals=['🥇','🥈','🥉','',''];
+    rows.forEach((r,i)=>{
+      const name=r.player_name??r.playerName??'Unknown';
+      const pts=r.best_scores??r.score??0;
+      el.innerHTML+=`<span class="lb-rank">#${i+1}</span><span class="lb-medal">${medals[i]||''}</span><span class="lb-name">${name}</span><span class="lb-pts">${pts}pts</span>`;
+    });
+  }catch{el.innerHTML='<div class="lb-empty">Could not load</div>';}
+}
+async function loadAllRanks(){await Promise.all(['easy','medium','hard'].map(loadRankList))}
+
+// ── INIT ──
+$('newBtn').onclick=newGame;
+$('playAgainBtn').onclick=newGame;
+loadAllRanks();
+</script>
+</body>
+</html>

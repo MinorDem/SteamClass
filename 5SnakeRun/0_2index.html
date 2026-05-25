@@ -1,0 +1,757 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Snake (Easy / Medium / Hard) + Leaderboard</title>
+  <style>
+    *{ box-sizing:border-box; }
+    body{
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:#ffffff;
+      margin:0;
+      padding:56px 16px 64px;
+      color:#111827;
+    }
+
+    .back-header{
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 1000;
+    }
+    .back-link{
+      text-decoration:none;
+      color:#000;
+      font-weight:800;
+      font-size:16px;
+    }
+
+    .layout{
+      max-width: 1220px;
+      margin: 0 auto;
+      display:grid;
+      grid-template-columns: minmax(0, 1fr) 380px;
+      gap: 24px;
+      align-items:start;
+    }
+    .main{
+      display:flex;
+      justify-content:center;
+    }
+    .game-shell{
+      width:100%;
+      max-width: 820px;
+    }
+
+    h1{ margin:0 0 8px; }
+    .sub{ margin:0 0 14px; color:#374151; font-size:14px; }
+
+    .topbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      margin: 8px 0 12px;
+    }
+    .topbar button{
+      padding:8px 14px;
+      border:1px solid #2563eb;
+      border-radius:10px;
+      background:#2563eb;
+      color:#fff;
+      cursor:pointer;
+      font-weight:800;
+      font-size:14px;
+    }
+    .topbar button.secondary{
+      background:#fff;
+      color:#2563eb;
+    }
+    .stats{
+      margin-left:auto;
+      font-weight:800;
+      color:#111827;
+      white-space:nowrap;
+    }
+    .stats span{ font-variant-numeric: tabular-nums; }
+
+    .difficulty{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin: 0 0 12px;
+    }
+    .difficulty label{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      padding:8px 10px;
+      border:1px solid #d1d5db;
+      border-radius:12px;
+      cursor:pointer;
+      user-select:none;
+      background:#fff;
+      font-weight:800;
+      font-size:14px;
+    }
+    .difficulty input{ cursor:pointer; }
+
+    .board-wrap{
+      width:100%;
+      display:flex;
+      justify-content:center;
+    }
+    canvas{
+      width: min(82vmin, 560px);
+      height: min(82vmin, 560px);
+      border: 2px solid #e5e7eb;
+      border-radius: 14px;
+      background:#fff;
+      touch-action:none;
+    }
+
+    .msg{
+      margin-top:12px;
+      min-height:22px;
+      font-weight:900;
+    }
+    .hint{
+      margin-top:6px;
+      min-height:18px;
+      font-size:14px;
+      color:#374151;
+    }
+
+    .rank-sidebar{
+      position: sticky;
+      top: 72px;
+      max-height: calc(100vh - 96px);
+      overflow:auto;
+    }
+    .rank-card{
+      border:1px solid #e5e7eb;
+      background:#fafafa;
+      border-radius:14px;
+      padding:12px 14px;
+    }
+    .rank-card h3{ margin:0 0 8px; }
+    .rank-note{
+      margin-top:10px;
+      font-size:12px;
+      color:#6b7280;
+      min-height:16px;
+    }
+    .rank-sub{
+      border:1px solid #e5e7eb;
+      background:#fff;
+      border-radius:12px;
+      padding:10px 12px;
+      margin-top:12px;
+    }
+    .rank-sub-title{
+      font-weight:900;
+      margin:0 0 6px;
+    }
+    .rank-sub ol{ margin:0; padding-left:22px; }
+    .rank-sub li{ margin:6px 0; }
+
+    @media (max-width: 980px){
+      .layout{ grid-template-columns: 1fr; }
+      .rank-sidebar{ position: static; max-height:none; }
+      .stats{ margin-left:0; }
+    }
+
+    /* Winner dialog */
+    .dialog-backdrop{
+      position:fixed;
+      inset:0;
+      background: rgba(17,24,39,0.45);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index: 4000;
+      padding: 16px;
+    }
+    .dialog{
+      width:100%;
+      max-width: 380px;
+      background:#fff;
+      border-radius:14px;
+      border:1px solid #e5e7eb;
+      box-shadow: 0 16px 30px rgba(0,0,0,0.2);
+      padding: 14px;
+    }
+    .dialog h4{ margin:0 0 8px; }
+    .dialog p{ margin:0 0 10px; color:#374151; font-size:14px; }
+    .dialog input{
+      width:100%;
+      padding:10px 12px;
+      border:1px solid #d1d5db;
+      border-radius:10px;
+      font-size:16px;
+      outline:none;
+    }
+    .dialog-actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:12px;
+      justify-content:flex-end;
+    }
+    .dialog-actions button{
+      padding:10px 14px;
+      border-radius:10px;
+      border:1px solid #9ca3af;
+      background:#f3f4f6;
+      cursor:pointer;
+      font-weight:900;
+      min-width: 110px;
+      color:#111827;
+    }
+    .dialog-actions button.primary{
+      background:#2563eb;
+      border-color:#2563eb;
+      color:#fff;
+      min-width: 140px;
+    }
+    .dialog-status{
+      margin-top:10px;
+      min-height:18px;
+      font-size:13px;
+      color:#374151;
+      font-weight:800;
+    }
+
+    footer{
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: #fafafa;
+      text-align: center;
+      padding: 8px 0;
+      font-size: 14px;
+      color: #555;
+      border-top: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+  <header class="back-header">
+    <a class="back-link" href="/puzzle">← Back to Puzzle Home</a>
+  </header>
+
+  <div class="layout">
+    <main class="main">
+      <div class="game-shell">
+        <h1>Snake</h1>
+        <p class="sub">
+          Use arrow keys (or WASD). On mobile: swipe. Score = apples eaten.
+        </p>
+
+        <div class="topbar">
+          <button id="startBtn">Start</button>
+          <button id="pauseBtn" class="secondary">Pause</button>
+          <button id="resetBtn" class="secondary">Reset</button>
+
+          <div class="stats">
+            Score: <span id="score">0</span> · Best: <span id="bestLocal">0</span> · Level: <span id="lvlText">EASY</span>
+          </div>
+        </div>
+
+        <div class="difficulty" role="radiogroup" aria-label="Difficulty">
+          <strong>Difficulty:</strong>
+          <label><input type="radio" name="difficulty" value="easy" checked /> Easy</label>
+          <label><input type="radio" name="difficulty" value="medium" /> Medium</label>
+          <label><input type="radio" name="difficulty" value="hard" /> Hard</label>
+        </div>
+
+        <div class="board-wrap">
+          <canvas id="c" width="560" height="560" aria-label="Snake board"></canvas>
+        </div>
+
+        <div class="msg" id="msg"></div>
+        <div class="hint" id="hint"></div>
+      </div>
+    </main>
+
+    <aside class="rank-sidebar">
+      <div class="rank-card">
+        <h3>🏆 Leaderboard</h3>
+        <div style="font-size:13px; opacity:0.85;">
+          Separate boards by difficulty. Ranking: Wins (high → low), then Best Score (high → low).
+        </div>
+
+        <div class="rank-sub">
+          <div class="rank-sub-title">Easy</div>
+          <ol id="rankEasy"><li>Loading…</li></ol>
+        </div>
+        <div class="rank-sub">
+          <div class="rank-sub-title">Medium</div>
+          <ol id="rankMedium"><li>Loading…</li></ol>
+        </div>
+        <div class="rank-sub">
+          <div class="rank-sub-title">Hard</div>
+          <ol id="rankHard"><li>Loading…</li></ol>
+        </div>
+
+        <div id="rankStatus" class="rank-note"></div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Winner Name Dialog -->
+  <div id="nameDialog" class="dialog-backdrop" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
+      <h4 id="dialogTitle">Game over</h4>
+      <p>Enter your name to submit your score.</p>
+      <input id="dialogNameInput" type="text" placeholder="Your name" maxlength="40" autocomplete="off" />
+      <div class="dialog-actions">
+        <button id="dialogCancel">Cancel (Esc)</button>
+        <button id="dialogSubmit" class="primary">Submit (Enter)</button>
+      </div>
+      <div id="dialogStatus" class="dialog-status"></div>
+    </div>
+  </div>
+
+  <footer>
+    © 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528. <br>
+    The STEAM Teacher is Chao Yu. For educational purposes only. All rights reserved.
+  </footer>
+
+  <script>
+document.addEventListener("DOMContentLoaded", () => {
+      const BASE_GAME_ID = "snake";
+
+      const canvas = document.getElementById("c");
+      const ctx = canvas.getContext("2d");
+
+      const startBtn = document.getElementById("startBtn");
+      const pauseBtn = document.getElementById("pauseBtn");
+      const resetBtn = document.getElementById("resetBtn");
+
+      const scoreEl = document.getElementById("score");
+      const bestLocalEl = document.getElementById("bestLocal");
+      const lvlTextEl = document.getElementById("lvlText");
+      const msgEl = document.getElementById("msg");
+      const hintEl = document.getElementById("hint");
+
+      const nameDialog = document.getElementById("nameDialog");
+      const dialogNameInput = document.getElementById("dialogNameInput");
+      const dialogSubmit = document.getElementById("dialogSubmit");
+      const dialogCancel = document.getElementById("dialogCancel");
+      const dialogStatus = document.getElementById("dialogStatus");
+
+      const CELL = 20;
+      const GRID = 28;
+
+      const LEVEL = {
+        easy:   { tickMs: 140, startLen: 4 },
+        medium: { tickMs: 105, startLen: 4 },
+        hard:   { tickMs: 78,  startLen: 4 }
+      };
+
+      let difficulty = "easy";
+
+      let snake = [];
+      let dir = {x:1, y:0};
+      let nextDir = {x:1, y:0};
+      let food = {x: 10, y: 10};
+      let score = 0;
+      let running = false;
+      let paused = false;
+      let tickId = null;
+      let scoreSubmitted = false;
+      let submittingScore = false;
+
+      let bestLocal = 0;
+
+      function keyForLocalBest() {
+        return `snake_best_${difficulty}`;
+      }
+
+      function gameKey(diff) {
+        return `${BASE_GAME_ID}_${diff}`;
+      }
+
+      function setMsg(m, h="") {
+        msgEl.textContent = m;
+        hintEl.textContent = h;
+      }
+
+      function loadLocalBest() {
+        const v = Number(localStorage.getItem(keyForLocalBest()) || "0");
+        bestLocal = Number.isFinite(v) ? v : 0;
+        bestLocalEl.textContent = String(bestLocal);
+      }
+
+      function saveLocalBest() {
+        localStorage.setItem(keyForLocalBest(), String(bestLocal));
+      }
+
+      function resetState(keepDiff=true) {
+        if (tickId) clearInterval(tickId);
+        tickId = null;
+        running = false;
+        paused = false;
+        scoreSubmitted = false;
+        submittingScore = false;
+
+        score = 0;
+        scoreEl.textContent = "0";
+
+        const d = LEVEL[difficulty];
+        snake = [];
+        const cx = Math.floor(GRID / 2);
+        const cy = Math.floor(GRID / 2);
+        for (let i = 0; i < d.startLen; i++) snake.push({x: cx - i, y: cy});
+
+        dir = {x:1, y:0};
+        nextDir = {x:1, y:0};
+
+        placeFood();
+        draw();
+
+        loadLocalBest();
+        lvlTextEl.textContent = difficulty.toUpperCase();
+        setMsg("Ready.", "Press Start. Controls: Arrow keys / WASD. Pause: P.");
+      }
+
+      function randInt(n) {
+        return Math.floor(Math.random() * n);
+      }
+
+      function placeFood() {
+        while (true) {
+          const x = randInt(GRID);
+          const y = randInt(GRID);
+          let ok = true;
+          for (const s of snake) if (s.x === x && s.y === y) { ok = false; break; }
+          if (ok) { food = {x,y}; return; }
+        }
+      }
+
+      function draw() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+
+        // board grid (very light)
+        ctx.globalAlpha = 0.08;
+        ctx.fillStyle = "#111827";
+        for (let y = 0; y < GRID; y++) {
+          for (let x = 0; x < GRID; x++) {
+            if (((x + y) & 1) === 0) ctx.fillRect(x*CELL, y*CELL, CELL, CELL);
+          }
+        }
+        ctx.globalAlpha = 1;
+
+        // food
+        ctx.fillStyle = "#ef4444";
+        ctx.beginPath();
+        ctx.arc(food.x*CELL + CELL/2, food.y*CELL + CELL/2, CELL*0.36, 0, Math.PI*2);
+        ctx.fill();
+
+        // snake
+        for (let i = 0; i < snake.length; i++) {
+          const s = snake[i];
+          ctx.fillStyle = i === 0 ? "#10b981" : "#22c55e";
+          ctx.fillRect(s.x*CELL + 1, s.y*CELL + 1, CELL - 2, CELL - 2);
+        }
+
+        // border
+        ctx.strokeStyle = "#e5e7eb";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(1,1,canvas.width-2,canvas.height-2);
+      }
+
+      function start() {
+        if (running) return;
+        running = true;
+        paused = false;
+        pauseBtn.textContent = "Pause";
+
+        const tickMs = LEVEL[difficulty].tickMs;
+
+        tickId = setInterval(step, tickMs);
+        setMsg("Go!", "Eat apples to increase your score.");
+      }
+
+      function togglePause() {
+        if (!running) return;
+        paused = !paused;
+        pauseBtn.textContent = paused ? "Resume" : "Pause";
+        setMsg(paused ? "Paused." : "Go!", paused ? "Press Resume (or P) to continue." : "Eat apples to increase your score.");
+      }
+
+      function step() {
+        if (!running || paused) return;
+
+        // commit direction
+        dir = nextDir;
+
+        const head = snake[0];
+        const nh = {x: head.x + dir.x, y: head.y + dir.y};
+
+        // wall collision
+        if (nh.x < 0 || nh.x >= GRID || nh.y < 0 || nh.y >= GRID) {
+          gameOver();
+          return;
+        }
+
+        // self collision
+        for (const s of snake) {
+          if (s.x === nh.x && s.y === nh.y) {
+            gameOver();
+            return;
+          }
+        }
+
+        snake.unshift(nh);
+
+        // eat
+        if (nh.x === food.x && nh.y === food.y) {
+          score++;
+          scoreEl.textContent = String(score);
+          if (score > bestLocal) {
+            bestLocal = score;
+            bestLocalEl.textContent = String(bestLocal);
+            saveLocalBest();
+          }
+          placeFood();
+        } else {
+          snake.pop();
+        }
+
+        draw();
+      }
+
+      function canTurn(nx, ny) {
+        return !(dir.x === -nx && dir.y === -ny);
+      }
+
+      function setDir(nx, ny) {
+        if (canTurn(nx, ny)) nextDir = {x:nx, y:ny};
+      }
+
+      function openDialog() {
+        dialogStatus.textContent = "";
+        dialogNameInput.value = "";
+        dialogSubmit.disabled = false;
+        dialogCancel.disabled = false;
+        dialogSubmit.textContent = "Submit (Enter)";
+        nameDialog.style.display = "flex";
+        nameDialog.setAttribute("aria-hidden","false");
+        setTimeout(() => dialogNameInput.focus(), 0);
+      }
+
+      function closeDialog() {
+        nameDialog.style.display = "none";
+        nameDialog.setAttribute("aria-hidden","true");
+      }
+
+      
+async function submitScore(name) {
+  // Store score in `best_scores` (positive integer). No negative best_seconds hacks.
+  try {
+    const res = await fetch("/api/score", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        game: gameKey(difficulty),
+        player_name: name,
+        best_scores: Math.max(0, Math.floor(score))
+      })
+    });
+    if (!res.ok) return false;
+    const data = await res.json().catch(() => ({}));
+    return data.ok === true || data.success === true || data.status === "ok" || Object.keys(data).length === 0;
+  } catch (e) {
+    console.error("submitScore error:", e);
+    return false;
+  }
+}
+
+function gameOver() {
+  if (tickId) clearInterval(tickId);
+  tickId = null;
+  running = false;
+  paused = false;
+  pauseBtn.textContent = "Pause";
+
+  const title = document.getElementById("dialogTitle");
+  if (title) title.textContent = `Game over — Score: ${score}`;
+
+  setMsg("Game over.", "Enter your name to submit your score, or press Reset to play again.");
+  openDialog();
+}
+
+// Controls
+      document.addEventListener("keydown", (e) => {
+        if (nameDialog.getAttribute("aria-hidden") === "false") return;
+        const k = e.key.toLowerCase();
+
+        if (k === "arrowup" || k === "w") { e.preventDefault(); setDir(0,-1); }
+        else if (k === "arrowdown" || k === "s") { e.preventDefault(); setDir(0,1); }
+        else if (k === "arrowleft" || k === "a") { e.preventDefault(); setDir(-1,0); }
+        else if (k === "arrowright" || k === "d") { e.preventDefault(); setDir(1,0); }
+        else if (k === "p") { e.preventDefault(); togglePause(); }
+        else if (k === " " && !running) { e.preventDefault(); start(); }
+      });
+
+      // Mobile swipe
+      let touchStart = null;
+      canvas.addEventListener("touchstart", (e) => {
+        if (!e.touches || !e.touches[0]) return;
+        touchStart = {x: e.touches[0].clientX, y: e.touches[0].clientY};
+      }, {passive:true});
+
+      canvas.addEventListener("touchend", (e) => {
+        if (!touchStart) return;
+        const t = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0] : null;
+        if (!t) return;
+        const dx = t.clientX - touchStart.x;
+        const dy = t.clientY - touchStart.y;
+        touchStart = null;
+
+        if (Math.abs(dx) < 18 && Math.abs(dy) < 18) return;
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+          if (dx > 0) setDir(1,0);
+          else setDir(-1,0);
+        } else {
+          if (dy > 0) setDir(0,1);
+          else setDir(0,-1);
+        }
+      }, {passive:true});
+
+      // Buttons
+      startBtn.addEventListener("click", start);
+      pauseBtn.addEventListener("click", togglePause);
+      resetBtn.addEventListener("click", () => resetState(true));
+
+      document.querySelectorAll('input[name="difficulty"]').forEach(r => {
+        r.addEventListener("change", (e) => {
+          difficulty = e.target.value;
+          resetState(true);
+          loadRankBoards();
+        });
+      });
+
+      // Dialog key handlers
+      function dialogKeydown(e) {
+        if (nameDialog.getAttribute("aria-hidden") === "true") return;
+        if (e.key === "Escape") {
+          e.preventDefault();
+          closeDialog();
+        }
+      }
+      document.addEventListener("keydown", dialogKeydown);
+
+      dialogNameInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          if (!scoreSubmitted && !submittingScore) dialogSubmit.click();
+        } else if (e.key === "Escape") {
+          e.preventDefault();
+          closeDialog();
+        }
+      });
+
+      dialogCancel.addEventListener("click", () => closeDialog());
+
+      dialogSubmit.addEventListener("click", async () => {
+        if (scoreSubmitted) {
+          dialogStatus.textContent = "This score has already been submitted.";
+          return;
+        }
+
+        if (submittingScore) return;
+
+        const name = (dialogNameInput.value || "").trim();
+        if (!name) {
+          dialogStatus.textContent = "Name is required.";
+          return;
+        }
+
+        submittingScore = true;
+        dialogSubmit.disabled = true;
+        dialogCancel.disabled = true;
+        dialogStatus.textContent = "Saving…";
+
+        const ok = await submitScore(name);
+
+        if (ok) {
+          scoreSubmitted = true;
+          dialogStatus.textContent = "Saved ✅ This score cannot be submitted again.";
+          dialogSubmit.textContent = "Submitted";
+          await loadRankBoards();
+          setTimeout(() => closeDialog(), 450);
+        } else {
+          submittingScore = false;
+          dialogStatus.textContent = "Could not save. Please tell the teacher.";
+          dialogSubmit.disabled = false;
+          dialogCancel.disabled = false;
+        }
+      });
+
+      
+// ===== Leaderboards (right) =====
+async function loadOneBoard(diff, listId){
+  const list = document.getElementById(listId);
+  if (!list) return;
+
+  const game = gameKey(diff);
+
+  list.innerHTML = "<li>Loading…</li>";
+
+  try{
+    const res = await fetch(`/api/leaderboard?game=${encodeURIComponent(game)}&limit=20`, { cache: "no-store" });
+    const data = await res.json();
+    const rows = Array.isArray(data) ? data : (data.rows || []);
+
+    list.innerHTML = "";
+    if (!rows.length){
+      list.innerHTML = "<li>No scores yet.</li>";
+      return;
+    }
+
+    // Rank: win_count DESC, then best_scores DESC. Ignore best_seconds.
+    const norm = rows.map(r => ({
+      name: (r.player_name ?? r.playerName ?? "Unknown").toString(),
+      wins: Number(r.win_count ?? r.wins ?? r.winCount ?? 0) || 0,
+      best: Number(r.best_scores ?? r.bestScores ?? r.bestScore ?? r.score ?? 0) || 0
+    })).sort((a,b) => (b.wins - a.wins) || (b.best - a.best));
+
+    norm.slice(0, 20).forEach((r, i) => {
+      const li = document.createElement("li");
+      li.textContent = `#${i+1} ${r.name} — Wins: ${r.wins} — Best Score: ${r.best}`;
+      list.appendChild(li);
+    });
+
+  }catch(e){
+    console.error("loadOneBoard error:", e);
+    list.innerHTML = "<li class='lb-err'>Could not load leaderboard.</li>";
+  }
+}
+
+async function loadRankBoards(){
+  const status = document.getElementById("rankStatus");
+  if (status) status.textContent = "Loading…";
+
+  await Promise.all([
+    loadOneBoard("easy", "rankEasy"),
+    loadOneBoard("medium", "rankMedium"),
+    loadOneBoard("hard", "rankHard")
+  ]);
+
+  if (status) status.textContent = "Updated just now.";
+}
+
+// Init
+      resetState(true);
+      loadRankBoards();
+    });
+</script>
+</body>
+</html>

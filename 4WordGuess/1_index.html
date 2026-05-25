@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title> Word Guess (5 Letters)</title>
+  <style>
+    body{
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:#fff;
+      margin:0;
+      padding:24px;
+      color:#111827;
+    }
+    .container{ max-width:720px; margin:0 auto; }
+    h1{ margin:0 0 10px; }
+    .sub{ color:#374151; margin:0 0 16px; }
+
+    .controls{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin: 12px 0 18px;
+    }
+    input[type="text"]{
+      width: 220px;
+      padding: 8px 10px;
+      font-size: 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      outline: none;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    button{
+      padding: 8px 14px;
+      border: 1px solid #2563eb;
+      border-radius: 6px;
+      background:#2563eb;
+      color:#fff;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    button.secondary{
+      background:#fff;
+      color:#2563eb;
+    }
+
+    .board{
+      display:grid;
+      grid-template-rows: repeat(6, 1fr);
+      gap:3px;
+      max-width: 360px;
+      margin: 10px 0 16px;
+    }
+    .row{
+      display:grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap:10px;
+    }
+    .cell{
+      width: 56px;
+      height: 56px;
+      border: 2px solid #d1d5db;
+      border-radius: 8px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight: 800;
+      font-size: 22px;
+      text-transform: uppercase;
+      user-select:none;
+    }
+
+    /* Colors */
+    .green { background:#22c55e; border-color:#22c55e; color:#fff; }
+    .yellow{ background:#eab308; border-color:#eab308; color:#fff; }
+    .black { background:#111827; border-color:#111827; color:#fff; }
+
+    .msg{ font-weight:700; min-height:22px; margin-top:8px; }
+    .hint{ color:#374151; font-size:14px; min-height:18px; }
+
+    .kbd {
+      margin-top: 18px;
+      max-width: 560px;
+    }
+
+    .kbd-row {
+      display: flex;
+      gap: 6px;
+      margin: 6px 0;
+    }
+
+    .key{
+      padding: 10px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background:#f3f4f6;
+      font-weight:700;
+      cursor:pointer;
+      min-width: 34px;
+      text-align:center;
+    }
+    .key.green { background:#22c55e; border-color:#22c55e; color:#fff; }
+    .key.yellow{ background:#eab308; border-color:#eab308; color:#fff; }
+    .key.black { background:#111827; border-color:#111827; color:#fff; }
+
+    .small{ font-size:12px; color:#6b7280; margin-top:6px; }
+  </style>
+</head>
+<body>
+
+  <header style="max-width:720px;margin:0 auto 14px;display:flex;align-items:center;gap:10px;">
+    <a href="/puzzle" style="text-decoration:none;color:#2563eb;font-weight:700;">← Back to Puzzle Home</a>
+  </header>
+
+  <div class="container">
+    <h1>Guess the Word (5 Letters)</h1>
+    <p class="sub">
+      Green = correct letter & correct position <br>
+      Yellow = correct letter but wrong position <br>
+      Black = not in the word
+    </p>
+
+    <div class="controls">
+      <input id="guessInput" type="text" maxlength="5" placeholder="Type 5 letters" autocomplete="off" />
+      <button id="submitBtn">Enter</button>
+      <button id="resetBtn" class="secondary">New Word</button>
+    </div>
+
+    <div class="board" id="board"></div>
+
+    <div class="msg" id="msg"></div>
+    <div class="hint" id="hint"></div>
+
+    <div class="kbd" id="kbd"></div>
+    <div class="small">Tip: You can type with your keyboard and press Enter.</div>
+  </div>
+
+  <script>
+    // Simple built-in word list (all 5 letters). Add your own!
+    const WORDS = [
+      "APPLE","HOUSE","SMART","PLANT","HORSE","CHINA","TEACH","LEARN","MUSIC","BRAVE",
+      "RIVER","WATER","LIGHT","CLOUD","STONE","PARTY","GREEN","YOUTH","WORLD","SUGAR",
+      "DEREK","AIDEN","AEDEN","CHILE"
+    ];
+
+    const MAX_ROWS = 6;
+    const WORD_LEN = 5;
+
+    let answer = pickWord();
+    let rowIndex = 0;
+    let gameOver = false;
+
+    // Keyboard coloring: best known status for each letter
+    // rank: green(3) > yellow(2) > black(1) > unknown(0)
+    const keyRank = { green: 3, yellow: 2, black: 1, "": 0 };
+    const letterStatus = {}; // e.g., { A: "green" }
+
+    const boardEl = document.getElementById("board");
+    const msgEl = document.getElementById("msg");
+    const hintEl = document.getElementById("hint");
+    const guessInput = document.getElementById("guessInput");
+    const kbdEl = document.getElementById("kbd");
+
+    function pickWord() {
+      return WORDS[Math.floor(Math.random() * WORDS.length)];
+    }
+
+    function buildBoard() {
+      boardEl.innerHTML = "";
+      for (let r = 0; r < MAX_ROWS; r++) {
+        const row = document.createElement("div");
+        row.className = "row";
+        row.dataset.row = r;
+
+        for (let c = 0; c < WORD_LEN; c++) {
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          cell.dataset.col = c;
+          row.appendChild(cell);
+        }
+        boardEl.appendChild(row);
+      }
+    }
+
+    function buildKeyboard() {
+      const rows = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
+      kbdEl.innerHTML = "";
+
+      rows.forEach((letters, idx) => {
+        const r = document.createElement("div");
+        r.className = "kbd-row";
+
+        // Add left padding to stagger rows (like a real keyboard)
+        if (idx === 1) r.style.marginLeft = "18px"; // A row
+        if (idx === 2) r.style.marginLeft = "48px"; // Z row
+
+        for (const ch of letters) {
+          const btn = document.createElement("div");
+          btn.className = "key";
+          btn.textContent = ch;
+          btn.addEventListener("click", () => {
+            if (gameOver) return;
+            if (guessInput.value.length < WORD_LEN) {
+              guessInput.value += ch;
+              guessInput.focus();
+            }
+          });
+          r.appendChild(btn);
+        }
+
+        kbdEl.appendChild(r);
+      });
+
+      // Control row: Enter + Backspace
+      const ctrl = document.createElement("div");
+      ctrl.className = "kbd-row";
+      ctrl.style.marginLeft = "48px";
+
+      const enter = document.createElement("div");
+      enter.className = "key";
+      enter.style.minWidth = "80px";
+      enter.textContent = "ENTER";
+      enter.addEventListener("click", submitGuess);
+
+      const back = document.createElement("div");
+      back.className = "key";
+      back.style.minWidth = "110px";
+      back.textContent = "BACKSPACE";
+      back.addEventListener("click", () => {
+        if (gameOver) return;
+        guessInput.value = guessInput.value.slice(0, -1);
+        guessInput.focus();
+      });
+
+      ctrl.appendChild(enter);
+      ctrl.appendChild(back);
+      kbdEl.appendChild(ctrl);
+
+      repaintKeyboard();
+    }
+
+
+    function repaintKeyboard() {
+      const keys = kbdEl.querySelectorAll(".key");
+      keys.forEach((k) => {
+        const ch = k.textContent;
+        if (ch.length === 1 && /[A-Z]/.test(ch)) {
+          k.classList.remove("green","yellow","black");
+          const st = letterStatus[ch] || "";
+          if (st) k.classList.add(st);
+        }
+      });
+    }
+
+    // Wordle-style scoring:
+    // 1) mark greens
+    // 2) for remaining letters, mark yellow if exists in remaining answer letters
+    function scoreGuess(guess, ans) {
+      const result = Array(WORD_LEN).fill("black");
+      const ansArr = ans.split("");
+      const used = Array(WORD_LEN).fill(false);
+
+      // Greens
+      for (let i = 0; i < WORD_LEN; i++) {
+        if (guess[i] === ansArr[i]) {
+          result[i] = "green";
+          used[i] = true;
+        }
+      }
+
+      // Yellows
+      for (let i = 0; i < WORD_LEN; i++) {
+        if (result[i] === "green") continue;
+        const ch = guess[i];
+
+        let foundIndex = -1;
+        for (let j = 0; j < WORD_LEN; j++) {
+          if (!used[j] && ansArr[j] === ch) {
+            foundIndex = j;
+            break;
+          }
+        }
+        if (foundIndex !== -1) {
+          result[i] = "yellow";
+          used[foundIndex] = true;
+        }
+      }
+
+      return result;
+    }
+
+    function updateLetterStatus(guess, colors) {
+      for (let i = 0; i < WORD_LEN; i++) {
+        const ch = guess[i];
+        const st = colors[i];
+        const prev = letterStatus[ch] || "";
+        if (keyRank[st] > keyRank[prev]) {
+          letterStatus[ch] = st;
+        }
+      }
+      repaintKeyboard();
+    }
+
+    function paintRow(r, guess, colors) {
+      const row = boardEl.querySelector(`.row[data-row="${r}"]`);
+      const cells = row.querySelectorAll(".cell");
+      for (let i = 0; i < WORD_LEN; i++) {
+        cells[i].textContent = guess[i];
+        cells[i].classList.remove("green","yellow","black");
+        cells[i].classList.add(colors[i]);
+      }
+    }
+
+    function setMessage(msg, hint="") {
+      msgEl.textContent = msg;
+      hintEl.textContent = hint;
+    }
+
+    function submitGuess() {
+      if (gameOver) return;
+
+      let raw = guessInput.value.trim().toUpperCase();
+      raw = raw.replace(/[^A-Z]/g, ""); // letters only
+
+      if (raw.length !== WORD_LEN) {
+        setMessage("Please enter exactly 5 letters.", "");
+        return;
+      }
+
+      // Score and render
+      const colors = scoreGuess(raw, answer);
+      paintRow(rowIndex, raw, colors);
+      updateLetterStatus(raw, colors);
+
+      // Check win
+      if (raw === answer) {
+        setMessage("🎉 You win!", "Click “New Word” to play again.");
+        gameOver = true;
+        return;
+      }
+
+      rowIndex++;
+      guessInput.value = "";
+
+      if (rowIndex >= MAX_ROWS) {
+        setMessage(`Game over. The word was ${answer}.`, "Click “New Word” to try again.");
+        gameOver = true;
+      } else {
+        setMessage("Keep going!", `Attempts left: ${MAX_ROWS - rowIndex}`);
+      }
+      guessInput.focus();
+    }
+
+    function resetGame() {
+      answer = pickWord();
+      rowIndex = 0;
+      gameOver = false;
+
+      for (const k in letterStatus) delete letterStatus[k];
+
+      buildBoard();
+      buildKeyboard();
+      setMessage("New game started.", "Enter a 5-letter word and press Enter.");
+      guessInput.value = "";
+      guessInput.focus();
+    }
+
+    // Buttons + typing support
+    document.getElementById("submitBtn").addEventListener("click", submitGuess);
+    document.getElementById("resetBtn").addEventListener("click", resetGame);
+
+    document.addEventListener("keydown", (e) => {
+      if (gameOver) return;
+
+      if (e.key === "Enter") {
+        submitGuess();
+      } else if (e.key === "Backspace") {
+        // Let the input handle it naturally if focused
+      } else if (/^[a-zA-Z]$/.test(e.key)) {
+        // Keep focus in input for easy typing
+        if (document.activeElement !== guessInput) guessInput.focus();
+      }
+    });
+
+    // Init
+    resetGame();
+  </script>
+
+  <footer style="
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: #fafafa;
+        text-align: center;
+        padding: 8px 0;
+        font-size: 14px;
+        color: #555;
+        border-top: 1px solid #ccc;
+      ">
+        © 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528. <br>
+        The STEAM Teacher is Chao Yu. For educational purposes only. All rights reserved.
+    </footer>
+</body>
+</html>

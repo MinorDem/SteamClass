@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Number Guessing Game (3 Levels)</title>
+  <style>
+    *{ box-sizing:border-box; }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: #ffffff;
+      margin: 0;
+      padding: 56px 16px 64px;
+      color:#111827;
+    }
+
+    h1 { margin: 0 0 8px; }
+    .container {
+      width: 100%;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 10px 0;
+      align-items: center;
+    }
+
+    label {
+      font-size: 14px;
+      color: #111827;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      cursor: pointer;
+      user-select: none;
+      background:#fff;
+    }
+
+    input[type="radio"] { cursor: pointer; }
+
+    input[type="number"] {
+      width: 100%;
+      max-width: 360px;
+      padding: 8px 10px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      margin: 6px 0;
+      outline: none;
+    }
+
+    button {
+      padding: 8px 14px;
+      border: 1px solid #2563eb;
+      border-radius: 6px;
+      background: #2563eb;
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+      margin-right: 8px;
+      font-weight: 700;
+    }
+    button.secondary { background: white; color: #2563eb; }
+
+    .result {
+      margin-top: 12px;
+      font-weight: 700;
+      min-height: 22px;
+    }
+    .hint { margin-top: 6px; color: #374151; min-height: 18px; }
+    .stats { margin-top: 8px; color: #374151; font-size: 14px; min-height: 18px; }
+
+    .back-header{
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 1000;
+    }
+    .back-link{
+      text-decoration:none;
+      color:#000000;
+      font-weight:700;
+      font-size:16px;
+    }
+
+    .layout{
+      max-width: 1180px;
+      margin: 0 auto;
+      display:grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 24px;
+      align-items:start;
+    }
+    .main{
+      display:flex;
+      justify-content:center;
+    }
+    .rank-sidebar{
+      position: sticky;
+      top: 72px;
+      max-height: calc(100vh - 96px);
+      overflow:auto;
+    }
+    .rank-card{
+      border:1px solid #e5e7eb;
+      background:#fafafa;
+      border-radius:14px;
+      padding:12px 14px;
+    }
+    .rank-card h3{ margin:0 0 8px; }
+    .rank-note{
+      margin-top:10px;
+      font-size:12px;
+      color:#6b7280;
+      min-height:16px;
+    }
+    .rank-sub{
+      border:1px solid #e5e7eb;
+      background:#fff;
+      border-radius:12px;
+      padding:10px 12px;
+      margin-top:12px;
+    }
+    .rank-sub-title{
+      font-weight:900;
+      margin:0 0 6px;
+    }
+    .rank-sub ol{ margin:0; padding-left:22px; }
+    .rank-sub li{ margin:6px 0; }
+
+    @media (max-width: 980px){
+      .layout{ grid-template-columns: 1fr; }
+      .rank-sidebar{ position: static; max-height:none; }
+    }
+
+    /* Winner dialog */
+    .dialog-backdrop{
+      position:fixed;
+      inset:0;
+      background: rgba(17,24,39,0.45);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index: 4000;
+      padding: 16px;
+    }
+    .dialog{
+      width:100%;
+      max-width: 380px;
+      background:#fff;
+      border-radius:14px;
+      border:1px solid #e5e7eb;
+      box-shadow: 0 16px 30px rgba(0,0,0,0.2);
+      padding: 14px;
+    }
+    .dialog h4{ margin:0 0 8px; }
+    .dialog p{ margin:0 0 10px; color:#374151; font-size:14px; }
+    .dialog input{
+      width:100%;
+      padding:10px 12px;
+      border:1px solid #d1d5db;
+      border-radius:10px;
+      font-size:16px;
+      outline:none;
+    }
+    .dialog-actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:12px;
+      justify-content:flex-end;
+    }
+    .dialog-actions button {
+      background: #f3f4f6;
+      border: 1px solid #9ca3af;
+      color: #111827;
+    }
+    .dialog-actions button.primary {
+      background: #2563eb;
+      border-color: #2563eb;
+      color: #fff;
+    }
+    .dialog-status{
+      margin-top:10px;
+      min-height:18px;
+      font-size:13px;
+      color:#374151;
+      font-weight:700;
+    }
+
+    footer{
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: #fafafa;
+      text-align: center;
+      padding: 8px 0;
+      font-size: 14px;
+      color: #555;
+      border-top: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+  <header class="back-header">
+    <a class="back-link" href="/puzzle">← Back to Puzzle Home</a>
+  </header>
+
+  <div class="layout">
+    <main class="main">
+      <div class="container">
+        <h1>Number Guessing Game</h1>
+
+        <p id="rangeText">Please choose a number between <strong>1</strong> and <strong>1,000</strong>.</p>
+
+        <div class="row">
+          <label>
+            <input type="radio" name="level" value="easy" checked />
+            Easy (1–1,000)
+          </label>
+          <label>
+            <input type="radio" name="level" value="medium" />
+            Medium (1–1,000,000)
+          </label>
+          <label>
+            <input type="radio" name="level" value="hard" />
+            Hard (1–1,000,000,000)
+          </label>
+        </div>
+
+        <div class="row">
+          <input id="guessInput" type="number" placeholder="Enter your guess..." />
+        </div>
+
+        <div class="row">
+          <button id="guessBtn">Guess</button>
+          <button class="secondary" id="resetBtn">Reset</button>
+        </div>
+
+        <div class="result" id="result"></div>
+        <div class="hint" id="hint"></div>
+        <div class="stats" id="stats"></div>
+        <div class="hint" id="reveal" style="display:none; font-weight:800;"></div>
+      </div>
+    </main>
+
+    <aside class="rank-sidebar">
+      <div class="rank-card">
+        <h3>🏆 Leaderboard</h3>
+        <div style="font-size:13px; opacity:0.85;">
+          Separate boards by level. Ranking: Wins (high → low), then Best Attempts (low → high).
+        </div>
+
+        <div class="rank-sub">
+          <div class="rank-sub-title">Easy</div>
+          <ol id="rankEasy"><li>Loading…</li></ol>
+        </div>
+
+        <div class="rank-sub">
+          <div class="rank-sub-title">Medium</div>
+          <ol id="rankMedium"><li>Loading…</li></ol>
+        </div>
+
+        <div class="rank-sub">
+          <div class="rank-sub-title">Hard</div>
+          <ol id="rankHard"><li>Loading…</li></ol>
+        </div>
+
+        <div id="rankStatus" class="rank-note"></div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Winner Name Dialog -->
+  <div id="nameDialog" class="dialog-backdrop" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
+      <h4 id="dialogTitle">You won 🎉</h4>
+      <p>Enter your name for the leaderboard.</p>
+      <input id="dialogNameInput" type="text" placeholder="Your name" maxlength="40" autocomplete="off" />
+      <div class="dialog-actions">
+        <button id="dialogCancel">Cancel (Esc)</button>
+        <button id="dialogSubmit" class="primary">Submit (Enter)</button>
+      </div>
+      <div id="dialogStatus" class="dialog-status"></div>
+    </div>
+  </div>
+
+  <script>
+    const BASE_GAME_ID = "numberguess";
+
+    const LEVELS = {
+      easy:   { max: 1000 },
+      medium: { max: 1000000 },
+      hard:   { max: 1000000000 }
+    };
+
+    let currentLevel = "easy";
+    let maxValue = LEVELS[currentLevel].max;
+    let target = randomTarget(maxValue);
+    let attempts = 0;
+    let minRange = 1;
+    let maxRange = maxValue;
+    let gameWon = false;
+
+    const rangeText = document.getElementById("rangeText");
+    const guessInput = document.getElementById("guessInput");
+    const resultEl = document.getElementById("result");
+    const hintEl = document.getElementById("hint");
+    const statsEl = document.getElementById("stats");
+    const revealEl = document.getElementById("reveal");
+
+    const nameDialog = document.getElementById("nameDialog");
+    const dialogNameInput = document.getElementById("dialogNameInput");
+    const dialogSubmit = document.getElementById("dialogSubmit");
+    const dialogCancel = document.getElementById("dialogCancel");
+    const dialogStatus = document.getElementById("dialogStatus");
+
+    function gameKey(level){ return `${BASE_GAME_ID}_${level}`; }
+
+    function randomTarget(max) {
+      return Math.floor(Math.random() * max) + 1;
+    }
+
+    function formatNum(n) {
+      return n.toLocaleString("en-US");
+    }
+
+    function setLevel(levelKey) {
+      currentLevel = levelKey;
+      maxValue = LEVELS[levelKey].max;
+      guessInput.min = "1";
+      guessInput.max = String(maxValue);
+      resetGame(true);
+      loadRankBoards();
+    }
+
+    function updateRangeUI() {
+      rangeText.innerHTML = `Please choose a number between <strong>1</strong> and <strong>${formatNum(maxValue)}</strong>.`;
+    }
+
+    function updateStats() {
+      statsEl.textContent = `Attempts: ${attempts}`;
+    }
+
+    function show(resultText, hintText) {
+      resultEl.textContent = resultText || "";
+      hintEl.textContent = hintText || "";
+    }
+
+    async function submitWin(playerName, attemptsCount){
+      try {
+        const res = await fetch("/api/score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            game: gameKey(currentLevel),
+            player_name: playerName,
+            seconds: Math.max(1, Math.floor(attemptsCount))
+          })
+        });
+        if (!res.ok) return false;
+        const data = await res.json().catch(() => ({}));
+        return data.ok === true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function openWinDialog(){
+      dialogStatus.textContent = "";
+      dialogNameInput.value = "";
+      nameDialog.style.display = "flex";
+      nameDialog.setAttribute("aria-hidden", "false");
+      setTimeout(() => dialogNameInput.focus(), 0);
+    }
+
+    function closeWinDialog(){
+      nameDialog.style.display = "none";
+      nameDialog.setAttribute("aria-hidden", "true");
+    }
+
+    async function submitGuess() {
+      if (gameWon) return;
+
+      const raw = String(guessInput.value || "").trim();
+
+      // Secret hint: enter 1000000007 to reveal the target (does NOT count as an attempt)
+      if (raw === "1000000007") {
+        if (revealEl) {
+          revealEl.style.display = "block";
+          revealEl.textContent = `🔎 Hint: The target number is ${formatNum(target)}.`;
+        }
+        guessInput.value = "";
+        guessInput.focus();
+        return; // do not count as an attempt
+      }
+
+
+      if (gameWon) return;
+
+      const value = Number(guessInput.value);
+
+      if (!Number.isInteger(value) || value < 1 || value > maxValue) {
+        show(`Please enter an integer between 1 and ${formatNum(maxValue)}.`, "");
+        return;
+      }
+
+      attempts++;
+
+      if (value === target) {
+        gameWon = true;
+        show(`🎉 Congratulations! You guessed ${formatNum(target)} correctly!`, `Level: ${currentLevel.toUpperCase()} · Attempts: ${attempts}`);
+        updateStats();
+        openWinDialog();
+      } else if (value < target) {
+        minRange = Math.max(minRange, value + 1);
+        show("Too low ⬆️", `Hint range: ${formatNum(minRange)} – ${formatNum(maxRange)}`);
+      } else {
+        maxRange = Math.min(maxRange, value - 1);
+        show("Too high ⬇️", `Hint range: ${formatNum(minRange)} – ${formatNum(maxRange)}`);
+      }
+
+      updateStats();
+      guessInput.value = "";
+      guessInput.focus();
+    }
+
+    function resetGame(hardReset = false) {
+      target = randomTarget(maxValue);
+      attempts = 0;
+      minRange = 1;
+      maxRange = maxValue;
+      gameWon = false;
+
+      updateRangeUI();
+      updateStats();
+      show("Game reset. I picked a new number.", `Hint range: ${formatNum(minRange)} – ${formatNum(maxRange)}`);
+      if (!hardReset) guessInput.focus();
+    }
+
+    document.getElementById("guessBtn").addEventListener("click", submitGuess);
+    document.getElementById("resetBtn").addEventListener("click", () => resetGame(false));
+    guessInput.addEventListener("keydown", (e) => { if (e.key === "Enter") submitGuess(); });
+
+    document.querySelectorAll('input[name="level"]').forEach(radio => {
+      radio.addEventListener("change", (e) => setLevel(e.target.value));
+    });
+
+    dialogNameInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        dialogSubmit.click();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        closeWinDialog();
+      }
+    });
+
+    dialogCancel.addEventListener("click", () => closeWinDialog());
+
+    dialogSubmit.addEventListener("click", async () => {
+      const playerName = (dialogNameInput.value || "").trim();
+      if (!playerName) {
+        dialogStatus.textContent = "Name is required.";
+        return;
+      }
+      dialogSubmit.disabled = true;
+      dialogCancel.disabled = true;
+      dialogStatus.textContent = "Saving…";
+
+      const ok = await submitWin(playerName, attempts);
+      if (ok) {
+        dialogStatus.textContent = "Saved ✅";
+        await loadRankBoards();
+        setTimeout(() => closeWinDialog(), 350);
+      } else {
+        dialogStatus.textContent = "Could not save. Please tell the teacher.";
+      }
+
+      dialogSubmit.disabled = false;
+      dialogCancel.disabled = false;
+    });
+
+    async function loadOneBoard(level, listId){
+      const list = document.getElementById(listId);
+      if (!list) return;
+
+      try{
+        const res = await fetch(`/api/leaderboard?game=${encodeURIComponent(gameKey(level))}&limit=10`, { cache: "no-store" });
+        const data = await res.json();
+        const rows = Array.isArray(data) ? data : (data.rows || []);
+
+        list.innerHTML = "";
+        if (!rows.length){
+          list.innerHTML = "<li>No scores yet.</li>";
+          return;
+        }
+
+        rows.forEach((r, i) => {
+          const name = r.player_name ?? "Unknown";
+          const wins = r.win_count ?? 0;
+          const best = r.best_seconds ?? null;
+
+          const li = document.createElement("li");
+          li.textContent = `#${i+1} ${name} — Wins: ${wins}` + (best != null ? ` — Attempts: ${best}` : "");
+          list.appendChild(li);
+        });
+      } catch(e){
+        list.innerHTML = "<li>Could not load leaderboard.</li>";
+      }
+    }
+
+    async function loadRankBoards(){
+      const status = document.getElementById("rankStatus");
+      if (status) status.textContent = "Loading…";
+
+      await Promise.all([
+        loadOneBoard("easy", "rankEasy"),
+        loadOneBoard("medium", "rankMedium"),
+        loadOneBoard("hard", "rankHard"),
+      ]);
+
+      if (status) status.textContent = "Updated just now.";
+    }
+
+    setLevel("easy");
+    loadRankBoards();
+  </script>
+
+  <footer>
+    © 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528. <br>
+    The STEAM Teacher is Chao Yu. For educational purposes only. All rights reserved.
+  </footer>
+</body>
+</html>
