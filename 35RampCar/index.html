@@ -1,0 +1,1164 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ramp Car Chase</title>
+  <style>
+    :root {
+      --ink: #102033;
+      --muted: #5f6f84;
+      --line: #d8e1ec;
+      --panel: #ffffff;
+      --accent: #2563eb;
+      --danger: #dc2626;
+      --ok: #16a34a;
+      --road: #384452;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(49, 145, 214, .28), transparent 36%),
+        linear-gradient(135deg, #e8f3ff 0%, #f8fafc 52%, #edf2f7 100%);
+    }
+
+    body {
+      padding: 58px 14px 38px;
+      overflow-x: hidden;
+    }
+
+    .back-home {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 20;
+      padding: 9px 13px;
+      border: 2px solid #1d4ed8;
+      border-radius: 8px;
+      color: #17345f;
+      background: rgba(255, 255, 255, .94);
+      box-shadow: 0 5px 0 rgba(37, 99, 235, .18);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .page {
+      width: min(100%, 1500px);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 310px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .game-card,
+    .side-card,
+    .rank-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 16px 42px rgba(15, 23, 42, .1);
+    }
+
+    .game-card {
+      padding: 14px;
+      overflow: hidden;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: clamp(28px, 4vw, 46px);
+      line-height: 1;
+    }
+
+    .sub {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .pill {
+      min-width: 82px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f8fafc;
+      color: var(--muted);
+      text-align: center;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .pill span {
+      display: block;
+      margin-top: 2px;
+      color: var(--ink);
+      font-size: 18px;
+    }
+
+    .canvas-wrap {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid #94a3b8;
+      border-radius: 8px;
+      background: #111827;
+      aspect-ratio: 16 / 9;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(15, 23, 42, .42);
+      color: #fff;
+      text-align: center;
+    }
+
+    .overlay.hidden { display: none; }
+
+    .overlay-box {
+      width: min(100%, 430px);
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, .4);
+      border-radius: 8px;
+      background: rgba(15, 23, 42, .78);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, .32);
+    }
+
+    .overlay-box h2 {
+      margin: 0 0 8px;
+      font-size: 30px;
+    }
+
+    .overlay-box p {
+      margin: 0 0 14px;
+      line-height: 1.45;
+    }
+
+    .button-row,
+    .mobile-controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    button {
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      background: var(--accent);
+      color: #fff;
+      padding: 9px 12px;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: #fff;
+      color: var(--accent);
+    }
+
+    .side {
+      display: grid;
+      gap: 14px;
+    }
+
+    .side-card,
+    .rank-card {
+      padding: 16px;
+    }
+
+    .side-card h2,
+    .rank-card h2 {
+      margin: 0 0 8px;
+      font-size: 20px;
+    }
+
+    .control-list,
+    .leader-list {
+      margin: 0;
+      padding-left: 22px;
+    }
+
+    .control-list li,
+    .leader-list li {
+      padding: 6px 0;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    .rank-note {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.4;
+    }
+
+    .message {
+      min-height: 34px;
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.4;
+    }
+
+    .mobile-controls button {
+      flex: 1 1 72px;
+      min-height: 44px;
+      font-size: 18px;
+    }
+
+    #nameDialog {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(15, 23, 42, .38);
+    }
+
+    .dialog {
+      width: min(100%, 380px);
+      padding: 20px;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 24px 70px rgba(15, 23, 42, .28);
+    }
+
+    .dialog h3 {
+      margin: 0 0 8px;
+      font-size: 22px;
+    }
+
+    .dialog p {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .dialog input {
+      width: 100%;
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--ink);
+      font: 800 15px Arial, Helvetica, sans-serif;
+    }
+
+    .dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .dialog button {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+    }
+
+    .dialog button.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .dialog-status {
+      min-height: 18px;
+      color: var(--danger);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    footer {
+      position: fixed;
+      right: 10px;
+      bottom: 8px;
+      color: rgba(22, 32, 51, .55);
+      font-size: 12px;
+      pointer-events: none;
+    }
+
+    @media (max-width: 1050px) {
+      .page { grid-template-columns: 1fr; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .stats { justify-content: flex-start; }
+    }
+
+    @media (max-width: 620px) {
+      body { padding-left: 8px; padding-right: 8px; }
+      .game-card,
+      .side-card,
+      .rank-card { padding: 12px; }
+      .canvas-wrap { aspect-ratio: 10 / 13; }
+    }
+  </style>
+</head>
+<body>
+  <a class="back-home" href="../index.html">Back Home</a>
+
+  <main class="page">
+    <section class="game-card" aria-label="Ramp car chase game">
+      <div class="topbar">
+        <div>
+          <h1>Ramp Car Chase</h1>
+          <p class="sub">Race down the city freeway, dodge police cars, and hit ramps to jump through the chase.</p>
+        </div>
+        <div class="stats" aria-label="Game stats">
+          <div class="pill">Time<span id="timeText">0s</span></div>
+          <div class="pill">Speed<span id="speedText">90</span></div>
+          <div class="pill">Damage<span id="damageText">0%</span></div>
+        </div>
+      </div>
+
+      <div class="canvas-wrap">
+        <canvas id="gameCanvas" width="1280" height="720" aria-label="Highway chase game canvas"></canvas>
+        <div id="startOverlay" class="overlay">
+          <div class="overlay-box">
+            <h2>Police chase started</h2>
+            <p>Stay in the lanes, avoid police cars, grab ramps, and survive as long as you can.</p>
+            <button id="startButton" type="button">Start Chase</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="button-row">
+        <button id="restartButton" type="button">Restart</button>
+        <button id="pauseButton" class="secondary" type="button">Pause</button>
+      </div>
+      <div class="mobile-controls" aria-label="Touch controls">
+        <button id="leftButton" type="button">Left</button>
+        <button id="upButton" type="button">Up</button>
+        <button id="downButton" type="button">Down</button>
+        <button id="rightButton" type="button">Right</button>
+        <button id="boostButton" type="button">Boost</button>
+      </div>
+      <p id="message" class="message">Controls: Arrow keys or WASD to move, Space to boost, P to pause.</p>
+    </section>
+
+    <aside class="side">
+      <section class="side-card">
+        <h2>Controls</h2>
+        <ol class="control-list">
+          <li>Steer with Arrow Left/Right or A/D.</li>
+          <li>Move up and down the road with Arrow Up/Down or W/S.</li>
+          <li>Boost with Space.</li>
+          <li>Hit ramps to jump over police and traffic cars.</li>
+        </ol>
+      </section>
+
+      <section class="rank-card" aria-label="Leaderboard">
+        <h2>Leaderboard</h2>
+        <p class="rank-note">Ranking: wins first, then best time.</p>
+        <ol class="leader-list" id="rankPreviewList">
+          <li>Loading...</li>
+        </ol>
+      </section>
+    </aside>
+  </main>
+
+  <div id="nameDialog">
+    <div class="dialog">
+      <h3>Chase complete</h3>
+      <p id="dialogPrompt"></p>
+      <input id="dialogName" placeholder="Your name" maxlength="40">
+      <div class="dialog-actions">
+        <button id="cancelName" type="button">Cancel</button>
+        <button id="submitName" class="primary" type="button">Submit</button>
+      </div>
+      <div id="dialogStatus" class="dialog-status"></div>
+    </div>
+  </div>
+
+  <footer>Game 35</footer>
+
+  <script>
+    const GAME_ID = "ramp_car_chase";
+    const SCORE_SUBMIT_MIN_SECONDS = 30;
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const timeText = document.getElementById("timeText");
+    const speedText = document.getElementById("speedText");
+    const damageText = document.getElementById("damageText");
+    const messageEl = document.getElementById("message");
+    const startOverlay = document.getElementById("startOverlay");
+    const startButton = document.getElementById("startButton");
+    const restartButton = document.getElementById("restartButton");
+    const pauseButton = document.getElementById("pauseButton");
+    const leftButton = document.getElementById("leftButton");
+    const rightButton = document.getElementById("rightButton");
+    const upButton = document.getElementById("upButton");
+    const downButton = document.getElementById("downButton");
+    const boostButton = document.getElementById("boostButton");
+    const rankPreviewList = document.getElementById("rankPreviewList");
+    const nameDialog = document.getElementById("nameDialog");
+    const dialogPrompt = document.getElementById("dialogPrompt");
+    const dialogName = document.getElementById("dialogName");
+    const dialogStatus = document.getElementById("dialogStatus");
+    const cancelName = document.getElementById("cancelName");
+    const submitName = document.getElementById("submitName");
+
+    const keys = new Set();
+    const lanes = [-0.72, -0.24, 0.24, 0.72];
+    const state = {
+      running: false,
+      paused: false,
+      gameOver: false,
+      submitted: false,
+      lastTime: 0,
+      startTime: 0,
+      elapsedSeconds: 0,
+      score: 0,
+      speed: 90,
+      damage: 0,
+      playerX: 0.18,
+      targetX: 0.18,
+      playerZ: 0.05,
+      targetZ: 0.05,
+      roadOffset: 0,
+      jump: 0,
+      boost: 0,
+      shake: 0,
+      nextSpawn: 0,
+      nextRamp: 1.2,
+      objects: []
+    };
+
+    function setMessage(text) {
+      messageEl.textContent = text;
+    }
+
+    function resetGame() {
+      state.running = false;
+      state.paused = false;
+      state.gameOver = false;
+      state.submitted = false;
+      state.lastTime = 0;
+      state.startTime = 0;
+      state.elapsedSeconds = 0;
+      state.score = 0;
+      state.speed = 90;
+      state.damage = 0;
+      state.playerX = 0.18;
+      state.targetX = 0.18;
+      state.playerZ = 0.05;
+      state.targetZ = 0.05;
+      state.roadOffset = 0;
+      state.jump = 0;
+      state.boost = 0;
+      state.shake = 0;
+      state.nextSpawn = 0;
+      state.nextRamp = 1.2;
+      state.objects = [];
+      keys.clear();
+      startOverlay.classList.remove("hidden");
+      startOverlay.querySelector("h2").textContent = "Police chase started";
+      startOverlay.querySelector("p").textContent = "Stay in the lanes, avoid police cars, grab ramps, and survive as long as you can.";
+      startButton.textContent = "Start Chase";
+      pauseButton.textContent = "Pause";
+      updateHud();
+      setMessage("Controls: Arrow keys or WASD to move, Space to boost, P to pause.");
+      drawScene(0);
+    }
+
+    function startGame() {
+      resetGame();
+      state.running = true;
+      state.startTime = performance.now();
+      state.lastTime = state.startTime;
+      startOverlay.classList.add("hidden");
+      requestAnimationFrame(loop);
+    }
+
+    function togglePause() {
+      if (!state.running || state.gameOver) return;
+      state.paused = !state.paused;
+      pauseButton.textContent = state.paused ? "Resume" : "Pause";
+      if (state.paused) {
+        startOverlay.classList.remove("hidden");
+        startOverlay.querySelector("h2").textContent = "Paused";
+        startOverlay.querySelector("p").textContent = "The chase is waiting on the freeway.";
+        startButton.textContent = "Resume";
+      } else {
+        startOverlay.classList.add("hidden");
+        state.lastTime = performance.now();
+        requestAnimationFrame(loop);
+      }
+    }
+
+    function loop(now) {
+      if (!state.running || state.paused) return;
+      const dt = Math.min(0.035, (now - state.lastTime) / 1000);
+      state.lastTime = now;
+      update(dt, now);
+      drawScene(now);
+      if (!state.gameOver) requestAnimationFrame(loop);
+    }
+
+    function update(dt, now) {
+      state.elapsedSeconds = Math.floor((now - state.startTime) / 1000);
+      const steer = (keys.has("ArrowRight") || keys.has("d") ? 1 : 0) - (keys.has("ArrowLeft") || keys.has("a") ? 1 : 0);
+      const depthMove = (keys.has("ArrowUp") || keys.has("w") ? 1 : 0) - (keys.has("ArrowDown") || keys.has("s") ? 1 : 0);
+      state.targetX += steer * dt * 1.65;
+      state.targetZ += depthMove * dt * 0.54;
+      state.targetX = Math.max(-0.84, Math.min(0.84, state.targetX));
+      state.targetZ = Math.max(0.02, Math.min(0.3, state.targetZ));
+      state.playerX += (state.targetX - state.playerX) * Math.min(1, dt * 9);
+      state.playerZ += (state.targetZ - state.playerZ) * Math.min(1, dt * 8);
+
+      if (keys.has(" ") || state.boost > 0) {
+        state.speed += dt * 34;
+        state.boost = Math.max(0, state.boost - dt);
+      } else {
+        state.speed -= dt * 8;
+      }
+      state.speed = Math.max(62, Math.min(152, state.speed));
+      state.roadOffset += dt * state.speed * 1.8;
+      state.score += dt * state.speed;
+      if (state.jump > 0) state.jump = Math.max(0, state.jump - dt * 1.8);
+      if (state.shake > 0) state.shake = Math.max(0, state.shake - dt * 3);
+
+      state.nextSpawn -= dt;
+      state.nextRamp -= dt;
+      if (state.nextSpawn <= 0) {
+        spawnVehicle();
+        state.nextSpawn = Math.max(0.45, 1.2 - state.elapsedSeconds * 0.01);
+      }
+      if (state.nextRamp <= 0) {
+        spawnRamp();
+        state.nextRamp = 4 + Math.random() * 3;
+      }
+
+      for (const item of state.objects) {
+        if (item.type === "police") {
+          updatePoliceChaser(item, dt);
+        } else {
+          item.z -= dt * (state.speed / 70) * item.speedScale;
+        }
+        if (item.collisionCooldown > 0) {
+          item.collisionCooldown = Math.max(0, item.collisionCooldown - dt);
+        }
+        item.wobble += dt;
+      }
+      state.objects = state.objects.filter(item => item.z > -0.16 && item.z < 1.35);
+      handleCollisions();
+      updateHud();
+    }
+
+    function spawnVehicle() {
+      const lane = lanes[Math.floor(Math.random() * lanes.length)];
+      const type = Math.random() < 0.72 ? "police" : "traffic";
+      state.objects.push({
+        type,
+        x: lane,
+        targetX: lane,
+        z: type === "police" ? -0.08 - Math.random() * 0.06 : 1.18 + Math.random() * 0.16,
+        speedScale: type === "police" ? 1.03 + Math.random() * 0.18 : 0.58 + Math.random() * 0.12,
+        wobble: Math.random() * 10
+      });
+    }
+
+    function updatePoliceChaser(item, dt) {
+      if (item.collisionCooldown > 0) {
+        item.z -= dt * 0.42;
+        item.x += (item.bumpVX || 0) * dt;
+        item.bumpVX = (item.bumpVX || 0) * Math.max(0, 1 - dt * 3.5);
+        item.targetX += (item.x - item.targetX) * dt * 2;
+        return;
+      }
+
+      const chaseStrength = 0.55 + Math.min(0.5, state.elapsedSeconds / 80);
+      const wantedLane = lanes.reduce((best, lane) => {
+        return Math.abs(lane - state.playerX) < Math.abs(best - state.playerX) ? lane : best;
+      }, lanes[0]);
+      item.targetX += (wantedLane - item.targetX) * dt * chaseStrength;
+      item.x += (item.targetX - item.x) * dt * (1.9 + chaseStrength);
+
+      const catchSpeed = Math.max(0.18, (item.speedScale - 0.92) * (state.speed / 85));
+      const playerEscaping = state.speed > 128 || state.jump > 0.1;
+      item.z += dt * (playerEscaping ? catchSpeed * 0.25 : catchSpeed);
+
+      if (item.z > 0.32) {
+        item.speedScale = Math.max(0.98, item.speedScale - dt * 0.16);
+      } else if (item.z < 0.08) {
+        item.speedScale = Math.min(1.28, item.speedScale + dt * 0.1);
+      }
+    }
+
+    function spawnRamp() {
+      const lane = lanes[Math.floor(Math.random() * lanes.length)];
+      state.objects.push({
+        type: "ramp",
+        x: lane,
+        z: 1.2,
+        speedScale: 0.72,
+        wobble: 0
+      });
+    }
+
+    function handleCollisions() {
+      const playerLaneWidth = 0.17;
+      const playerDepthWidth = state.jump > 0.2 ? 0.035 : 0.08;
+      for (const item of state.objects) {
+        if (item.hit || item.collisionCooldown > 0) continue;
+        const isPoliceChaser = item.type === "police";
+        const closeX = Math.abs(item.x - state.playerX) < (isPoliceChaser ? 0.2 : playerLaneWidth);
+        const closeZ = Math.abs(item.z - state.playerZ) < (isPoliceChaser ? playerDepthWidth + 0.02 : playerDepthWidth);
+        if (!closeX) continue;
+        if (!closeZ) continue;
+        if (item.type === "ramp") {
+          item.hit = true;
+          state.jump = 1;
+          state.boost = 1.1;
+          state.speed = Math.min(152, state.speed + 22);
+          setMessage("Ramp hit. You jumped the chase line.");
+        } else if (state.jump > 0.2) {
+          item.hit = true;
+          state.score += 300;
+          setMessage("Clean jump over a car.");
+        } else if (isPoliceChaser) {
+          bumpPoliceCar(item);
+        } else {
+          bumpTrafficCar(item);
+        }
+      }
+      if (state.damage >= 100) endGame();
+    }
+
+    function bumpPoliceCar(item) {
+      const pushDir = state.playerX >= item.x ? 1 : -1;
+      state.damage += 24;
+      state.speed = Math.max(58, state.speed - 20);
+      state.shake = 1.15;
+      state.targetX = Math.max(-0.84, Math.min(0.84, state.targetX + pushDir * 0.3));
+      state.playerX = Math.max(-0.88, Math.min(0.88, state.playerX + pushDir * 0.12));
+      state.targetZ = Math.max(0.02, Math.min(0.3, state.targetZ - 0.04));
+      state.playerZ = Math.max(0.02, Math.min(0.3, state.playerZ - 0.025));
+
+      item.x = Math.max(-0.92, Math.min(0.92, item.x - pushDir * 0.1));
+      item.targetX = Math.max(-0.92, Math.min(0.92, item.targetX - pushDir * 0.26));
+      item.z = Math.max(-0.12, item.z - 0.12);
+      item.speedScale = Math.max(0.9, item.speedScale - 0.18);
+      item.bumpVX = -pushDir * 0.56;
+      item.collisionCooldown = 0.62;
+      setMessage("Police bump. Both cars bounced out of the lane.");
+    }
+
+    function bumpTrafficCar(item) {
+      const pushDir = state.playerX >= item.x ? 1 : -1;
+      item.hit = true;
+      state.damage += 18;
+      state.speed = Math.max(58, state.speed - 24);
+      state.shake = 1;
+      state.targetX = Math.max(-0.84, Math.min(0.84, state.targetX + pushDir * 0.22));
+      state.playerX = Math.max(-0.88, Math.min(0.88, state.playerX + pushDir * 0.08));
+      state.targetZ = Math.max(0.02, Math.min(0.3, state.targetZ - 0.035));
+      item.z = Math.min(1.35, item.z + 0.08);
+      setMessage("Traffic bump. The ramp car got knocked off line.");
+    }
+
+    function endGame() {
+      if (state.gameOver) return;
+      state.gameOver = true;
+      state.running = false;
+      updateHud();
+      startOverlay.classList.remove("hidden");
+      startOverlay.querySelector("h2").textContent = "Chase over";
+      startOverlay.querySelector("p").textContent = `You survived ${state.elapsedSeconds}s and scored ${Math.floor(state.score)}.`;
+      startButton.textContent = "Try Again";
+      const canSubmitScore = state.elapsedSeconds >= SCORE_SUBMIT_MIN_SECONDS;
+      setMessage(canSubmitScore ? "Submit your run to the leaderboard, then try for a cleaner chase." : `Survive at least ${SCORE_SUBMIT_MIN_SECONDS}s to submit a leaderboard score.`);
+      if (canSubmitScore && !state.submitted) {
+        state.submitted = true;
+        openWinDialog();
+      }
+    }
+
+    function updateHud() {
+      timeText.textContent = `${state.elapsedSeconds}s`;
+      speedText.textContent = `${Math.round(state.speed)}`;
+      damageText.textContent = `${Math.min(100, Math.round(state.damage))}%`;
+    }
+
+    function roadX(x, z) {
+      const perspective = 1 - z;
+      const center = canvas.width / 2;
+      const width = canvas.width * (0.12 + perspective * 0.78);
+      return center + x * width / 2;
+    }
+
+    function roadY(z) {
+      return canvas.height * (0.34 + (1 - z) * 0.66);
+    }
+
+    function drawScene(now) {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.save();
+      if (state.shake > 0) {
+        ctx.translate((Math.random() - 0.5) * 12 * state.shake, (Math.random() - 0.5) * 8 * state.shake);
+      }
+      drawSky(w, h);
+      drawCity(w, h, now);
+      drawRoad(w, h);
+      const sortedObjects = [...state.objects].sort((a, b) => b.z - a.z);
+      sortedObjects.filter(item => item.z > state.playerZ).forEach(drawObject);
+      drawPlayer();
+      sortedObjects.filter(item => item.z <= state.playerZ).forEach(drawObject);
+      ctx.restore();
+    }
+
+    function drawSky(w, h) {
+      const grad = ctx.createLinearGradient(0, 0, 0, h * 0.42);
+      grad.addColorStop(0, "#27b8ff");
+      grad.addColorStop(0.58, "#d8f5ff");
+      grad.addColorStop(1, "#ffe4a3");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h * 0.45);
+      ctx.fillStyle = "rgba(255,255,255,.88)";
+      for (let i = 0; i < 6; i++) {
+        const x = (i * 230 + 80) % w;
+        const y = 60 + (i % 3) * 28;
+        ctx.beginPath();
+        ctx.ellipse(x, y, 62, 18, 0, 0, Math.PI * 2);
+        ctx.ellipse(x + 46, y + 8, 48, 14, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawCity(w, h, now) {
+      const horizon = h * 0.35;
+      const wallTop = h * 0.42;
+      for (let side = -1; side <= 1; side += 2) {
+        for (let i = 0; i < 10; i++) {
+          const x = side < 0 ? i * 82 - 26 : w - i * 82 - 58;
+          const depth = i / 10;
+          const bw = 70 - depth * 24;
+          const bh = 230 - depth * 126;
+          ctx.fillStyle = side < 0 ? "#8f969f" : "#a3a7ad";
+          ctx.fillRect(x, horizon - bh * .72, bw, bh);
+          ctx.fillStyle = "rgba(25,34,48,.42)";
+          for (let yy = horizon - bh * .64; yy < horizon + bh * .18; yy += 28) {
+            ctx.fillRect(x + 8, yy, bw - 16, 9);
+          }
+        }
+      }
+      ctx.fillStyle = "#8b8174";
+      ctx.fillRect(0, wallTop, w, h * .16);
+      ctx.fillStyle = "rgba(255,255,255,.15)";
+      for (let x = 0; x < w; x += 34) ctx.fillRect(x, wallTop, 18, h * .16);
+      ctx.fillStyle = "#c7ced6";
+      for (let x = 110; x < w; x += 220) {
+        const sway = Math.sin((now || 0) / 900 + x) * 10;
+        ctx.fillRect(x + sway, horizon - 8, 4, 102);
+        ctx.fillRect(x + sway, horizon - 8, 42, 4);
+      }
+    }
+
+    function drawRoad(w, h) {
+      const horizon = h * 0.36;
+      const road = ctx.createLinearGradient(0, horizon, 0, h);
+      road.addColorStop(0, "#78828e");
+      road.addColorStop(1, "#2d3744");
+      ctx.fillStyle = road;
+      ctx.beginPath();
+      ctx.moveTo(w * 0.42, horizon);
+      ctx.lineTo(w * 0.58, horizon);
+      ctx.lineTo(w * 0.97, h);
+      ctx.lineTo(w * 0.03, h);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = "rgba(255,255,255,.85)";
+      ctx.lineWidth = 5;
+      for (const lane of [-0.5, 0, 0.5]) {
+        ctx.beginPath();
+        for (let i = 0; i < 28; i++) {
+          const z1 = ((i * 0.09 + state.roadOffset * 0.004) % 1);
+          const z2 = Math.min(1, z1 + 0.035);
+          ctx.moveTo(roadX(lane, z1), roadY(z1));
+          ctx.lineTo(roadX(lane, z2), roadY(z2));
+        }
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = "rgba(255,255,255,.75)";
+      ctx.lineWidth = 7;
+      ctx.beginPath();
+      ctx.moveTo(w * .42, horizon);
+      ctx.lineTo(w * .05, h);
+      ctx.moveTo(w * .58, horizon);
+      ctx.lineTo(w * .95, h);
+      ctx.stroke();
+    }
+
+    function drawObject(item) {
+      const x = roadX(item.x + Math.sin(item.wobble * 2) * (item.type === "police" ? 0.015 : 0), item.z);
+      const y = roadY(item.z);
+      const scale = Math.max(0.12, 1 - item.z);
+      if (item.type === "ramp") {
+        drawRamp(x, y, scale);
+      } else {
+        drawCar(x, y, scale, item.type === "police", item.z < 0.05);
+      }
+    }
+
+    function drawCar(x, y, s, police, chasing) {
+      if (police) {
+        drawPoliceCar3D(x, y, s, chasing);
+        return;
+      }
+      const w = 90 * s;
+      const h = 150 * s;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.fillStyle = "rgba(0,0,0,.28)";
+      ctx.beginPath();
+      ctx.ellipse(0, h * .33, w * .6, h * .18, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#1f2937";
+      ctx.fillRect(-w * .45, -h * .62, w * .9, h * .92);
+      ctx.fillStyle = "#334155";
+      ctx.fillRect(-w * .34, -h * .46, w * .68, h * .34);
+      ctx.fillStyle = "#64748b";
+      ctx.fillRect(-w * .44, -h * .08, w * .88, h * .18);
+      ctx.fillStyle = "#111827";
+      ctx.fillRect(-w * .56, -h * .36, w * .16, h * .58);
+      ctx.fillRect(w * .4, -h * .36, w * .16, h * .58);
+      ctx.restore();
+    }
+
+    function drawPoliceCar3D(x, y, s, chasing) {
+      const w = 104 * s;
+      const h = 164 * s;
+      ctx.save();
+      ctx.translate(x, y);
+
+      ctx.fillStyle = "rgba(0,0,0,.34)";
+      ctx.beginPath();
+      ctx.ellipse(0, h * .4, w * .66, h * .2, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (chasing) {
+        ctx.fillStyle = "rgba(59, 130, 246, .35)";
+        ctx.beginPath();
+        ctx.moveTo(-w * .36, h * .22);
+        ctx.lineTo(-w * .92, h * .8);
+        ctx.lineTo(-w * .24, h * .74);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "rgba(239, 68, 68, .35)";
+        ctx.beginPath();
+        ctx.moveTo(w * .36, h * .22);
+        ctx.lineTo(w * .92, h * .8);
+        ctx.lineTo(w * .24, h * .74);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      ctx.fillStyle = "#111827";
+      ctx.beginPath();
+      ctx.moveTo(-w * .56, -h * .02);
+      ctx.lineTo(-w * .4, h * .44);
+      ctx.lineTo(-w * .28, h * .58);
+      ctx.lineTo(-w * .66, h * .52);
+      ctx.lineTo(-w * .74, h * .08);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(w * .56, -h * .02);
+      ctx.lineTo(w * .4, h * .44);
+      ctx.lineTo(w * .28, h * .58);
+      ctx.lineTo(w * .66, h * .52);
+      ctx.lineTo(w * .74, h * .08);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "#dbeafe";
+      ctx.beginPath();
+      ctx.moveTo(-w * .42, -h * .62);
+      ctx.lineTo(w * .42, -h * .62);
+      ctx.lineTo(w * .56, h * .24);
+      ctx.lineTo(w * .42, h * .48);
+      ctx.lineTo(-w * .42, h * .48);
+      ctx.lineTo(-w * .56, h * .24);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "#f8fafc";
+      ctx.beginPath();
+      ctx.moveTo(-w * .34, -h * .52);
+      ctx.lineTo(w * .34, -h * .52);
+      ctx.lineTo(w * .43, -h * .08);
+      ctx.lineTo(-w * .43, -h * .08);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "#172033";
+      ctx.beginPath();
+      ctx.moveTo(-w * .28, -h * .42);
+      ctx.lineTo(w * .28, -h * .42);
+      ctx.lineTo(w * .34, -h * .14);
+      ctx.lineTo(-w * .34, -h * .14);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "#0f172a";
+      ctx.beginPath();
+      ctx.moveTo(-w * .43, -h * .06);
+      ctx.lineTo(w * .43, -h * .06);
+      ctx.lineTo(w * .52, h * .2);
+      ctx.lineTo(-w * .52, h * .2);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "#2563eb";
+      ctx.beginPath();
+      ctx.moveTo(-w * .5, h * .08);
+      ctx.lineTo(0, h * .16);
+      ctx.lineTo(0, h * .36);
+      ctx.lineTo(-w * .42, h * .44);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#f8fafc";
+      ctx.beginPath();
+      ctx.moveTo(0, h * .16);
+      ctx.lineTo(w * .5, h * .08);
+      ctx.lineTo(w * .42, h * .44);
+      ctx.lineTo(0, h * .36);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "#ef4444";
+      ctx.fillRect(-w * .26, -h * .72, w * .2, h * .08);
+      ctx.fillStyle = "#2563eb";
+      ctx.fillRect(w * .06, -h * .72, w * .2, h * .08);
+      ctx.fillStyle = "#facc15";
+      ctx.fillRect(-w * .36, h * .42, w * .2, h * .08);
+      ctx.fillRect(w * .16, h * .42, w * .2, h * .08);
+
+      ctx.strokeStyle = "rgba(15,23,42,.35)";
+      ctx.lineWidth = Math.max(1, 3 * s);
+      ctx.strokeRect(-w * .18, h * .18, w * .36, h * .16);
+      ctx.restore();
+    }
+
+    function drawRamp(x, y, s) {
+      const w = 118 * s;
+      const h = 92 * s;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.fillStyle = "rgba(0,0,0,.26)";
+      ctx.beginPath();
+      ctx.ellipse(0, h * .38, w * .52, h * .18, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#f59e0b";
+      ctx.beginPath();
+      ctx.moveTo(-w * .5, h * .35);
+      ctx.lineTo(w * .5, h * .35);
+      ctx.lineTo(w * .25, -h * .45);
+      ctx.lineTo(-w * .5, h * .08);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = "#7c2d12";
+      ctx.lineWidth = Math.max(2, 4 * s);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawPlayer() {
+      const lift = Math.sin(state.jump * Math.PI) * 95;
+      const x = roadX(state.playerX, state.playerZ);
+      const y = roadY(state.playerZ) - lift;
+      const s = Math.max(0.82, (1 - state.playerZ) * 1.22) + lift / 900;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(s, s);
+      ctx.fillStyle = "rgba(0,0,0,.34)";
+      ctx.beginPath();
+      ctx.ellipse(0, 72 + lift * .18, 98, 24, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#0f4dd6";
+      ctx.beginPath();
+      ctx.moveTo(-92, 48);
+      ctx.lineTo(96, 48);
+      ctx.lineTo(58, -52);
+      ctx.lineTo(-82, -10);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#38bdf8";
+      ctx.fillRect(-42, -34, 62, 28);
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(-86, 32, 28, 44);
+      ctx.fillRect(56, 32, 28, 44);
+      ctx.fillStyle = "#f8fafc";
+      ctx.fillRect(-16, 44, 34, 10);
+      ctx.fillStyle = "#ef4444";
+      ctx.fillRect(-70, 50, 16, 10);
+      ctx.fillRect(54, 50, 16, 10);
+      ctx.restore();
+    }
+
+    async function submitScore(name) {
+      try {
+        const res = await fetch("/api/score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            game: GAME_ID,
+            player_name: name.trim().slice(0, 40),
+            seconds: state.elapsedSeconds
+          })
+        });
+        if (!res.ok) return false;
+        const data = await res.json().catch(() => ({}));
+        return data.ok === true;
+      } catch {
+        return false;
+      }
+    }
+
+    async function loadRankPreview() {
+      rankPreviewList.innerHTML = "<li>Loading...</li>";
+      try {
+        const res = await fetch(`/api/leaderboard?game=${encodeURIComponent(GAME_ID)}&limit=10`, { cache: "no-store" });
+        const data = await res.json();
+        const rows = Array.isArray(data) ? data : (data.rows || []);
+        rankPreviewList.innerHTML = "";
+        if (!rows.length) {
+          rankPreviewList.innerHTML = "<li>No scores yet.</li>";
+          return;
+        }
+        rows.forEach((entry, index) => {
+          const name = entry.player_name ?? entry.playerName ?? "Unknown";
+          const wins = entry.win_count ?? entry.wins ?? entry.winCount ?? 0;
+          const best = entry.best_seconds ?? entry.bestSeconds ?? null;
+          const item = document.createElement("li");
+          item.textContent = `#${index + 1} ${name} - ${wins}W` + (best != null ? ` - Best: ${best}s` : "");
+          rankPreviewList.appendChild(item);
+        });
+      } catch {
+        rankPreviewList.innerHTML = "<li>Could not load.</li>";
+      }
+    }
+
+    function openWinDialog() {
+      dialogPrompt.textContent = `Ramp Car Chase - ${state.elapsedSeconds}s. Enter your name:`;
+      dialogName.value = localStorage.getItem("rampCarLastName") || "";
+      dialogStatus.textContent = "";
+      nameDialog.style.display = "flex";
+      setTimeout(() => dialogName.focus(), 50);
+    }
+
+    function closeWinDialog() {
+      nameDialog.style.display = "none";
+    }
+
+    function bindHold(button, key) {
+      button.addEventListener("pointerdown", event => {
+        event.preventDefault();
+        keys.add(key);
+        button.setPointerCapture(event.pointerId);
+      });
+      button.addEventListener("pointerup", event => {
+        keys.delete(key);
+        try { button.releasePointerCapture(event.pointerId); } catch {}
+      });
+      button.addEventListener("pointercancel", () => keys.delete(key));
+      button.addEventListener("pointerleave", () => keys.delete(key));
+    }
+
+    window.addEventListener("keydown", event => {
+      if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", " ", "a", "d", "w", "s", "p"].includes(event.key)) {
+        event.preventDefault();
+      }
+      if (event.key === "p") {
+        togglePause();
+        return;
+      }
+      keys.add(event.key);
+    });
+
+    window.addEventListener("keyup", event => keys.delete(event.key));
+    startButton.addEventListener("click", () => state.paused ? togglePause() : startGame());
+    restartButton.addEventListener("click", startGame);
+    pauseButton.addEventListener("click", togglePause);
+    cancelName.addEventListener("click", closeWinDialog);
+    submitName.addEventListener("click", async () => {
+      const name = dialogName.value.trim();
+      if (!name) {
+        dialogStatus.textContent = "Name is required.";
+        return;
+      }
+      submitName.disabled = true;
+      dialogStatus.textContent = "Saving...";
+      const ok = await submitScore(name);
+      if (ok) {
+        localStorage.setItem("rampCarLastName", name);
+        closeWinDialog();
+        loadRankPreview();
+      } else {
+        dialogStatus.textContent = "Could not save.";
+      }
+      submitName.disabled = false;
+    });
+
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") closeWinDialog();
+      if (event.key === "Enter" && nameDialog.style.display === "flex") submitName.click();
+    });
+
+    bindHold(leftButton, "ArrowLeft");
+    bindHold(rightButton, "ArrowRight");
+    bindHold(upButton, "ArrowUp");
+    bindHold(downButton, "ArrowDown");
+    bindHold(boostButton, " ");
+    loadRankPreview();
+    resetGame();
+  </script>
+</body>
+</html>
