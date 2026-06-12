@@ -40,7 +40,8 @@
       display: flex;
       flex-direction: column;
     }
-    .card.student-feature {
+    .card.student-feature,
+    .card.special-touch {
       position: relative;
       border: 2px solid #f59e0b;
       background:
@@ -63,7 +64,22 @@
       font-weight: 900;
       letter-spacing: 0;
     }
-    .card.student-feature h2 {
+    .card.special-touch::before {
+      content: "Special Touch";
+      position: absolute;
+      top: -11px;
+      right: 14px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 2px solid #92400e;
+      background: #facc15;
+      color: #78350f;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+    .card.student-feature h2,
+    .card.special-touch h2 {
       color: #92400e;
     }
     .card.most-played {
@@ -221,7 +237,7 @@
         <a class="btn" href="./9Cooking">Play</a>
       </div>
       
-      <div class="card">
+      <div class="card most-played">
         <h2>10) Count 10 seconds </h2>
         <p>Encourages math thinking, highlighting the calculation component of STEAM through visual expression. <br>
         </p>
@@ -326,7 +342,7 @@
         <a class="btn" href="./23SideFinishRun">Play</a>
       </div>
       
-      <div class="card">
+      <div class="card special-touch">
         <h2>24) Pieces Puzzle </h2>
        <p>Enhances visual perception, spatial reasoning, concentration, memory, and logical sequencing skills while strengthening patience and problem-solving abilities through image reconstruction and pattern recognition.
         </p>
@@ -401,7 +417,7 @@
         <a class="btn" href="./33Geometry">Play</a>
       </div>
 
-      <div class="card">
+      <div class="card special-touch">
         <h2>34) Word Find</h2>
            <p>Builds vocabulary, visual scanning, spelling, and pattern recognition as players search a 15 by 15 grid for 10 random science words in every direction.<br>
             <span class="coming-soon"></span>
@@ -410,13 +426,20 @@
       </div>
 
       <div class="card">
-        <h2>35) Ramp Car Chase</h2>
+        <h2>35) Ramp Car</h2>
            <p>Builds reaction speed, lane planning, focus, and persistence as players dodge police cars, hit ramps, and survive a fast city freeway chase.<br>
             <span class="coming-soon"></span>
            </p>
         <a class="btn" href="./35RampCar">Play</a>
       </div>
-      
+
+      <div class="card">
+        <h2>36) In Progress</h2>
+           <p>.<br>
+            <span class="coming-soon"></span>
+           </p>
+        <a class="btn disabled" href="./">Play</a>
+      </div>
       
       <div class="card">
         <h2>98) Ranking 🪜</h2>

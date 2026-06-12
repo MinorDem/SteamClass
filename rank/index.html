@@ -45,7 +45,6 @@
     .sum-row td{background:#fff3b0!important;border-bottom:2px solid var(--gold);font-weight:800;}
     .sum-row .sticky{background:#fff3b0!important;}
     .sum-row .sum-label{color:var(--purple);letter-spacing:1px;}
-    .sum-row .sum-max{background:#fef08a!important;color:var(--pink);font-size:15px;}
     .legend{margin-top:18px;display:flex;gap:20px;flex-wrap:wrap;justify-content:center;font-size:12px;color:var(--dim);letter-spacing:1px;}
     .legend span{display:flex;align-items:center;gap:6px;}
     .dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
@@ -255,7 +254,6 @@ function renderTable(rows,gameMax,gameTotals){
 
   // body
   const tbody=document.createElement('tbody');
-  const maxTotal=Math.max(0,...DISPLAY_GAMES.map(g=>gameTotals[g]||0));
   const sumRow=document.createElement('tr');
   sumRow.className='sum-row';
 
@@ -278,7 +276,12 @@ function renderTable(rows,gameMax,gameTotals){
     const td=document.createElement('td');
     const total=gameTotals[g]||0;
     td.textContent=total||'-';
-    td.className=total===maxTotal&&total>0?'sum-max':(total?'w-hi':'w0');
+    td.className=
+      total>=100 ? 'w-top' :
+      total>=50  ? 'w-hi'  :
+      total>=10  ? 'w-md'  :
+      total>0    ? 'w-lo'  :
+                   'w0';
     sumRow.appendChild(td);
   });
   rows.forEach((row,idx)=>{
