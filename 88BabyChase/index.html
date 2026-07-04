@@ -1,0 +1,847 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Baby Midnight Escape</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      overflow: hidden;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #172033;
+      background: #101827;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .back-home {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 40;
+      padding: 9px 13px;
+      border: 3px solid #f8fafc;
+      color: #172033;
+      background: rgba(255, 255, 255, .92);
+      box-shadow: 0 5px 0 rgba(15, 23, 42, .24);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .game {
+      position: relative;
+      width: 100vw;
+      height: 100dvh;
+      min-height: 560px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 34%, rgba(255, 255, 255, .2), transparent 19%),
+        linear-gradient(180deg, #0f172a 0%, #233876 35%, #7dd3fc 36%, #dbeafe 55%, #0f172a 56% 100%);
+      isolation: isolate;
+    }
+
+    .moon {
+      position: absolute;
+      top: 58px;
+      right: 15%;
+      width: 74px;
+      height: 74px;
+      border-radius: 50%;
+      background: #fef3c7;
+      box-shadow: 0 0 42px rgba(254, 243, 199, .72);
+      z-index: -2;
+    }
+
+    .stars {
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,.95) 0 2px, transparent 3px),
+        radial-gradient(circle, rgba(255,255,255,.62) 0 1px, transparent 2px);
+      background-size: 170px 130px, 240px 180px;
+      background-position: 24px 20px, 84px 68px;
+      opacity: .72;
+      animation: drift 7s linear infinite;
+      z-index: -3;
+    }
+
+    @keyframes drift {
+      to {
+        transform: translateX(-170px);
+      }
+    }
+
+    .room {
+      position: absolute;
+      inset: 0;
+      perspective: 620px;
+      overflow: hidden;
+    }
+
+    .track {
+      position: absolute;
+      left: 50%;
+      bottom: -8vh;
+      width: min(1180px, 120vw);
+      height: 74vh;
+      transform: translateX(-50%) rotateX(64deg);
+      transform-origin: bottom center;
+      background:
+        linear-gradient(90deg, transparent 0 10%, rgba(255,255,255,.22) 10% 11%, transparent 11% 48%, rgba(255,255,255,.3) 48% 52%, transparent 52% 89%, rgba(255,255,255,.22) 89% 90%, transparent 90%),
+        repeating-linear-gradient(180deg, rgba(255,255,255,.16) 0 16px, transparent 16px 44px),
+        linear-gradient(90deg, #7c3aed, #334155 14%, #111827 50%, #334155 86%, #7c3aed);
+      border-left: 8px solid rgba(255,255,255,.28);
+      border-right: 8px solid rgba(255,255,255,.28);
+      box-shadow: 0 -22px 60px rgba(15, 23, 42, .34);
+    }
+
+    .track.car-mode {
+      background:
+        linear-gradient(90deg, transparent 0 10%, rgba(255,255,255,.22) 10% 11%, transparent 11% 48%, rgba(250,204,21,.8) 48% 52%, transparent 52% 89%, rgba(255,255,255,.22) 89% 90%, transparent 90%),
+        repeating-linear-gradient(180deg, rgba(255,255,255,.2) 0 14px, transparent 14px 36px),
+        linear-gradient(90deg, #2563eb, #1f2937 15%, #0f172a 50%, #1f2937 85%, #2563eb);
+    }
+
+    .side {
+      position: absolute;
+      bottom: 22vh;
+      width: 19vw;
+      height: 24vh;
+      background: rgba(255, 255, 255, .12);
+      border: 4px solid rgba(255, 255, 255, .28);
+      box-shadow: inset 0 0 24px rgba(15, 23, 42, .34);
+    }
+
+    .side.left {
+      left: 4vw;
+      transform: skewY(9deg);
+    }
+
+    .side.right {
+      right: 4vw;
+      transform: skewY(-9deg);
+    }
+
+    .hud {
+      position: absolute;
+      top: 16px;
+      left: 14px;
+      right: 14px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-left: 112px;
+    }
+
+    .stat,
+    .status,
+    .meter {
+      border: 3px solid rgba(15, 23, 42, .44);
+      background: rgba(255, 255, 255, .9);
+      box-shadow: 0 5px 0 rgba(15, 23, 42, .18);
+      font-weight: 900;
+    }
+
+    .stat {
+      min-width: 92px;
+      padding: 8px 10px;
+      text-align: center;
+      font-size: clamp(12px, 1.7vw, 15px);
+    }
+
+    .status {
+      max-width: 350px;
+      padding: 8px 10px;
+      text-align: right;
+      font-size: clamp(12px, 1.7vw, 15px);
+    }
+
+    .meter {
+      position: absolute;
+      left: 14px;
+      top: 68px;
+      width: min(280px, 45vw);
+      padding: 8px;
+      z-index: 21;
+    }
+
+    .meter-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
+
+    .meter-track {
+      height: 16px;
+      border: 2px solid #111827;
+      background: #dbeafe;
+    }
+
+    .meter-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #22c55e, #facc15, #ef4444);
+      transition: width .12s linear;
+    }
+
+    .scene-item {
+      position: absolute;
+      left: 50%;
+      bottom: 16vh;
+      width: 90px;
+      height: 90px;
+      transform: translate(-50%, -50%) scale(.2);
+      z-index: 8;
+      will-change: transform, bottom;
+    }
+
+    .item-body {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      border: 4px solid #111827;
+      background: #f8fafc;
+      box-shadow: 0 9px 0 rgba(15, 23, 42, .22);
+      font-size: 34px;
+      font-weight: 900;
+    }
+
+    .toy .item-body {
+      border-radius: 18px;
+      background: #fef08a;
+    }
+
+    .snack .item-body {
+      border-radius: 50%;
+      background: #86efac;
+    }
+
+    .car .item-body {
+      border-radius: 18px 18px 8px 8px;
+      background:
+        radial-gradient(circle at 25% 80%, #111827 0 9px, transparent 10px),
+        radial-gradient(circle at 75% 80%, #111827 0 9px, transparent 10px),
+        linear-gradient(180deg, #facc15 0 45%, #ef4444 46%);
+    }
+
+    .obstacle .item-body {
+      border-radius: 12px;
+      background: #fca5a5;
+    }
+
+    .police .item-body {
+      border-radius: 18px 18px 10px 10px;
+      background:
+        radial-gradient(circle at 30% 34%, #111827 0 4px, transparent 5px),
+        radial-gradient(circle at 67% 34%, #111827 0 4px, transparent 5px),
+        linear-gradient(180deg, #60a5fa 0 28%, #fef3c7 29% 47%, #1d4ed8 48%);
+    }
+
+    .police .item-body::after {
+      content: "STOP";
+      position: absolute;
+      left: -18px;
+      top: -18px;
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      border: 3px solid #111827;
+      background: #ef4444;
+      color: white;
+      font-size: 10px;
+    }
+
+    .baby-view {
+      position: absolute;
+      left: 50%;
+      bottom: 4vh;
+      width: min(400px, 84vw);
+      height: 26vh;
+      transform: translateX(-50%);
+      pointer-events: none;
+      z-index: 15;
+    }
+
+    .hands {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 110px;
+    }
+
+    .hand {
+      position: absolute;
+      bottom: 8px;
+      width: 112px;
+      height: 86px;
+      border: 5px solid #111827;
+      border-radius: 50% 50% 34px 34px;
+      background: #fed7aa;
+      box-shadow: inset -10px -10px 0 rgba(146, 64, 14, .12), 0 8px 0 rgba(15, 23, 42, .2);
+      animation: crawl .62s ease-in-out infinite;
+    }
+
+    .hand.left {
+      left: 18px;
+      transform: rotate(18deg);
+    }
+
+    .hand.right {
+      right: 18px;
+      transform: rotate(-18deg);
+      animation-delay: .31s;
+    }
+
+    @keyframes crawl {
+      50% {
+        bottom: 24px;
+      }
+    }
+
+    .car-dashboard {
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      width: min(430px, 90vw);
+      height: 132px;
+      transform: translateX(-50%);
+      display: none;
+      border: 5px solid #111827;
+      border-bottom: 0;
+      border-radius: 40px 40px 0 0;
+      background:
+        radial-gradient(circle at 50% 70%, transparent 0 37px, #111827 38px 47px, transparent 48px),
+        radial-gradient(circle at 26% 42%, #22c55e 0 8px, transparent 9px),
+        radial-gradient(circle at 74% 42%, #ef4444 0 8px, transparent 9px),
+        linear-gradient(180deg, #e5e7eb 0 36%, #334155 37%);
+      box-shadow: 0 -12px 0 rgba(15, 23, 42, .22);
+    }
+
+    .car-dashboard::before,
+    .car-dashboard::after {
+      content: "";
+      position: absolute;
+      bottom: -18px;
+      width: 82px;
+      height: 82px;
+      border-radius: 50%;
+      border: 7px solid #111827;
+      background: #1f2937;
+    }
+
+    .car-dashboard::before {
+      left: 36px;
+    }
+
+    .car-dashboard::after {
+      right: 36px;
+    }
+
+    .game.car-mode .hands {
+      display: none;
+    }
+
+    .game.car-mode .car-dashboard {
+      display: block;
+    }
+
+    .mom {
+      position: absolute;
+      left: 50%;
+      top: 12vh;
+      width: 104px;
+      height: 148px;
+      transform: translateX(-50%) scale(.62);
+      z-index: 6;
+      opacity: .24;
+      transition: opacity .16s linear, transform .16s linear;
+    }
+
+    .mom-body {
+      position: absolute;
+      inset: 0;
+      border: 5px solid #111827;
+      border-radius: 34px 34px 18px 18px;
+      background:
+        radial-gradient(circle at 32% 30%, #111827 0 4px, transparent 5px),
+        radial-gradient(circle at 66% 30%, #111827 0 4px, transparent 5px),
+        linear-gradient(180deg, #854d0e 0 20%, #fed7aa 21% 44%, #f472b6 45%);
+      box-shadow: 0 12px 0 rgba(15, 23, 42, .2);
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 30;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgba(15, 23, 42, .42);
+    }
+
+    .panel {
+      width: min(540px, 92vw);
+      padding: 26px;
+      border: 3px solid #111827;
+      background: rgba(255, 255, 255, .94);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, .28);
+      text-align: center;
+    }
+
+    .panel h1 {
+      margin: 0 0 10px;
+      font-size: clamp(30px, 6vw, 52px);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .panel p {
+      margin: 0 0 18px;
+      font-weight: 800;
+      line-height: 1.45;
+      color: #334155;
+    }
+
+    .panel button {
+      min-width: 122px;
+      min-height: 44px;
+      border: 3px solid #111827;
+      background: #22c55e;
+      color: #052e16;
+      box-shadow: 0 6px 0 rgba(15, 23, 42, .24);
+      cursor: pointer;
+      font-weight: 900;
+    }
+
+    .panel button:active {
+      transform: translateY(3px);
+      box-shadow: 0 3px 0 rgba(15, 23, 42, .24);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 680px) {
+      .stats {
+        margin-left: 0;
+        margin-top: 46px;
+      }
+
+      .hud {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .status {
+        max-width: none;
+        text-align: left;
+      }
+
+      .meter {
+        top: auto;
+        bottom: 12px;
+        width: calc(100vw - 28px);
+      }
+
+      .baby-view {
+        bottom: 7vh;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="../sharedStyle/game-shell.css" data-shared-game-shell>
+<style id="kid-friendly-polish-v1">/* Kid-friendly + tablet-ready polish (grades 1-5). Rides on the .happy-game class from game-shell.js; button/cell theming lives in game-shell.css. */
+body.happy-game{background:radial-gradient(circle,rgba(219,122,52,.10) 2px,transparent 2.4px) 0 0/46px 46px,radial-gradient(circle,rgba(42,140,130,.09) 2px,transparent 2.4px) 23px 23px/46px 46px,linear-gradient(180deg,#fdf5e6 0%,#fbedd6 55%,#f7e6c9 100%) !important;background-attachment:fixed,fixed,fixed !important;overflow-x:hidden}
+body.happy-game img,body.happy-game svg:not(.icon){max-width:100%;height:auto}
+body.happy-game .play,body.happy-game .play-area,body.happy-game .playfield,body.happy-game .game-area,body.happy-game .board-shell,body.happy-game .info-card,body.happy-game .order-card,body.happy-game .pot-section,body.happy-game .sidebar,body.happy-game .pictureBox,body.happy-game .clues,body.happy-game .hint-box,body.happy-game .rank-sub{background:#fffdf8;border-radius:16px;box-shadow:0 4px 0 rgba(46,36,24,.18)}
+@media(max-width:760px){body.happy-game button,body.happy-game .btn,body.happy-game select,body.happy-game input{font-size:16px !important}}
+</style>
+</head>
+<body>
+  <a class="back-home" href="../index.html">Back Home</a>
+  <main class="game" id="game" aria-label="Baby Midnight Escape game">
+    <div class="stars"></div>
+    <div class="moon"></div>
+    <div class="room">
+      <div class="side left"></div>
+      <div class="side right"></div>
+      <div class="track" id="track"></div>
+    </div>
+
+    <section class="hud">
+      <div class="stats">
+        <div class="stat">Score <span id="scoreText">0</span></div>
+        <div class="stat">Mode <span id="modeText">Crawl</span></div>
+        <div class="stat">Speed <span id="speedText">1</span></div>
+      </div>
+      <div class="status" id="status">W/S speed, A/D steer, E enters a car, Space boosts while driving.</div>
+    </section>
+
+    <section class="meter" aria-label="Mom chase meter">
+      <div class="meter-label"><span>Mom</span><span id="momText">far</span></div>
+      <div class="meter-track"><div class="meter-fill" id="momFill"></div></div>
+    </section>
+
+    <div class="mom" id="mom"><div class="mom-body"></div></div>
+
+    <div class="baby-view">
+      <div class="hands">
+        <div class="hand left"></div>
+        <div class="hand right"></div>
+      </div>
+      <div class="car-dashboard"></div>
+    </div>
+
+    <section class="overlay" id="overlay">
+      <div class="panel">
+        <h1>Baby Midnight Escape</h1>
+        <p id="overlayMessage">Mom fell asleep. Sneak out, grab snacks, press E near a car to drive, and dodge bedtime trouble. Police and crossing guards are safe-zone obstacles, so avoid bumping them.</p>
+        <button id="startButton" type="button">Start</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const game = document.getElementById("game");
+    const track = document.getElementById("track");
+    const overlay = document.getElementById("overlay");
+    const overlayMessage = document.getElementById("overlayMessage");
+    const startButton = document.getElementById("startButton");
+    const scoreText = document.getElementById("scoreText");
+    const modeText = document.getElementById("modeText");
+    const speedText = document.getElementById("speedText");
+    const statusText = document.getElementById("status");
+    const mom = document.getElementById("mom");
+    const momFill = document.getElementById("momFill");
+    const momText = document.getElementById("momText");
+
+    const keys = new Set();
+    const lanes = [-1, 0, 1];
+    const laneLabels = ["left", "middle", "right"];
+    const state = {
+      running: false,
+      gameOver: false,
+      lane: 0,
+      targetLane: 0,
+      laneOffset: 0,
+      score: 0,
+      speed: 1,
+      distance: 0,
+      momClose: 18,
+      carTime: 0,
+      driveIntent: false,
+      driveIntentTimer: 0,
+      throttle: 0,
+      boostCooldown: 0,
+      spawnTimer: 0,
+      items: [],
+      lastTime: 0
+    };
+
+    const itemTypes = [
+      { type: "toy", label: "🧸", good: true, score: 80, message: "Toy grabbed. Nice quiet crawling." },
+      { type: "snack", label: "🍼", good: true, score: 110, message: "Snack boost. Mom got a little farther away." },
+      { type: "car", label: "", good: true, score: 160, message: "Press E to get in the car." },
+      { type: "obstacle", label: "🧺", good: false, message: "Laundry basket bump. Mom heard that." },
+      { type: "police", label: "", good: false, message: "Safe-zone officer ahead. Dodge around people." }
+    ];
+
+    function laneToX(lane, depth) {
+      const center = game.clientWidth / 2;
+      const spread = Math.min(game.clientWidth * .24, 260);
+      const perspective = .28 + depth * .82;
+      return center + lane * spread * perspective + state.laneOffset * 24;
+    }
+
+    function makeItem() {
+      const roll = Math.random();
+      const type =
+        roll < .24 ? itemTypes[0] :
+        roll < .42 ? itemTypes[1] :
+        roll < .54 ? itemTypes[2] :
+        roll < .82 ? itemTypes[3] :
+        itemTypes[4];
+
+      const el = document.createElement("div");
+      const body = document.createElement("div");
+      el.className = `scene-item ${type.type}`;
+      body.className = "item-body";
+      body.textContent = type.label;
+      el.appendChild(body);
+      game.appendChild(el);
+
+      state.items.push({
+        ...type,
+        el,
+        lane: lanes[Math.floor(Math.random() * lanes.length)],
+        z: 0,
+        hit: false
+      });
+    }
+
+    function clearItems() {
+      for (const item of state.items) item.el.remove();
+      state.items = [];
+    }
+
+    function resetGame() {
+      clearItems();
+      Object.assign(state, {
+        running: true,
+        gameOver: false,
+        lane: 0,
+        targetLane: 0,
+        laneOffset: 0,
+        score: 0,
+        speed: 1,
+        distance: 0,
+        momClose: 18,
+        carTime: 0,
+        driveIntent: false,
+        driveIntentTimer: 0,
+        throttle: 0,
+        boostCooldown: 0,
+        spawnTimer: .7,
+        lastTime: performance.now()
+      });
+
+      overlay.classList.add("hidden");
+      game.classList.remove("car-mode");
+      track.classList.remove("car-mode");
+      statusText.textContent = "W/S speed, A/D steer, E enters a car, Space boosts while driving.";
+      updateHud();
+      requestAnimationFrame(update);
+    }
+
+    function endGame(message) {
+      state.running = false;
+      state.gameOver = true;
+      clearItems();
+      game.classList.remove("car-mode");
+      track.classList.remove("car-mode");
+      overlay.querySelector("h1").textContent = "Caught";
+      overlayMessage.textContent = `${message} Final score: ${Math.floor(state.score)}.`;
+      startButton.textContent = "Restart";
+      overlay.classList.remove("hidden");
+    }
+
+    function winGame() {
+      state.running = false;
+      clearItems();
+      overlay.querySelector("h1").textContent = "Escape Complete";
+      overlayMessage.textContent = `You reached the playground before bedtime patrol. Final score: ${Math.floor(state.score)}.`;
+      startButton.textContent = "Play Again";
+      overlay.classList.remove("hidden");
+    }
+
+    function updateHud() {
+      scoreText.textContent = Math.floor(state.score);
+      modeText.textContent = state.carTime > 0 ? "Car" : "Crawl";
+      speedText.textContent = Math.max(1, Math.floor(state.speed + state.throttle * 2));
+      const momPercent = Math.max(0, Math.min(100, state.momClose));
+      momFill.style.width = `${momPercent}%`;
+      momText.textContent = momPercent > 78 ? "close" : momPercent > 44 ? "near" : "far";
+      const momScale = .55 + momPercent / 100 * .75;
+      mom.style.opacity = .18 + momPercent / 100 * .64;
+      mom.style.transform = `translateX(-50%) scale(${momScale})`;
+    }
+
+    function moveLane(dir) {
+      state.targetLane = Math.max(-1, Math.min(1, state.targetLane + dir));
+      statusText.textContent = `Dodging ${laneLabels[state.targetLane + 1]}.`;
+    }
+
+    function boost() {
+      if (state.carTime <= 0 || state.boostCooldown > 0) return;
+      state.boostCooldown = 1.1;
+      state.score += 40;
+      state.momClose = Math.max(0, state.momClose - 9);
+      statusText.textContent = "Car boost!";
+    }
+
+    function enterCar(item) {
+      state.carTime = 10;
+      state.throttle = Math.max(state.throttle, .6);
+      state.score += item.score;
+      state.momClose = Math.max(0, state.momClose - 12);
+      game.classList.add("car-mode");
+      track.classList.add("car-mode");
+      statusText.textContent = "Driving. Use W/S for speed, A/D to steer, Space to boost.";
+    }
+
+    function handleCollision(item) {
+      item.hit = true;
+      if (item.type === "car" && state.carTime <= 0) {
+        if (state.driveIntent) {
+          item.el.remove();
+          enterCar(item);
+          state.driveIntent = false;
+          return true;
+        } else {
+          item.hit = false;
+          statusText.textContent = "Press E when you reach the car to drive it.";
+        }
+        state.driveIntent = false;
+        return false;
+      }
+
+      item.el.remove();
+      if (item.good) {
+        state.score += item.score;
+        if (item.type === "snack") state.momClose = Math.max(0, state.momClose - 10);
+        statusText.textContent = item.message;
+      } else {
+        state.score = Math.max(0, state.score - 55);
+        state.momClose += item.type === "police" ? 26 : 18;
+        statusText.textContent = item.message;
+      }
+      return true;
+    }
+
+    function renderItem(item) {
+      const depth = item.z;
+      const x = laneToX(item.lane, depth);
+      const bottom = 15 + depth * 61;
+      const scale = .18 + depth * 1.45;
+      item.el.style.left = `${x}px`;
+      item.el.style.bottom = `${bottom}vh`;
+      item.el.style.transform = `translate(-50%, -50%) scale(${scale})`;
+      item.el.style.opacity = Math.min(1, .28 + depth * 1.4);
+      item.el.style.zIndex = String(7 + Math.floor(depth * 14));
+    }
+
+    function update(time) {
+      if (!state.running) return;
+      const delta = Math.min((time - state.lastTime) / 1000, .04);
+      state.lastTime = time;
+
+      if (keys.has("KeyW") || keys.has("ArrowUp")) {
+        state.throttle = Math.min(1, state.throttle + delta * 1.8);
+      } else if (keys.has("KeyS") || keys.has("ArrowDown")) {
+        state.throttle = Math.max(-.35, state.throttle - delta * 2.1);
+      } else {
+        state.throttle += (0 - state.throttle) * Math.min(1, delta * 1.7);
+      }
+
+      const driveMultiplier = state.carTime > 0 ? 1.25 + state.throttle * .95 : 1 + state.throttle * .38;
+      const pace = Math.max(.62, driveMultiplier);
+
+      state.speed += delta * (.05 + Math.max(0, state.throttle) * .09);
+      state.distance += delta * pace;
+      state.score += delta * (state.carTime > 0 ? 22 + Math.max(0, state.throttle) * 18 : 12 + Math.max(0, state.throttle) * 8);
+      state.momClose += delta * (state.carTime > 0 ? 1.1 - Math.max(0, state.throttle) * .45 : 3.3 - Math.max(0, state.throttle) * .55);
+      state.boostCooldown = Math.max(0, state.boostCooldown - delta);
+      state.driveIntentTimer = Math.max(0, state.driveIntentTimer - delta);
+      if (state.driveIntentTimer <= 0) state.driveIntent = false;
+      state.carTime = Math.max(0, state.carTime - delta);
+      if (state.carTime <= 0) {
+        game.classList.remove("car-mode");
+        track.classList.remove("car-mode");
+      }
+
+      if (keys.has("ArrowLeft") || keys.has("KeyA")) {
+        keys.delete("ArrowLeft");
+        keys.delete("KeyA");
+        moveLane(-1);
+      }
+      if (keys.has("ArrowRight") || keys.has("KeyD")) {
+        keys.delete("ArrowRight");
+        keys.delete("KeyD");
+        moveLane(1);
+      }
+
+      state.lane += (state.targetLane - state.lane) * Math.min(1, delta * 9);
+      state.laneOffset = (state.targetLane - state.lane);
+
+      state.spawnTimer -= delta;
+      if (state.spawnTimer <= 0) {
+        makeItem();
+        state.spawnTimer = Math.max(.34, .9 - state.speed * .045 + Math.random() * .34);
+      }
+
+      for (let i = state.items.length - 1; i >= 0; i--) {
+        const item = state.items[i];
+        item.z += delta * (.34 + state.speed * .08) * pace;
+        renderItem(item);
+
+        if (item.z > .82 && item.z < 1.04 && Math.abs(item.lane - state.lane) < .48 && !item.hit) {
+          if (handleCollision(item)) {
+            state.items.splice(i, 1);
+            continue;
+          }
+        }
+
+        if (item.z > 1.15) {
+          item.el.remove();
+          state.items.splice(i, 1);
+        }
+      }
+
+      if (state.momClose >= 100) {
+        endGame("Mom caught you and carried you back to bed.");
+        return;
+      }
+
+      if (state.distance >= 80) {
+        state.score += Math.max(0, 600 - Math.floor(state.momClose * 3));
+        winGame();
+        return;
+      }
+
+      updateHud();
+      requestAnimationFrame(update);
+    }
+
+    startButton.addEventListener("click", resetGame);
+
+    window.addEventListener("keydown", event => {
+      if (event.code === "Space") {
+        event.preventDefault();
+        boost();
+        return;
+      }
+      if (event.code === "KeyE") {
+        event.preventDefault();
+        state.driveIntent = true;
+        state.driveIntentTimer = .9;
+        statusText.textContent = state.carTime > 0 ? "Already driving." : "Ready to enter the next car.";
+        return;
+      }
+      if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "KeyA", "KeyD", "KeyW", "KeyS"].includes(event.code)) {
+        event.preventDefault();
+        keys.add(event.code);
+      }
+    });
+
+    window.addEventListener("keyup", event => {
+      keys.delete(event.code);
+    });
+  </script>
+  <script src="../sharedStyle/game-shell.js" defer data-shared-game-shell></script>
+</body>
+</html>

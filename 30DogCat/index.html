@@ -1,0 +1,1401 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dog Cat Fight</title>
+  <style>
+    :root {
+      --bg: #f5f8fb;
+      --ink: #18212b;
+      --muted: #617083;
+      --panel: #ffffff;
+      --line: #cfd9e5;
+      --dog: #d97706;
+      --cat: #697386;
+      --blue: #2f80ed;
+      --teal: #18a999;
+      --green: #1f9d72;
+      --red: #c44646;
+      --amber: #f2a93b;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      padding-bottom: 34px;
+      background:
+        linear-gradient(140deg, rgba(47, 128, 237, 0.12), transparent 38%),
+        linear-gradient(320deg, rgba(31, 157, 114, 0.12), transparent 40%),
+        var(--bg);
+      color: var(--ink);
+    }
+
+    .back-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.92);
+      padding: 9px 16px;
+      backdrop-filter: blur(8px);
+    }
+
+    .back-link {
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    main {
+      width: min(1500px, calc(100vw - 18px));
+      margin: 0 auto;
+      padding: 10px 0 16px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.5rem, 4vw, 2.35rem);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .hud {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .meter {
+      min-width: 92px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.86);
+      padding: 8px 10px;
+      text-align: right;
+    }
+
+    .meter span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .meter strong {
+      display: block;
+      font-size: 1.2rem;
+      line-height: 1.15;
+    }
+
+    button {
+      min-height: 42px;
+      border: 0;
+      border-radius: 8px;
+      background: #17202a;
+      color: #fff;
+      padding: 0 16px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    button:hover,
+    button:focus-visible {
+      background: var(--blue);
+      outline: none;
+    }
+
+    button:disabled {
+      cursor: default;
+      opacity: 0.55;
+    }
+
+    .layout {
+      position: relative;
+      display: block;
+    }
+
+    .arena-card,
+    .side,
+    .rank-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 16px 42px rgba(38, 56, 73, 0.13);
+    }
+
+    .arena-card {
+      overflow: hidden;
+      padding: 0;
+    }
+
+    .arena-wrap {
+      position: relative;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: min(78vh, 760px);
+      min-height: 520px;
+      border: 0;
+      border-radius: 8px;
+      background: #bfe2ff;
+      touch-action: none;
+    }
+
+    .strength-overlay {
+      position: absolute;
+      left: 16px;
+      top: 68px;
+      z-index: 4;
+      width: 240px;
+      height: 46px;
+      transform: none;
+      border: 4px solid #d8c15a;
+      border-radius: 10px;
+      background: #fff8b8;
+      padding: 6px 8px;
+      box-shadow: 5px 0 0 rgba(120, 112, 30, 0.28), 0 8px 18px rgba(27, 32, 37, 0.2);
+      cursor: pointer;
+    }
+
+    .strength-label {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 4px;
+      color: #4c451a;
+      font-size: 0.62rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      pointer-events: none;
+    }
+
+    .strength-label::after {
+      content: none;
+    }
+
+    .strength-label strong {
+      position: static;
+      transform: none;
+      color: #4c451a;
+      font-size: 0.62rem;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+    }
+
+    .strength-bar,
+    .health-bar {
+      overflow: hidden;
+      height: 12px;
+      border-radius: 999px;
+      background: #dce6f0;
+    }
+
+    .strength-fill,
+    .health-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--teal), var(--amber), var(--red));
+      transition: width 40ms linear, height 40ms linear;
+    }
+
+    .strength-bar {
+      position: relative;
+      left: auto;
+      right: auto;
+      bottom: auto;
+      width: 100%;
+      height: 12px;
+      border-radius: 6px;
+      background: #ebe58d;
+      transform: none;
+    }
+
+    .strength-fill {
+      width: 50%;
+      height: 100%;
+      background: linear-gradient(90deg, #fff274, #f29e30, #d2412d);
+    }
+
+    .side {
+      position: absolute;
+      inset: 14px 16px 16px 16px;
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) auto;
+      gap: 12px;
+      align-items: start;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+      pointer-events: none;
+    }
+
+    .turn-card {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1fr minmax(170px, 270px) 1fr;
+      gap: 12px;
+      align-items: center;
+      border: 0;
+      background: transparent;
+      padding: 0;
+    }
+
+    .turn-line {
+      display: none;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .turn-line strong {
+      color: var(--ink);
+    }
+
+    .wind-pill {
+      grid-column: 2;
+      margin-top: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 58px;
+      border: 5px solid #b98722;
+      border-radius: 18px;
+      background: #d29d23;
+      color: #241884;
+      padding: 8px 16px;
+      font-weight: 900;
+      text-transform: uppercase;
+      box-shadow: 0 8px 0 rgba(127, 85, 15, 0.45);
+      pointer-events: auto;
+    }
+
+    .wind-pill > span:first-child {
+      margin-right: 8px;
+      font-size: 1.35rem;
+    }
+
+    .wind-arrow {
+      color: #b75f19;
+      font-size: 1.85rem;
+      line-height: 1;
+    }
+
+    .health-row {
+      position: absolute;
+      top: 0;
+      width: min(36vw, 540px);
+      display: grid;
+      gap: 4px;
+      pointer-events: auto;
+    }
+
+    .health-row.dog-row {
+      right: 0;
+    }
+
+    .health-row.cat-row {
+      left: 0;
+    }
+
+    .health-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #fff8ce;
+      text-shadow: 0 2px 2px rgba(70, 35, 10, 0.45);
+      font-size: 0.78rem;
+      font-weight: 850;
+    }
+
+    .health-bar {
+      height: 20px;
+      border: 5px solid #c49b22;
+      border-radius: 999px;
+      background: #f2e898;
+      box-shadow: 0 5px 0 rgba(117, 83, 18, 0.38);
+    }
+
+    .health-fill.dog {
+      background: linear-gradient(90deg, #f59e0b, var(--dog));
+    }
+
+    .health-fill.cat {
+      background: linear-gradient(90deg, #94a3b8, var(--cat));
+    }
+
+    .action {
+      position: absolute;
+      top: 68px;
+      right: 0;
+      display: grid;
+      gap: 10px;
+      width: 180px;
+      pointer-events: auto;
+    }
+
+    .power-input {
+      display: none;
+    }
+
+    .message {
+      position: fixed;
+      left: 50%;
+      bottom: 52px;
+      z-index: 8;
+      width: min(520px, calc(100vw - 32px));
+      transform: translateX(-50%);
+      min-height: 42px;
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.82);
+      color: var(--muted);
+      padding: 8px 10px;
+      line-height: 1.35;
+      text-align: center;
+      box-shadow: 0 10px 24px rgba(27, 32, 37, 0.18);
+    }
+
+    .message.good {
+      color: var(--green);
+      font-weight: 800;
+    }
+
+    .message.bad {
+      color: var(--red);
+      font-weight: 800;
+    }
+
+    .rank-card {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: min(290px, calc(100vw - 48px));
+      padding: 14px;
+      pointer-events: auto;
+    }
+
+    .rank-card h2 {
+      margin: 0 0 4px;
+      font-size: 1.1rem;
+      letter-spacing: 0;
+    }
+
+    .rank-note {
+      display: none;
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.35;
+    }
+
+    .rank-sub {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f8fbff;
+      padding: 10px;
+    }
+
+    .rank-sub-title {
+      margin-bottom: 6px;
+      color: var(--blue);
+      font-size: 0.78rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .rank-sub ol {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .rank-sub li {
+      margin: 4px 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.35;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: rgba(20, 28, 36, 0.42);
+    }
+
+    .overlay.show {
+      display: grid;
+    }
+
+    .dialog,
+    .name-dialog {
+      width: min(380px, 100%);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+    }
+
+    .dialog h2,
+    .name-dialog h2 {
+      margin: 0 0 8px;
+      font-size: 1.8rem;
+      letter-spacing: 0;
+    }
+
+    .dialog p,
+    .name-dialog p {
+      margin: 0 0 16px;
+      color: var(--muted);
+    }
+
+    .name-dialog input {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+      color: var(--ink);
+      font: inherit;
+      font-weight: 650;
+    }
+
+    .dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .primary {
+      background: var(--blue);
+    }
+
+    .dialog-status {
+      min-height: 20px;
+      margin-top: 10px;
+      color: var(--red);
+      font-weight: 800;
+      text-align: left;
+    }
+
+    footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      border-top: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.95);
+      color: var(--muted);
+      font-size: 12px;
+      padding: 7px;
+      text-align: center;
+    }
+
+    @media (max-width: 820px) {
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .hud {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .layout {
+        display: block;
+      }
+
+      .side {
+        inset: 10px;
+        grid-template-columns: 1fr;
+      }
+
+      .turn-card {
+        grid-template-columns: 1fr;
+        padding-top: 34px;
+      }
+
+      .health-row {
+        width: calc(50% - 6px);
+      }
+
+      .action {
+        justify-self: end;
+      }
+
+      .rank-card {
+        display: none;
+      }
+    }
+
+    @media (max-width: 460px) {
+      main {
+        width: min(100vw - 14px, 1080px);
+      }
+
+      .meter {
+        min-width: 78px;
+        padding: 7px 8px;
+      }
+
+      button {
+        padding: 0 12px;
+      }
+
+      canvas {
+        min-height: 480px;
+      }
+
+      .strength-overlay {
+        width: 190px;
+        height: 44px;
+        top: 62px;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="../sharedStyle/game-shell.css" data-shared-game-shell>
+<style id="kid-friendly-polish-v1">/* Kid-friendly + tablet-ready polish (grades 1-5). Rides on the .happy-game class from game-shell.js; button/cell theming lives in game-shell.css. */
+body.happy-game{background:radial-gradient(circle,rgba(219,122,52,.10) 2px,transparent 2.4px) 0 0/46px 46px,radial-gradient(circle,rgba(42,140,130,.09) 2px,transparent 2.4px) 23px 23px/46px 46px,linear-gradient(180deg,#fdf5e6 0%,#fbedd6 55%,#f7e6c9 100%) !important;background-attachment:fixed,fixed,fixed !important;overflow-x:hidden}
+body.happy-game img,body.happy-game svg:not(.icon){max-width:100%;height:auto}
+body.happy-game .play,body.happy-game .play-area,body.happy-game .playfield,body.happy-game .game-area,body.happy-game .board-shell,body.happy-game .info-card,body.happy-game .order-card,body.happy-game .pot-section,body.happy-game .sidebar,body.happy-game .pictureBox,body.happy-game .clues,body.happy-game .hint-box,body.happy-game .rank-sub{background:#fffdf8;border-radius:16px;box-shadow:0 4px 0 rgba(46,36,24,.18)}
+@media(max-width:760px){body.happy-game button,body.happy-game .btn,body.happy-game select,body.happy-game input{font-size:16px !important}}
+</style>
+</head>
+<body>
+  <header class="back-header"><a class="back-link" href="/puzzle">Back to Puzzle Home</a></header>
+  <main>
+    <section class="topbar">
+      <h1>Dog Cat Fight</h1>
+      <div class="hud" aria-live="polite">
+        <div class="meter">
+          <span>Time</span>
+          <strong id="time">0s</strong>
+        </div>
+        <div class="meter">
+          <span>Turns</span>
+          <strong id="turns">0</strong>
+        </div>
+        <div class="meter">
+          <span>Hits</span>
+          <strong id="hits">0</strong>
+        </div>
+        <button id="newGame" type="button">New Game</button>
+      </div>
+    </section>
+
+    <section class="layout" aria-label="Dog Cat Fight game">
+      <div class="arena-card">
+        <div class="arena-wrap">
+          <canvas id="arena" width="960" height="540" aria-label="Dog and cat projectile arena"></canvas>
+          <div class="strength-overlay">
+            <div class="strength-label">
+              <span>Throw strength</span>
+              <strong id="powerReadout">50%</strong>
+            </div>
+            <div class="strength-bar"><div id="powerFill" class="strength-fill"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="side">
+        <section class="turn-card" aria-live="polite">
+          <div class="turn-line"><span>Current throw</span><strong id="currentPlayer">Dog</strong></div>
+          <div class="wind-pill">
+            <span>Wind</span>
+            <span><span id="windArrow" class="wind-arrow">&rarr;</span> <span id="windText">Right 0</span></span>
+          </div>
+          <div class="health-row dog-row">
+            <div class="health-title"><span>Dog health</span><strong id="dogHealthText">100</strong></div>
+            <div class="health-bar"><div id="dogHealth" class="health-fill dog"></div></div>
+          </div>
+          <div class="health-row cat-row">
+            <div class="health-title"><span>Cat health</span><strong id="catHealthText">100</strong></div>
+            <div class="health-bar"><div id="catHealth" class="health-fill cat"></div></div>
+          </div>
+        </section>
+
+        <section class="action">
+          <input id="power" class="power-input" type="range" min="20" max="100" value="50" aria-label="Throw strength">
+          <button id="throwBtn" class="primary" type="button">Release</button>
+          <p id="message" class="message">Dog starts. Click Release when the strength looks right.</p>
+        </section>
+
+        <section class="rank-card">
+          <h2>Leaderboard</h2>
+          <p class="rank-note">Ranking: wins first, then best time. Scores submit when either side wins.</p>
+          <div class="rank-sub">
+            <div class="rank-sub-title">Dog Cat Fight</div>
+            <ol id="rankList"><li>Loading...</li></ol>
+          </div>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <div id="gameOverDialog" class="overlay" role="dialog" aria-modal="true" aria-labelledby="gameOverTitle">
+    <div class="dialog">
+      <h2 id="gameOverTitle">Game Over</h2>
+      <p id="finalResult">Winner: Dog</p>
+      <button id="again" type="button">Play Again</button>
+    </div>
+  </div>
+
+  <div id="nameDialog" class="overlay" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
+    <div class="name-dialog">
+      <h2 id="dialogTitle">You won!</h2>
+      <p id="dialogPrompt"></p>
+      <input id="dialogName" placeholder="Your name" maxlength="40">
+      <div class="dialog-actions">
+        <button id="cancelName" type="button">Cancel</button>
+        <button id="submitName" class="primary" type="button">Submit</button>
+      </div>
+      <div id="dialogStatus" class="dialog-status"></div>
+    </div>
+  </div>
+
+  <footer>© 2026 Yinghua International School. Made by Science and STEAM Teacher Chao Yu. For educational purposes only.</footer>
+
+  <script>
+    const gameId = "dogcatfight";
+    const canvas = document.querySelector("#arena");
+    const ctx = canvas.getContext("2d");
+    const powerInput = document.querySelector("#power");
+    const strengthOverlay = document.querySelector(".strength-overlay");
+    const powerReadout = document.querySelector("#powerReadout");
+    const powerFill = document.querySelector("#powerFill");
+    const throwBtn = document.querySelector("#throwBtn");
+    const newGameBtn = document.querySelector("#newGame");
+    const againBtn = document.querySelector("#again");
+    const timeEl = document.querySelector("#time");
+    const turnsEl = document.querySelector("#turns");
+    const hitsEl = document.querySelector("#hits");
+    const currentPlayerEl = document.querySelector("#currentPlayer");
+    const windArrowEl = document.querySelector("#windArrow");
+    const windTextEl = document.querySelector("#windText");
+    const dogHealthEl = document.querySelector("#dogHealth");
+    const catHealthEl = document.querySelector("#catHealth");
+    const dogHealthTextEl = document.querySelector("#dogHealthText");
+    const catHealthTextEl = document.querySelector("#catHealthText");
+    const messageEl = document.querySelector("#message");
+    const gameOverDialogEl = document.querySelector("#gameOverDialog");
+    const finalResultEl = document.querySelector("#finalResult");
+    const nameDialogEl = document.querySelector("#nameDialog");
+    const dialogPromptEl = document.querySelector("#dialogPrompt");
+    const dialogNameEl = document.querySelector("#dialogName");
+    const dialogStatusEl = document.querySelector("#dialogStatus");
+    const submitNameBtn = document.querySelector("#submitName");
+    const cancelNameBtn = document.querySelector("#cancelName");
+    const rankListEl = document.querySelector("#rankList");
+
+    const groundY = 438;
+    const dog = { name: "Dog", x: 838, y: groundY, health: 100, color: "#9b8d67" };
+    const cat = { name: "Cat", x: 112, y: groundY, health: 100, color: "#37b6c8" };
+    const gravity = 520;
+    const hitRadius = 44;
+
+    let current = "dog";
+    let projectile = null;
+    let particles = [];
+    let wind = 0;
+    let turns = 0;
+    let hits = 0;
+    let seconds = 0;
+    let timer = null;
+    let animationId = null;
+    let lastFrame = 0;
+    let gameOver = false;
+    let submitted = false;
+    let lastSubmitError = "";
+    let currentPower = 50;
+    let powerDirection = 1;
+
+    function startTimer() {
+      stopTimer();
+      timer = setInterval(() => {
+        seconds++;
+        timeEl.textContent = `${seconds}s`;
+      }, 1000);
+    }
+
+    function stopTimer() {
+      clearInterval(timer);
+      timer = null;
+    }
+
+    function randomWind() {
+      let next = 0;
+      while (Math.abs(next) < 18) {
+        next = Math.round((Math.random() * 220) - 110);
+      }
+      wind = next;
+    }
+
+    function setMessage(text, tone = "") {
+      messageEl.textContent = text;
+      messageEl.className = `message ${tone}`.trim();
+    }
+
+    function updatePowerUi() {
+      const power = Math.round(currentPower);
+      powerReadout.textContent = `${power}%`;
+      powerFill.style.width = `${power}%`;
+      powerFill.style.height = "100%";
+    }
+
+    function updateHud() {
+      turnsEl.textContent = turns;
+      hitsEl.textContent = hits;
+      currentPlayerEl.textContent = current === "dog" ? "Dog" : "Cat";
+      dogHealthTextEl.textContent = Math.max(0, dog.health);
+      catHealthTextEl.textContent = Math.max(0, cat.health);
+      dogHealthEl.style.width = `${Math.max(0, dog.health)}%`;
+      catHealthEl.style.width = `${Math.max(0, cat.health)}%`;
+      windArrowEl.textContent = wind >= 0 ? ">" : "<";
+      windTextEl.textContent = `${wind >= 0 ? "Right" : "Left"} ${Math.abs(wind)}`;
+      throwBtn.textContent = current === "dog" ? "Release Bone" : "Release Fish Bones";
+      throwBtn.disabled = Boolean(projectile) || gameOver;
+      updatePowerUi();
+    }
+
+    function throwProjectile() {
+      if (projectile || gameOver) return;
+      const attacker = current === "dog" ? dog : cat;
+      const target = current === "dog" ? cat : dog;
+      const direction = target.x > attacker.x ? 1 : -1;
+      const power = currentPower / 100;
+      const speed = 390 + power * 390;
+      const lift = 370 + power * 250;
+      projectile = {
+        x: attacker.x + direction * 34,
+        y: attacker.y - 72,
+        vx: direction * speed,
+        vy: -lift,
+        rotation: 0,
+        spin: direction * (6 + power * 10),
+        owner: current,
+        kind: current === "dog" ? "bone" : "fish"
+      };
+      turns++;
+      throwBtn.disabled = true;
+      setMessage(`${attacker.name} throws with ${Math.round(power * 100)}% strength.`, "");
+      updateHud();
+    }
+
+    function endTurn(hit) {
+      projectile = null;
+      if (dog.health <= 0 || cat.health <= 0) {
+        finishGame(dog.health > cat.health ? "Dog" : "Cat");
+        return;
+      }
+      current = current === "dog" ? "cat" : "dog";
+      randomWind();
+      setMessage(hit ? "Direct hit. Wind changed for the next throw." : "Missed. Wind changed for the next throw.", hit ? "good" : "bad");
+      updateHud();
+    }
+
+    function applyHit(target, impactX, impactY) {
+      const damage = 24 + Math.floor(Math.random() * 12);
+      target.health = Math.max(0, target.health - damage);
+      hits++;
+      for (let i = 0; i < 18; i++) {
+        particles.push({
+          x: impactX,
+          y: impactY,
+          vx: (Math.random() - 0.5) * 250,
+          vy: -Math.random() * 240,
+          life: 0.45 + Math.random() * 0.25,
+          color: target === dog ? "#f59e0b" : "#94a3b8"
+        });
+      }
+      setMessage(`${target.name} took ${damage} damage.`, "good");
+    }
+
+    function finishGame(winner) {
+      gameOver = true;
+      stopTimer();
+      throwBtn.disabled = true;
+      finalResultEl.textContent = `${winner} wins in ${seconds}s after ${turns} throws.`;
+      gameOverDialogEl.classList.add("show");
+      setMessage(`${winner} wins. Submit your ranking.`, "good");
+      if (!submitted) {
+        submitted = true;
+        openWinDialog(winner);
+      }
+    }
+
+    function updateDynamicPower(dt) {
+      if (projectile || gameOver) return;
+      currentPower += powerDirection * 95 * dt;
+      if (currentPower >= 100) {
+        currentPower = 100;
+        powerDirection = -1;
+      } else if (currentPower <= 20) {
+        currentPower = 20;
+        powerDirection = 1;
+      }
+      updatePowerUi();
+    }
+
+    function updatePhysics(dt) {
+      if (projectile) {
+        projectile.vx += wind * dt;
+        projectile.vy += gravity * dt;
+        projectile.x += projectile.vx * dt;
+        projectile.y += projectile.vy * dt;
+        projectile.rotation += projectile.spin * dt;
+
+        const target = projectile.owner === "dog" ? cat : dog;
+        const targetX = target.x;
+        const targetY = target.y - 62;
+        const dx = projectile.x - targetX;
+        const dy = projectile.y - targetY;
+        if (Math.hypot(dx, dy) < hitRadius) {
+          applyHit(target, projectile.x, projectile.y);
+          endTurn(true);
+        } else if (projectile.y > groundY + 18 || projectile.x < -60 || projectile.x > canvas.width + 60) {
+          endTurn(false);
+        }
+      }
+
+      particles = particles.filter(particle => {
+        particle.life -= dt;
+        particle.vy += gravity * dt * 0.75;
+        particle.x += particle.vx * dt;
+        particle.y += particle.vy * dt;
+        return particle.life > 0;
+      });
+    }
+
+    function drawSky() {
+      const sky = ctx.createLinearGradient(0, 0, 0, groundY);
+      sky.addColorStop(0, "#7f91b2");
+      sky.addColorStop(1, "#c6e5ce");
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "#b69ad0";
+      ctx.fillRect(0, 0, 275, groundY + 70);
+      ctx.fillStyle = "#303030";
+      ctx.fillRect(112, 0, 92, 150);
+      ctx.fillStyle = "rgba(255,255,255,0.35)";
+      ctx.fillRect(204, 0, 18, 160);
+
+      ctx.fillStyle = "rgba(255,255,255,0.55)";
+      [[360, 112, 36], [726, 98, 34], [780, 104, 28]].forEach(cloud => {
+        ctx.beginPath();
+        ctx.arc(cloud[0], cloud[1], cloud[2], 0, Math.PI * 2);
+        ctx.arc(cloud[0] + cloud[2] * 0.72, cloud[1] + 4, cloud[2] * 0.7, 0, Math.PI * 2);
+        ctx.arc(cloud[0] - cloud[2] * 0.72, cloud[1] + 6, cloud[2] * 0.62, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      ctx.fillStyle = "#6e9a67";
+      ctx.beginPath();
+      ctx.moveTo(275, groundY - 150);
+      ctx.quadraticCurveTo(560, 90, 730, groundY - 110);
+      ctx.quadraticCurveTo(842, 250, 960, groundY - 210);
+      ctx.lineTo(960, groundY);
+      ctx.lineTo(275, groundY);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#a8ccb2";
+      ctx.beginPath();
+      ctx.moveTo(398, groundY);
+      ctx.quadraticCurveTo(570, 96, 692, groundY - 86);
+      ctx.lineTo(960, groundY - 2);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawGround() {
+      ctx.fillStyle = "#b9b498";
+      ctx.beginPath();
+      ctx.moveTo(0, groundY);
+      ctx.lineTo(390, groundY);
+      ctx.lineTo(960, groundY - 65);
+      ctx.lineTo(960, canvas.height);
+      ctx.lineTo(0, canvas.height);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "#81b463";
+      ctx.beginPath();
+      ctx.moveTo(515, groundY + 70);
+      ctx.lineTo(960, groundY + 8);
+      ctx.lineTo(960, canvas.height);
+      ctx.lineTo(515, canvas.height);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "#9f9a2a";
+      ctx.fillRect(500, groundY - 58, 460, 194);
+      ctx.fillStyle = "#fff78a";
+      ctx.fillRect(758, groundY - 58, 202, 194);
+      ctx.fillStyle = "rgba(255,255,255,0.16)";
+      for (let x = 515; x < 960; x += 44) {
+        ctx.fillRect(x, groundY - 58, 3, 194);
+      }
+
+      ctx.fillStyle = "#fff8bd";
+      ctx.fillRect(465, groundY - 82, 54, 256);
+      ctx.fillStyle = "rgba(128, 120, 40, 0.25)";
+      ctx.fillRect(514, groundY - 58, 8, 194);
+    }
+
+    function drawDog() {
+      ctx.save();
+      ctx.translate(dog.x, dog.y);
+      ctx.scale(-1, 1);
+
+      ctx.fillStyle = "rgba(35, 45, 20, 0.22)";
+      ctx.beginPath();
+      ctx.ellipse(-6, 8, 58, 16, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#f0a532";
+      ctx.beginPath();
+      ctx.ellipse(-18, -2, 48, 18, -0.08, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#fff7e6";
+      for (let i = 0; i < 6; i++) {
+        ctx.beginPath();
+        ctx.arc(-46 + i * 14, -30 - (i % 2) * 5, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(-50 + i * 14, -30 - (i % 2) * 5, 14, 5);
+      }
+
+      ctx.strokeStyle = "#2c241b";
+      ctx.lineWidth = 7;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(-48, -52);
+      ctx.quadraticCurveTo(-86, -78, -99, -36);
+      ctx.stroke();
+
+      ctx.fillStyle = dog.color;
+      ctx.beginPath();
+      ctx.ellipse(-15, -54, 48, 34, -0.04, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#d9d2b9";
+      ctx.beginPath();
+      ctx.ellipse(-9, -48, 26, 18, -0.1, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = dog.color;
+      ctx.fillRect(-32, -26, 13, 30);
+      ctx.fillRect(10, -26, 13, 30);
+      ctx.fillStyle = "#2a2119";
+      ctx.beginPath();
+      ctx.ellipse(-24, 5, 13, 6, 0, 0, Math.PI * 2);
+      ctx.ellipse(18, 5, 13, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#6d654d";
+      ctx.beginPath();
+      ctx.ellipse(41, -70, 31, 28, -0.08, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#ded8c1";
+      ctx.beginPath();
+      ctx.ellipse(51, -68, 22, 18, -0.1, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#3f3729";
+      ctx.beginPath();
+      ctx.ellipse(28, -88, 10, 24, -0.45, 0, Math.PI * 2);
+      ctx.ellipse(48, -93, 10, 22, 0.55, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#111827";
+      ctx.beginPath();
+      ctx.ellipse(58, -75, 5, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#211915";
+      ctx.beginPath();
+      ctx.ellipse(73, -66, 10, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = "#1f1712";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(47, -55);
+      ctx.quadraticCurveTo(56, -48, 70, -54);
+      ctx.stroke();
+
+      ctx.strokeStyle = "#5c2f1e";
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.moveTo(5, -31);
+      ctx.quadraticCurveTo(19, -22, 36, -30);
+      ctx.stroke();
+
+      ctx.fillStyle = "#f9fafb";
+      ctx.beginPath();
+      ctx.arc(60, -77, 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawCat() {
+      ctx.save();
+      ctx.translate(cat.x, cat.y);
+
+      ctx.fillStyle = "rgba(35, 45, 20, 0.2)";
+      ctx.beginPath();
+      ctx.ellipse(-5, 8, 58, 15, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#f1c36a";
+      ctx.fillRect(-54, -8, 76, 72);
+      ctx.fillStyle = "#8c6b24";
+      ctx.fillRect(18, -8, 30, 72);
+      ctx.fillStyle = "#9a9a8f";
+      ctx.fillRect(38, -80, 44, 142);
+      ctx.fillStyle = "#c9c9bd";
+      ctx.beginPath();
+      ctx.ellipse(60, -80, 38, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = "#247483";
+      ctx.lineWidth = 7;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(-42, -52);
+      ctx.quadraticCurveTo(-84, -102, -98, -42);
+      ctx.stroke();
+
+      ctx.fillStyle = cat.color;
+      ctx.beginPath();
+      ctx.ellipse(-12, -55, 45, 33, 0.08, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#80d8e2";
+      ctx.beginPath();
+      ctx.ellipse(-6, -47, 23, 16, 0.12, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = cat.color;
+      ctx.fillRect(-25, -26, 11, 29);
+      ctx.fillRect(9, -26, 11, 29);
+      ctx.fillStyle = "#1f2937";
+      ctx.beginPath();
+      ctx.ellipse(-20, 4, 12, 5, 0, 0, Math.PI * 2);
+      ctx.ellipse(15, 4, 12, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#35b6c8";
+      ctx.beginPath();
+      ctx.ellipse(38, -72, 29, 26, -0.08, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#196f7d";
+      ctx.beginPath();
+      ctx.moveTo(22, -91);
+      ctx.lineTo(30, -121);
+      ctx.lineTo(42, -92);
+      ctx.moveTo(47, -92);
+      ctx.lineTo(61, -118);
+      ctx.lineTo(63, -88);
+      ctx.fill();
+
+      ctx.fillStyle = "#fac7d3";
+      ctx.beginPath();
+      ctx.moveTo(28, -94);
+      ctx.lineTo(31, -110);
+      ctx.lineTo(37, -94);
+      ctx.moveTo(51, -94);
+      ctx.lineTo(59, -108);
+      ctx.lineTo(60, -92);
+      ctx.fill();
+
+      ctx.fillStyle = "#e8fbff";
+      ctx.beginPath();
+      ctx.ellipse(48, -68, 17, 13, -0.1, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#1f2937";
+      ctx.beginPath();
+      ctx.ellipse(48, -76, 5, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#f6a8b8";
+      ctx.beginPath();
+      ctx.ellipse(62, -68, 6, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = "#1f2937";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(47, -58);
+      ctx.quadraticCurveTo(53, -52, 60, -57);
+      ctx.moveTo(61, -68);
+      ctx.lineTo(78, -73);
+      ctx.moveTo(61, -65);
+      ctx.lineTo(80, -62);
+      ctx.moveTo(60, -70);
+      ctx.lineTo(76, -82);
+      ctx.stroke();
+
+      ctx.fillStyle = "#f9fafb";
+      ctx.beginPath();
+      ctx.arc(50, -78, 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawProjectile() {
+      if (!projectile) return;
+      ctx.save();
+      ctx.translate(projectile.x, projectile.y);
+      ctx.rotate(projectile.rotation);
+      if (projectile.kind === "bone") {
+        ctx.strokeStyle = "#fff7e6";
+        ctx.lineWidth = 12;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(-18, 0);
+        ctx.lineTo(18, 0);
+        ctx.stroke();
+        ctx.fillStyle = "#fff7e6";
+        [-24, 24].forEach(x => {
+          ctx.beginPath();
+          ctx.arc(x, -7, 9, 0, Math.PI * 2);
+          ctx.arc(x, 7, 9, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      } else {
+        ctx.strokeStyle = "#eef2f7";
+        ctx.lineWidth = 7;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(-24, 0);
+        ctx.lineTo(20, 0);
+        ctx.stroke();
+        ctx.strokeStyle = "#cbd5e1";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(4, 0);
+        ctx.lineTo(22, -15);
+        ctx.moveTo(4, 0);
+        ctx.lineTo(22, 15);
+        ctx.moveTo(-8, 0);
+        ctx.lineTo(-22, -12);
+        ctx.moveTo(-8, 0);
+        ctx.lineTo(-22, 12);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawParticles() {
+      particles.forEach(particle => {
+        ctx.globalAlpha = Math.max(0, particle.life * 1.8);
+        ctx.fillStyle = particle.color;
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      });
+    }
+
+    function drawAimGuide() {
+      if (projectile || gameOver) return;
+      const attacker = current === "dog" ? dog : cat;
+      const target = current === "dog" ? cat : dog;
+      const direction = target.x > attacker.x ? 1 : -1;
+      const power = currentPower / 100;
+      let x = attacker.x + direction * 34;
+      let y = attacker.y - 72;
+      let vx = direction * (390 + power * 390);
+      let vy = -(370 + power * 250);
+      ctx.fillStyle = "rgba(23, 32, 42, 0.22)";
+      for (let i = 0; i < 32; i++) {
+        vx += wind * 0.045;
+        vy += gravity * 0.045;
+        x += vx * 0.045;
+        y += vy * 0.045;
+        if (y > groundY || x < 0 || x > canvas.width) break;
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function draw() {
+      drawSky();
+      drawGround();
+      drawAimGuide();
+      drawDog();
+      drawCat();
+      drawProjectile();
+      drawParticles();
+    }
+
+    function frame(now) {
+      const dt = Math.min(0.033, (now - lastFrame) / 1000 || 0);
+      lastFrame = now;
+      updateDynamicPower(dt);
+      updatePhysics(dt);
+      draw();
+      animationId = requestAnimationFrame(frame);
+    }
+
+    function newGame() {
+      dog.health = 100;
+      cat.health = 100;
+      current = "dog";
+      projectile = null;
+      particles = [];
+      turns = 0;
+      hits = 0;
+      seconds = 0;
+      gameOver = false;
+      submitted = false;
+      gameOverDialogEl.classList.remove("show");
+      nameDialogEl.classList.remove("show");
+      timeEl.textContent = "0s";
+      currentPower = 50;
+      powerDirection = 1;
+      randomWind();
+      setMessage("Dog starts. Click Release when the strength looks right.");
+      updateHud();
+      startTimer();
+    }
+
+    async function submitScore(name) {
+      try {
+        const response = await fetch("/api/score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            game: gameId,
+            player_name: name.trim().slice(0, 40),
+            seconds,
+            best_scores: Math.max(0, 1000 - seconds * 4 - turns * 12 + hits * 35)
+          })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          lastSubmitError = data.error || data.message || `HTTP ${response.status}`;
+          console.error("Dog Cat Fight submit failed:", lastSubmitError, data);
+          return false;
+        }
+        lastSubmitError = "";
+        return data.ok === true || data.success === true || data.status === "ok" || Object.keys(data).length === 0;
+      } catch (error) {
+        lastSubmitError = error.message || "Network error";
+        console.error("Dog Cat Fight submit error:", error);
+        return false;
+      }
+    }
+
+    async function loadRanks() {
+      try {
+        const response = await fetch(`/api/leaderboard?game=${encodeURIComponent(gameId)}&limit=5`, { cache: "no-store" });
+        const data = await response.json();
+        const rows = Array.isArray(data) ? data : (data.rows || []);
+        rankListEl.innerHTML = "";
+        if (!rows.length) {
+          rankListEl.innerHTML = "<li>No scores yet.</li>";
+          return;
+        }
+        rows.forEach((row, index) => {
+          const name = row.player_name ?? row.playerName ?? "Unknown";
+          const wins = row.win_count ?? row.wins ?? row.winCount ?? 0;
+          const bestSeconds = row.best_seconds ?? row.bestSeconds ?? null;
+          const bestScore = row.best_scores ?? row.bestScore ?? row.score ?? null;
+          const item = document.createElement("li");
+          item.textContent = `#${index + 1} ${name} - ${wins} Wins` + (bestSeconds != null ? ` - Best: ${bestSeconds}s` : "") + (bestScore != null ? ` - Score: ${bestScore}` : "");
+          rankListEl.appendChild(item);
+        });
+      } catch {
+        rankListEl.innerHTML = "<li>Could not load.</li>";
+      }
+    }
+
+    function openWinDialog(winner) {
+      dialogPromptEl.textContent = `${winner} won Dog Cat Fight in ${seconds}s with ${hits} hits. Enter your name:`;
+      dialogNameEl.value = "";
+      dialogStatusEl.textContent = "";
+      nameDialogEl.classList.add("show");
+      setTimeout(() => dialogNameEl.focus(), 50);
+    }
+
+    function closeWinDialog() {
+      nameDialogEl.classList.remove("show");
+    }
+
+    throwBtn.addEventListener("click", throwProjectile);
+    strengthOverlay.addEventListener("click", throwProjectile);
+    newGameBtn.addEventListener("click", newGame);
+    againBtn.addEventListener("click", newGame);
+    cancelNameBtn.addEventListener("click", closeWinDialog);
+    submitNameBtn.addEventListener("click", async () => {
+      const name = dialogNameEl.value.trim();
+      if (!name) {
+        dialogStatusEl.textContent = "Name is required.";
+        return;
+      }
+      submitNameBtn.disabled = true;
+      dialogStatusEl.textContent = "Saving...";
+      const ok = await submitScore(name);
+      if (ok) {
+        closeWinDialog();
+        loadRanks();
+      } else {
+        dialogStatusEl.textContent = `Could not save. ${lastSubmitError || "Check /api/score."}`;
+      }
+      submitNameBtn.disabled = false;
+    });
+
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") closeWinDialog();
+      if (event.key === "Enter" && nameDialogEl.classList.contains("show")) submitNameBtn.click();
+      if (event.code === "Space" && !projectile && !gameOver) {
+        event.preventDefault();
+        throwProjectile();
+      }
+    });
+
+    updateHud();
+    newGame();
+    loadRanks();
+    animationId = requestAnimationFrame(frame);
+  </script>
+  <script src="../sharedStyle/game-shell.js" defer data-shared-game-shell></script>
+</body>
+</html>

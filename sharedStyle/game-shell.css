@@ -1,0 +1,260 @@
+@import url("https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@500;700;800&family=Space+Mono:wght@400;700&display=swap");
+
+:root {
+  --happy-board: #efe3c8;
+  --happy-kraft: #d9b27c;
+  --happy-ink: #2e2418;
+  --happy-soft: #6b5a44;
+  --happy-paper: #fffdf8;
+  --happy-tape: #f3ecd8;
+  --happy-teal: #2a8c82;
+  --happy-purple: #7c5cb0;
+  --happy-orange: #db7a34;
+  --happy-red: #b23b3b;
+  --happy-line: rgba(46, 36, 24, .28);
+  --happy-shadow: rgba(46, 36, 24, .18);
+}
+
+html.happy-game-page,
+body.happy-game {
+  min-height: 100%;
+}
+
+body.happy-game {
+  /* Cheerful backdrop for grades 1–5: warm cream wash with soft confetti dots. */
+  background:
+    radial-gradient(circle, rgba(219, 122, 52, .10) 2px, transparent 2.4px) 0 0 / 46px 46px,
+    radial-gradient(circle, rgba(42, 140, 130, .09) 2px, transparent 2.4px) 23px 23px / 46px 46px,
+    linear-gradient(180deg, #fdf5e6 0%, #fbedd6 55%, #f7e6c9 100%),
+    var(--happy-board) !important;
+  background-attachment: fixed, fixed, fixed, fixed !important;
+  color: var(--happy-ink) !important;
+  font-family: "Nunito", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  overflow-x: hidden;
+}
+
+/* Media never overflows the screen (iPad / phone friendly). Canvas is left to each
+   game so its internal pixel size and pointer mapping stay intact. */
+body.happy-game img,
+body.happy-game svg:not(.icon) {
+  max-width: 100%;
+  height: auto;
+}
+
+body.happy-game * {
+  letter-spacing: 0;
+}
+
+body.happy-game h1,
+body.happy-game h2,
+body.happy-game h3 {
+  color: var(--happy-ink);
+  font-family: "Baloo 2", system-ui, sans-serif;
+  letter-spacing: 0;
+}
+
+body.happy-game h1 {
+  font-size: clamp(34px, 6vw, 58px);
+  line-height: .95;
+}
+
+.happy-shell-bar {
+  width: min(100%, 1180px);
+  margin: 0 auto 16px;
+  padding: 14px 16px 0;
+}
+
+body.happy-game .back-header {
+  position: static !important;
+  inset: auto !important;
+  z-index: auto !important;
+  margin: 0 0 14px !important;
+}
+
+body.happy-game .back-link,
+body.happy-game .back-home,
+body.happy-game .happy-home-link {
+  position: static !important;
+  inset: auto !important;
+  z-index: auto !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  min-height: 40px !important;
+  padding: 9px 14px !important;
+  border: 2px solid var(--happy-ink) !important;
+  border-radius: 8px !important;
+  background: var(--happy-tape) !important;
+  box-shadow: 3px 3px 0 var(--happy-shadow) !important;
+  color: var(--happy-ink) !important;
+  font-size: 14px !important;
+  font-weight: 900 !important;
+  text-decoration: none !important;
+}
+
+body.happy-game .back-link::before,
+body.happy-game .back-home::before,
+body.happy-game .happy-home-link::before {
+  content: "<";
+  font-family: "Space Mono", Consolas, monospace;
+  font-weight: 700;
+}
+
+/* UI buttons get the full happy treatment. Game-board CELLS (tiles, chess
+   squares, memory cards, color swatches) are EXCLUDED via :not(...) so their
+   own colors and square shape — which carry game meaning — are preserved.
+   This is why the chessboard keeps light/dark squares and Color Link keeps
+   its colors instead of everything turning teal. */
+body.happy-game button:not(.tile):not(.sq):not(.cell):not(.card-front):not(.card-back):not(.mini-card):not(.deck-card):not(.color-btn):not(.swatch),
+body.happy-game .btn,
+body.happy-game input[type="button"],
+body.happy-game input[type="submit"] {
+  border: 2px solid var(--happy-ink) !important;
+  border-radius: 14px !important;
+  box-shadow: 3px 3px 0 var(--happy-shadow) !important;
+  font-weight: 900 !important;
+  min-height: 44px; /* comfy tap target for small fingers on tablets */
+  transition: transform .08s ease, box-shadow .08s ease;
+}
+
+/* Squishy press feedback kids love */
+body.happy-game button:not(.tile):not(.sq):not(.cell):not(.card-front):not(.card-back):not(.mini-card):not(.deck-card):not(.color-btn):not(.swatch):active,
+body.happy-game .btn:active,
+body.happy-game input[type="button"]:active,
+body.happy-game input[type="submit"]:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--happy-shadow) !important;
+}
+
+body.happy-game button:not(.secondary):not(.tile):not(.sq):not(.cell):not(.card-front):not(.card-back):not(.mini-card):not(.deck-card):not(.color-btn):not(.swatch),
+body.happy-game .btn:not(.secondary) {
+  background: var(--happy-teal) !important;
+  color: #fff !important;
+}
+
+body.happy-game button.secondary,
+body.happy-game .btn.secondary {
+  background: var(--happy-tape) !important;
+  color: var(--happy-ink) !important;
+}
+
+body.happy-game input,
+body.happy-game select,
+body.happy-game textarea {
+  border: 2px solid var(--happy-ink) !important;
+  border-radius: 8px !important;
+  color: var(--happy-ink) !important;
+  font-family: inherit !important;
+  font-weight: 800;
+}
+
+body.happy-game .container,
+body.happy-game .game-container,
+body.happy-game .panel,
+body.happy-game .card,
+body.happy-game .game-card,
+body.happy-game .side-panel,
+body.happy-game .rank-sidebar > div,
+body.happy-game #rankPreview,
+body.happy-game .rank-card,
+body.happy-game .leaderboard,
+body.happy-game [id*="leaderboard" i],
+body.happy-game [id*="rank" i] {
+  border-radius: 8px;
+}
+
+body.happy-game .card,
+body.happy-game .panel,
+body.happy-game .game-card,
+body.happy-game .side-panel,
+body.happy-game #rankPreview,
+body.happy-game .rank-card,
+body.happy-game .leaderboard {
+  background: var(--happy-paper);
+  border-color: var(--happy-line);
+  box-shadow: 5px 5px 0 var(--happy-shadow);
+}
+
+body.happy-game footer {
+  position: static !important;
+  width: auto !important;
+  margin: 28px auto 0 !important;
+  padding: 18px 16px 0 !important;
+  border-top: 1px solid var(--happy-line) !important;
+  background: transparent !important;
+  color: var(--happy-soft) !important;
+  font-family: "Space Mono", Consolas, monospace !important;
+  font-size: 11px !important;
+  line-height: 1.7 !important;
+  text-align: center !important;
+}
+
+body.happy-game .happy-shell-title {
+  width: min(100%, 1180px);
+  margin: 0 auto 18px;
+  padding: 24px clamp(18px, 4vw, 34px);
+  border: 3px solid var(--happy-ink);
+  border-radius: 8px;
+  background: var(--happy-kraft);
+  box-shadow: 7px 7px 0 var(--happy-shadow);
+}
+
+body.happy-game .happy-shell-title h1 {
+  margin: 0 0 4px;
+}
+
+body.happy-game .happy-shell-title p {
+  margin: 0;
+  color: var(--happy-soft);
+  font-weight: 800;
+}
+
+/* Warm up the big pale/white content panels that read as "blank" so games look
+   friendly like the hub. Only generic CONTAINER class names are listed here —
+   deliberately NOT .board/.tile/.cell/canvas/.card-front, whose colors carry
+   game meaning. No !important, but the extra `.happy-game` class means these win
+   over a game's own plain `.play{background:#fff}` rule. */
+body.happy-game .play,
+body.happy-game .play-area,
+body.happy-game .playfield,
+body.happy-game .game-area,
+body.happy-game .board-shell,
+body.happy-game .info-card,
+body.happy-game .order-card,
+body.happy-game .pot-section,
+body.happy-game .sidebar,
+body.happy-game .pictureBox,
+body.happy-game .clues,
+body.happy-game .hint-box,
+body.happy-game .rank-sub {
+  background: var(--happy-paper);
+  border-radius: 16px;
+  box-shadow: 0 4px 0 var(--happy-shadow);
+}
+
+/* Rounder inputs/selects to match the friendly buttons */
+body.happy-game input,
+body.happy-game select,
+body.happy-game textarea {
+  border-radius: 12px !important;
+  min-height: 40px;
+}
+
+@media (max-width: 760px) {
+  .happy-shell-bar {
+    padding: 10px 10px 0;
+  }
+
+  body.happy-game h1 {
+    font-size: clamp(30px, 12vw, 46px);
+  }
+
+  /* Bigger, easier-to-read controls on tablets & phones */
+  body.happy-game button,
+  body.happy-game .btn,
+  body.happy-game select,
+  body.happy-game input {
+    font-size: 16px !important;
+  }
+}

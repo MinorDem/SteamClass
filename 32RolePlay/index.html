@@ -1,0 +1,1319 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Relative Sneak Mission</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #172033;
+      overscroll-behavior: none;
+      background:
+        radial-gradient(circle at 12% 12%, rgba(252, 211, 77, .28), transparent 24%),
+        linear-gradient(180deg, #d9f99d 0%, #bae6fd 46%, #f8fafc 100%);
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 56px 14px 42px;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .back-home {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 40;
+      padding: 9px 13px;
+      border: 3px solid #155e75;
+      color: #123447;
+      background: rgba(255, 255, 255, .94);
+      box-shadow: 0 5px 0 rgba(21, 94, 117, .24);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .page-shell {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(250px, 310px);
+      gap: 14px;
+      align-items: start;
+      width: min(100%, 1500px);
+    }
+
+    .game {
+      position: relative;
+      width: 100%;
+      height: clamp(560px, calc(100dvh - 112px), 820px);
+      min-height: 520px;
+      overflow: hidden;
+      touch-action: none;
+      border: 3px solid rgba(15, 76, 129, .42);
+      background: #f8fafc;
+      box-shadow: 0 18px 42px rgba(15, 23, 42, .16);
+      isolation: isolate;
+    }
+
+    .floor {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(15, 23, 42, .07) 1px, transparent 1px),
+        linear-gradient(rgba(15, 23, 42, .07) 1px, transparent 1px),
+        linear-gradient(135deg, #fef3c7 0%, #dbeafe 50%, #dcfce7 100%);
+      background-size: 44px 44px, 44px 44px, auto;
+      z-index: -3;
+    }
+
+    .room-band {
+      position: absolute;
+      inset: auto 0 0;
+      height: 116px;
+      background:
+        linear-gradient(90deg, #0f766e 0 18%, #38bdf8 18% 20%, #0f766e 20% 38%, #38bdf8 38% 40%, #0f766e 40% 64%, #38bdf8 64% 66%, #0f766e 66% 100%);
+      border-top: 6px solid rgba(255, 255, 255, .7);
+      opacity: .82;
+      z-index: -2;
+    }
+
+    .hud {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      right: 14px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      z-index: 15;
+      pointer-events: none;
+    }
+
+    .hud-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      pointer-events: auto;
+    }
+
+    .stat {
+      min-width: 88px;
+      padding: 8px 10px;
+      border: 3px solid rgba(15, 23, 42, .28);
+      background: rgba(255, 255, 255, .86);
+      box-shadow: 0 5px 0 rgba(15, 23, 42, .12);
+      font-weight: 900;
+      font-size: clamp(12px, 1.7vw, 15px);
+      text-align: center;
+    }
+
+    .tool-button,
+    .dialog-buttons button,
+    .close-button {
+      appearance: none;
+      border: 3px solid #123447;
+      background: #facc15;
+      color: #172033;
+      box-shadow: 0 6px 0 rgba(15, 23, 42, .22);
+      cursor: pointer;
+      font-weight: 900;
+    }
+
+    .tool-button {
+      min-width: 42px;
+      height: 42px;
+      padding: 0 12px;
+      font-size: 13px;
+    }
+
+    .tool-button:active,
+    .dialog-buttons button:active,
+    .close-button:active {
+      transform: translateY(3px);
+      box-shadow: 0 3px 0 rgba(15, 23, 42, .22);
+    }
+
+    .status {
+      max-width: 320px;
+      padding: 8px 10px;
+      border: 3px solid rgba(15, 23, 42, .28);
+      background: rgba(255, 255, 255, .9);
+      box-shadow: 0 5px 0 rgba(15, 23, 42, .12);
+      text-align: right;
+      font-weight: 900;
+      font-size: clamp(12px, 1.8vw, 15px);
+    }
+
+    .actor {
+      position: absolute;
+      width: 42px;
+      height: 54px;
+      border: 4px solid #111827;
+      border-radius: 18px 18px 12px 12px;
+      transform: translate(-50%, -50%);
+      z-index: 8;
+    }
+
+    .player {
+      background:
+        radial-gradient(circle at 31% 30%, #111827 0 3px, transparent 4px),
+        radial-gradient(circle at 67% 30%, #111827 0 3px, transparent 4px),
+        linear-gradient(180deg, #fef3c7 0 31%, #22c55e 32% 70%, #0f766e 71%);
+      box-shadow: 0 0 0 4px rgba(34, 197, 94, .16), 0 8px 0 rgba(15, 23, 42, .2);
+    }
+
+    .player.hiding {
+      opacity: .42;
+      box-shadow: 0 0 0 5px rgba(15, 23, 42, .12);
+    }
+
+    .relative {
+      background:
+        radial-gradient(circle at 31% 30%, #111827 0 3px, transparent 4px),
+        radial-gradient(circle at 67% 30%, #111827 0 3px, transparent 4px),
+        linear-gradient(180deg, #fde68a 0 31%, #fb7185 32% 70%, #be123c 71%);
+      box-shadow: 0 8px 0 rgba(15, 23, 42, .18);
+    }
+
+    .relative.aunt {
+      background:
+        radial-gradient(circle at 31% 30%, #111827 0 3px, transparent 4px),
+        radial-gradient(circle at 67% 30%, #111827 0 3px, transparent 4px),
+        linear-gradient(180deg, #fed7aa 0 31%, #38bdf8 32% 70%, #1d4ed8 71%);
+    }
+
+    .relative.cousin {
+      background:
+        radial-gradient(circle at 31% 30%, #111827 0 3px, transparent 4px),
+        radial-gradient(circle at 67% 30%, #111827 0 3px, transparent 4px),
+        linear-gradient(180deg, #f5d0fe 0 31%, #a78bfa 32% 70%, #6d28d9 71%);
+    }
+
+    .vision-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 4;
+      pointer-events: none;
+    }
+
+    .vision-cone {
+      fill: rgba(250, 204, 21, .28);
+      stroke: rgba(234, 88, 12, .74);
+      stroke-width: 3;
+      stroke-linejoin: round;
+    }
+
+    .vision-close {
+      fill: rgba(239, 68, 68, .14);
+      stroke: rgba(239, 68, 68, .76);
+      stroke-width: 3;
+      stroke-dasharray: 7 6;
+    }
+
+    .vision-cone.alert {
+      fill: rgba(250, 204, 21, .44);
+      stroke: rgba(220, 38, 38, .9);
+    }
+
+    .vision-close.alert {
+      fill: rgba(239, 68, 68, .24);
+      stroke: rgba(220, 38, 38, .95);
+    }
+
+    .vision-cone.caught {
+      fill: rgba(239, 68, 68, .48);
+      stroke: #991b1b;
+      stroke-width: 5;
+    }
+
+    .vision-close.caught {
+      fill: rgba(239, 68, 68, .34);
+      stroke: #991b1b;
+      stroke-width: 5;
+      stroke-dasharray: none;
+    }
+
+    .furniture,
+    .kit,
+    .target,
+    .exit {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      z-index: 5;
+    }
+
+    .furniture {
+      border: 4px solid #1f2937;
+      background: #94a3b8;
+      box-shadow: inset -8px -8px 0 rgba(15, 23, 42, .16), 0 8px 0 rgba(15, 23, 42, .16);
+    }
+
+    .furniture.sofa {
+      width: 170px;
+      height: 64px;
+      border-radius: 8px;
+      background: #38bdf8;
+    }
+
+    .furniture.table {
+      width: 132px;
+      height: 92px;
+      border-radius: 50%;
+      background: #a16207;
+    }
+
+    .furniture.counter {
+      width: 220px;
+      height: 56px;
+      border-radius: 6px;
+      background: #64748b;
+    }
+
+    .furniture.hideable::after {
+      content: "HIDE";
+      position: absolute;
+      inset: auto 8px 6px;
+      color: rgba(255, 255, 255, .86);
+      font-size: 12px;
+      font-weight: 900;
+      text-align: center;
+      letter-spacing: 0;
+    }
+
+    .kit,
+    .target,
+    .exit {
+      display: grid;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      border: 4px solid #111827;
+      box-shadow: 0 7px 0 rgba(15, 23, 42, .18);
+      font-size: 24px;
+      font-weight: 900;
+    }
+
+    .kit {
+      background: #fef08a;
+    }
+
+    .kit::before {
+      content: "?";
+    }
+
+    .target {
+      background: #fda4af;
+    }
+
+    .target::before {
+      content: "!";
+    }
+
+    .target.done {
+      background: #86efac;
+    }
+
+    .target.done::before {
+      content: "OK";
+      font-size: 13px;
+    }
+
+    .exit {
+      width: 78px;
+      height: 58px;
+      background: #4ade80;
+    }
+
+    .exit::before {
+      content: "EXIT";
+      font-size: 13px;
+    }
+
+    .noise-ring {
+      position: absolute;
+      width: 64px;
+      height: 64px;
+      border: 4px solid rgba(239, 68, 68, .6);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      animation: ping .42s ease-out forwards;
+      z-index: 3;
+    }
+
+    @keyframes ping {
+      to {
+        width: 138px;
+        height: 138px;
+        opacity: 0;
+      }
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+      background: rgba(15, 23, 42, .28);
+      z-index: 30;
+    }
+
+    .panel {
+      width: min(540px, 92vw);
+      padding: 24px;
+      border: 3px solid rgba(15, 23, 42, .56);
+      background: rgba(255, 255, 255, .94);
+      box-shadow: 0 24px 70px rgba(15, 23, 42, .24);
+      text-align: center;
+    }
+
+    .panel h1,
+    .panel h2,
+    .rank-card h2 {
+      margin: 0 0 10px;
+      font-size: clamp(28px, 5vw, 44px);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .panel p {
+      margin: 0 0 16px;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
+    .submit-actions {
+      display: grid;
+      gap: 10px;
+      justify-items: center;
+    }
+
+    .name-row input {
+      width: min(270px, 78vw);
+      height: 42px;
+      border: 3px solid #123447;
+      padding: 0 12px;
+      background: #f8fafc;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .dialog-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .dialog-buttons button,
+    .close-button {
+      min-width: 104px;
+      min-height: 42px;
+      padding: 0 16px;
+    }
+
+    .leader-list {
+      width: 100%;
+      margin: 12px 0 16px;
+      padding-left: 24px;
+      text-align: left;
+      font-weight: 900;
+    }
+
+    .leader-list li {
+      margin: 9px 0;
+      padding: 8px 10px;
+      background: rgba(255, 255, 255, .72);
+      border: 2px solid rgba(15, 23, 42, .18);
+    }
+
+    .rank-card {
+      padding: 18px;
+      border: 3px solid rgba(15, 23, 42, .34);
+      background: rgba(255, 255, 255, .86);
+      box-shadow: 0 18px 40px rgba(15, 23, 42, .12);
+    }
+
+    .rank-card h2 {
+      font-size: 28px;
+    }
+
+    .rank-note {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 900;
+      color: #475569;
+    }
+
+    .touch-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 14px;
+      pointer-events: auto;
+    }
+
+    .dpad {
+      display: grid;
+      grid-template-columns: repeat(3, 58px);
+      grid-template-rows: repeat(3, 58px);
+      gap: 8px;
+      pointer-events: auto;
+    }
+
+    .touch-button {
+      width: 58px;
+      height: 58px;
+      border: 3px solid #123447;
+      background: rgba(255, 255, 255, .88);
+      color: #172033;
+      box-shadow: 0 5px 0 rgba(15, 23, 42, .22);
+      font-size: 24px;
+      font-weight: 900;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .touch-button:active,
+    .touch-button.active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 rgba(15, 23, 42, .22);
+      background: #facc15;
+    }
+
+    .touch-up {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    .touch-left {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    .touch-right {
+      grid-column: 3;
+      grid-row: 2;
+    }
+
+    .touch-down {
+      grid-column: 2;
+      grid-row: 3;
+    }
+
+
+    @media (max-width: 900px) {
+      body {
+        align-items: flex-start;
+      }
+
+      .page-shell {
+      grid-template-columns: 1fr;
+      }
+
+      .rank-card {
+        order: 2;
+      }
+
+      .game {
+        height: min(760px, calc(100dvh - 88px));
+      }
+    }
+
+    @media (max-width: 620px) {
+      body {
+        padding-inline: 8px;
+      }
+
+      .game {
+        height: 650px;
+      }
+
+      .hud {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .status {
+        max-width: none;
+        text-align: left;
+      }
+
+      .dpad {
+        grid-template-columns: repeat(3, 48px);
+        grid-template-rows: repeat(3, 48px);
+        gap: 7px;
+      }
+
+      .touch-button {
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
+      }
+
+    }
+  </style>
+  <link rel="stylesheet" href="../sharedStyle/game-shell.css" data-shared-game-shell>
+<style id="kid-friendly-polish-v1">/* Kid-friendly + tablet-ready polish (grades 1-5). Rides on the .happy-game class from game-shell.js; button/cell theming lives in game-shell.css. */
+body.happy-game{background:radial-gradient(circle,rgba(219,122,52,.10) 2px,transparent 2.4px) 0 0/46px 46px,radial-gradient(circle,rgba(42,140,130,.09) 2px,transparent 2.4px) 23px 23px/46px 46px,linear-gradient(180deg,#fdf5e6 0%,#fbedd6 55%,#f7e6c9 100%) !important;background-attachment:fixed,fixed,fixed !important;overflow-x:hidden}
+body.happy-game img,body.happy-game svg:not(.icon){max-width:100%;height:auto}
+body.happy-game .play,body.happy-game .play-area,body.happy-game .playfield,body.happy-game .game-area,body.happy-game .board-shell,body.happy-game .info-card,body.happy-game .order-card,body.happy-game .pot-section,body.happy-game .sidebar,body.happy-game .pictureBox,body.happy-game .clues,body.happy-game .hint-box,body.happy-game .rank-sub{background:#fffdf8;border-radius:16px;box-shadow:0 4px 0 rgba(46,36,24,.18)}
+@media(max-width:760px){body.happy-game button,body.happy-game .btn,body.happy-game select,body.happy-game input{font-size:16px !important}}
+</style>
+</head>
+<body>
+  <a class="back-home" href="../index.html">Back Home</a>
+  <div class="page-shell">
+    <main class="game" id="game" aria-label="Relative Sneak Mission game">
+      <div class="floor"></div>
+      <div class="room-band"></div>
+      <svg class="vision-layer" id="visionLayer" viewBox="0 0 1000 680" preserveAspectRatio="none" aria-hidden="true"></svg>
+
+      <section class="hud">
+        <div class="hud-group" aria-live="polite">
+          <div class="stat">Score <span id="scoreText">0</span></div>
+          <div class="stat">Kits <span id="kitText">0</span></div>
+          <div class="stat">Pranks <span id="prankText">0</span>/5</div>
+          <button class="tool-button" id="leaderButton" type="button">Leaders</button>
+          <button class="tool-button" id="pauseButton" type="button" aria-label="Pause game">II</button>
+        </div>
+        <div class="status" id="status">WASD or arrows to sneak. Hold Shift to tiptoe. Space hides near furniture.</div>
+      </section>
+
+      <div class="actor player" id="player"></div>
+
+      <section class="overlay" id="overlay">
+        <div class="panel">
+          <h1>Relative Sneak Mission</h1>
+          <p id="overlayMessage">Collect prank kits, tag silly targets, and sneak out before relatives spot you.</p>
+          <div class="submit-actions">
+            <div class="name-row hidden" id="nameRow">
+              <input id="nameInput" type="text" maxlength="14" placeholder="Your name">
+            </div>
+            <div class="dialog-buttons">
+              <button id="startButton" type="button">Start</button>
+              <button id="saveScoreButton" class="hidden" type="button">Save</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="overlay hidden" id="leaderOverlay">
+        <div class="panel">
+          <h2>Leaderboard</h2>
+          <p>Best sneaky scores first, then wins.</p>
+          <ol class="leader-list" id="leaderList"></ol>
+          <button class="close-button" id="closeLeaderButton" type="button">Close</button>
+        </div>
+      </section>
+    </main>
+
+    <aside class="rank-card" aria-label="Leaderboard preview">
+      <h2>Leaderboard</h2>
+      <p class="rank-note">Ranking: best score first, then wins.</p>
+      <ol class="leader-list" id="rankPreviewList">
+        <li>Loading...</li>
+      </ol>
+      <section class="touch-controls" aria-label="Touch controls">
+        <div class="dpad">
+          <button class="touch-button touch-up" type="button" data-key="KeyW" aria-label="Move up">^</button>
+          <button class="touch-button touch-left" type="button" data-key="KeyA" aria-label="Move left">&lt;</button>
+          <button class="touch-button touch-right" type="button" data-key="KeyD" aria-label="Move right">&gt;</button>
+          <button class="touch-button touch-down" type="button" data-key="KeyS" aria-label="Move down">v</button>
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  <script>
+    const game = document.getElementById("game");
+    const visionLayer = document.getElementById("visionLayer");
+    const playerEl = document.getElementById("player");
+    const overlay = document.getElementById("overlay");
+    const overlayMessage = document.getElementById("overlayMessage");
+    const leaderOverlay = document.getElementById("leaderOverlay");
+    const startButton = document.getElementById("startButton");
+    const pauseButton = document.getElementById("pauseButton");
+    const leaderButton = document.getElementById("leaderButton");
+    const closeLeaderButton = document.getElementById("closeLeaderButton");
+    const saveScoreButton = document.getElementById("saveScoreButton");
+    const nameRow = document.getElementById("nameRow");
+    const nameInput = document.getElementById("nameInput");
+    const leaderList = document.getElementById("leaderList");
+    const rankPreviewList = document.getElementById("rankPreviewList");
+    const scoreText = document.getElementById("scoreText");
+    const kitText = document.getElementById("kitText");
+    const prankText = document.getElementById("prankText");
+    const statusText = document.getElementById("status");
+
+    const GAME_ID = "rolesneakmission";
+    const keys = new Set();
+    const stage = {
+      width: 1000,
+      height: 680
+    };
+    const CATCH_RANGE = 178;
+    const CATCH_HALF_ANGLE = .47;
+    const CLOSE_CATCH_RANGE = 32;
+    const SVG_NS = "http://www.w3.org/2000/svg";
+
+    const furnitureData = [
+      { x: 205, y: 180, w: 170, h: 64, className: "sofa hideable", hideable: true },
+      { x: 720, y: 160, w: 132, h: 92, className: "table hideable", hideable: true },
+      { x: 500, y: 345, w: 220, h: 56, className: "counter", hideable: false },
+      { x: 222, y: 505, w: 132, h: 92, className: "table hideable", hideable: true },
+      { x: 774, y: 504, w: 170, h: 64, className: "sofa hideable", hideable: true }
+    ];
+
+    const kitData = [
+      { x: 126, y: 90 },
+      { x: 882, y: 92 },
+      { x: 108, y: 604 },
+      { x: 910, y: 608 },
+      { x: 502, y: 562 }
+    ];
+
+    const targetData = [
+      { x: 498, y: 92 },
+      { x: 122, y: 344 },
+      { x: 880, y: 346 },
+      { x: 370, y: 602 },
+      { x: 652, y: 602 }
+    ];
+
+    const relativeData = [
+      { x: 310, y: 126, route: [{ x: 310, y: 126 }, { x: 780, y: 126 }, { x: 780, y: 276 }, { x: 310, y: 276 }], speed: 82, className: "" },
+      { x: 820, y: 430, route: [{ x: 820, y: 430 }, { x: 610, y: 430 }, { x: 610, y: 590 }, { x: 900, y: 590 }], speed: 95, className: "aunt" },
+      { x: 170, y: 438, route: [{ x: 170, y: 438 }, { x: 420, y: 438 }, { x: 420, y: 584 }, { x: 170, y: 584 }], speed: 102, className: "cousin" }
+    ];
+
+    const state = {
+      running: false,
+      paused: false,
+      gameOver: false,
+      scoreSaved: false,
+      won: false,
+      score: 0,
+      startTime: 0,
+      lastTime: 0,
+      player: { x: 86, y: 92, w: 42, h: 54, hiding: false },
+      kits: [],
+      kitCount: 0,
+      targets: [],
+      pranks: 0,
+      relatives: [],
+      furniture: [],
+      exit: null,
+      noiseCooldown: 0,
+      caughtBy: null,
+      frameId: 0
+    };
+
+    function scaleX(x) {
+      return x / stage.width * game.clientWidth;
+    }
+
+    function scaleY(y) {
+      return y / stage.height * game.clientHeight;
+    }
+
+    function distance(a, b) {
+      return Math.hypot(a.x - b.x, a.y - b.y);
+    }
+
+    function rectFromCenter(item) {
+      return {
+        left: item.x - item.w / 2,
+        right: item.x + item.w / 2,
+        top: item.y - item.h / 2,
+        bottom: item.y + item.h / 2
+      };
+    }
+
+    function rectsOverlap(a, b, pad = 0) {
+      return !(
+        a.right - pad < b.left ||
+        a.left + pad > b.right ||
+        a.bottom - pad < b.top ||
+        a.top + pad > b.bottom
+      );
+    }
+
+    function positionEl(el, x, y) {
+      el.style.left = `${scaleX(x)}px`;
+      el.style.top = `${scaleY(y)}px`;
+    }
+
+    function sizeEl(el, w, h) {
+      el.style.width = `${scaleX(w)}px`;
+      el.style.height = `${scaleY(h)}px`;
+    }
+
+    function renderVision(relative) {
+      const leftAngle = relative.dir - CATCH_HALF_ANGLE;
+      const rightAngle = relative.dir + CATCH_HALF_ANGLE;
+      const leftPoint = {
+        x: relative.x + Math.cos(leftAngle) * CATCH_RANGE,
+        y: relative.y + Math.sin(leftAngle) * CATCH_RANGE
+      };
+      const rightPoint = {
+        x: relative.x + Math.cos(rightAngle) * CATCH_RANGE,
+        y: relative.y + Math.sin(rightAngle) * CATCH_RANGE
+      };
+
+      relative.cone.setAttribute("points", `${relative.x},${relative.y} ${leftPoint.x},${leftPoint.y} ${rightPoint.x},${rightPoint.y}`);
+      relative.closeRange.setAttribute("cx", relative.x);
+      relative.closeRange.setAttribute("cy", relative.y);
+      relative.cone.classList.toggle("alert", relative.alert > 0);
+      relative.closeRange.classList.toggle("alert", relative.alert > 0);
+      relative.cone.classList.toggle("caught", state.caughtBy === relative);
+      relative.closeRange.classList.toggle("caught", state.caughtBy === relative);
+    }
+
+    function clearStage() {
+      for (const selector of [".furniture", ".kit", ".target", ".exit", ".relative", ".noise-ring"]) {
+        game.querySelectorAll(selector).forEach(el => el.remove());
+      }
+      visionLayer.innerHTML = "";
+    }
+
+    function buildStage() {
+      clearStage();
+
+      state.furniture = furnitureData.map(item => {
+        const el = document.createElement("div");
+        el.className = `furniture ${item.className}`;
+        game.appendChild(el);
+        return { ...item, el };
+      });
+
+      state.kits = kitData.map(item => {
+        const el = document.createElement("div");
+        el.className = "kit";
+        game.appendChild(el);
+        return { ...item, w: 48, h: 48, taken: false, el };
+      });
+
+      state.targets = targetData.map(item => {
+        const el = document.createElement("div");
+        el.className = "target";
+        game.appendChild(el);
+        return { ...item, w: 48, h: 48, done: false, el };
+      });
+
+      const exitEl = document.createElement("div");
+      exitEl.className = "exit";
+      game.appendChild(exitEl);
+      state.exit = { x: 944, y: 338, w: 78, h: 58, el: exitEl };
+
+      state.relatives = relativeData.map(item => {
+        const el = document.createElement("div");
+        el.className = `actor relative ${item.className}`.trim();
+        const cone = document.createElementNS(SVG_NS, "polygon");
+        const closeRange = document.createElementNS(SVG_NS, "circle");
+        cone.setAttribute("class", "vision-cone");
+        closeRange.setAttribute("class", "vision-close");
+        closeRange.setAttribute("r", CLOSE_CATCH_RANGE);
+        visionLayer.append(cone, closeRange);
+        game.appendChild(el);
+        return {
+          ...item,
+          w: 42,
+          h: 54,
+          targetIndex: 1,
+          dir: 0,
+          alert: 0,
+          el,
+          cone,
+          closeRange
+        };
+      });
+    }
+
+    function renderStage() {
+      for (const item of state.furniture) {
+        positionEl(item.el, item.x, item.y);
+        sizeEl(item.el, item.w, item.h);
+      }
+
+      for (const kit of state.kits) {
+        if (!kit.taken) {
+          positionEl(kit.el, kit.x, kit.y);
+        }
+      }
+
+      for (const target of state.targets) {
+        positionEl(target.el, target.x, target.y);
+      }
+
+      positionEl(state.exit.el, state.exit.x, state.exit.y);
+      sizeEl(state.exit.el, state.exit.w, state.exit.h);
+      positionEl(playerEl, state.player.x, state.player.y);
+
+      for (const relative of state.relatives) {
+        positionEl(relative.el, relative.x, relative.y);
+        renderVision(relative);
+      }
+    }
+
+    function updateHud() {
+      scoreText.textContent = Math.max(0, Math.floor(state.score));
+      kitText.textContent = state.kitCount;
+      prankText.textContent = state.pranks;
+    }
+
+    function setOverlayMessage(text) {
+      overlayMessage.textContent = text;
+    }
+
+    async function submitWinToDB(playerName, score) {
+      try {
+        const res = await fetch("/api/score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            game: GAME_ID,
+            player_name: playerName,
+            best_scores: score
+          })
+        });
+        return res.ok;
+      } catch {
+        return false;
+      }
+    }
+
+    async function loadRankPreview() {
+      const lists = [leaderList, rankPreviewList].filter(Boolean);
+      lists.forEach(list => { list.innerHTML = ""; });
+
+      try {
+        const res = await fetch(`/api/leaderboard?game=${encodeURIComponent(GAME_ID)}&limit=100`, { cache: "no-store" });
+        const data = await res.json();
+        const rows = Array.isArray(data) ? data : (data.rows || []);
+
+        if (!rows.length) {
+          lists.forEach(list => {
+            const item = document.createElement("li");
+            item.textContent = "No scores yet. Sneak first!";
+            list.appendChild(item);
+          });
+          return;
+        }
+
+        rows
+          .slice()
+          .sort((a, b) => {
+            const aScore = Number(a.best_scores ?? a.bestScores ?? 0);
+            const bScore = Number(b.best_scores ?? b.bestScores ?? 0);
+            if (bScore !== aScore) return bScore - aScore;
+            const aWins = Number(a.wins ?? a.win_count ?? a.winCount ?? 0);
+            const bWins = Number(b.wins ?? b.win_count ?? b.winCount ?? 0);
+            return bWins - aWins;
+          })
+          .slice(0, 10)
+          .forEach((entry, index) => {
+            const name = entry.player_name ?? entry.playerName ?? "Player";
+            const wins = entry.wins ?? entry.win_count ?? entry.winCount ?? 0;
+            const best = entry.best_scores ?? entry.bestScores ?? entry.best_score ?? entry.bestScore ?? 0;
+            lists.forEach(list => {
+              const item = document.createElement("li");
+              item.textContent = `#${index + 1} ${name} - Score: ${best} - Wins: ${wins}`;
+              list.appendChild(item);
+            });
+          });
+      } catch {
+        lists.forEach(list => {
+          const item = document.createElement("li");
+          item.textContent = "Could not load leaderboard.";
+          list.appendChild(item);
+        });
+      }
+    }
+
+    async function saveCurrentScore() {
+      if (!state.gameOver || !state.won || state.scoreSaved) return;
+
+      const score = Math.max(0, Math.floor(state.score));
+      const name = nameInput.value.trim().slice(0, 14) || "PLAYER";
+      localStorage.setItem("rpgLastName", name);
+      saveScoreButton.disabled = true;
+      saveScoreButton.textContent = "Saving...";
+      const ok = await submitWinToDB(name, score);
+      saveScoreButton.disabled = false;
+      saveScoreButton.textContent = "Save";
+
+      if (!ok) {
+        setOverlayMessage(`Final score: ${score}. Could not save score.`);
+        return;
+      }
+
+      state.scoreSaved = true;
+      nameRow.classList.add("hidden");
+      saveScoreButton.classList.add("hidden");
+      setOverlayMessage(`Final score: ${score}. Saved for ${name}.`);
+      loadRankPreview();
+    }
+
+    async function openLeaderboard() {
+      if (state.running && !state.paused && !state.gameOver) {
+        togglePause();
+      }
+      leaderList.innerHTML = "<li>Loading...</li>";
+      leaderOverlay.classList.remove("hidden");
+      await loadRankPreview();
+    }
+
+    function closeLeaderboard() {
+      leaderOverlay.classList.add("hidden");
+    }
+
+    function showNoise() {
+      const ring = document.createElement("div");
+      ring.className = "noise-ring";
+      positionEl(ring, state.player.x, state.player.y);
+      game.appendChild(ring);
+      setTimeout(() => ring.remove(), 440);
+    }
+
+    function resetGame() {
+      if (state.frameId) cancelAnimationFrame(state.frameId);
+      keys.clear();
+      buildStage();
+      Object.assign(state, {
+        running: true,
+        paused: false,
+        gameOver: false,
+        scoreSaved: false,
+        won: false,
+        score: 0,
+        startTime: performance.now(),
+        lastTime: performance.now(),
+        player: { x: 86, y: 92, w: 42, h: 54, hiding: false },
+        kitCount: 0,
+        pranks: 0,
+        noiseCooldown: 0,
+        caughtBy: null,
+        frameId: 0
+      });
+
+      playerEl.classList.remove("hiding");
+      overlay.classList.add("hidden");
+      leaderOverlay.classList.add("hidden");
+      nameRow.classList.add("hidden");
+      saveScoreButton.classList.add("hidden");
+      startButton.textContent = "Restart";
+      pauseButton.textContent = "II";
+      pauseButton.setAttribute("aria-label", "Pause game");
+      statusText.textContent = "WASD or arrows to sneak. Hold Shift to tiptoe. Space hides near furniture.";
+      updateHud();
+      renderStage();
+      state.frameId = requestAnimationFrame(update);
+    }
+
+    function togglePause() {
+      if (!state.running || state.gameOver) return;
+      state.paused = !state.paused;
+
+      if (state.paused) {
+        pauseButton.textContent = ">";
+        pauseButton.setAttribute("aria-label", "Resume game");
+        statusText.textContent = "Paused";
+      } else {
+        pauseButton.textContent = "II";
+        pauseButton.setAttribute("aria-label", "Pause game");
+        statusText.textContent = "Keep sneaking.";
+        state.lastTime = performance.now();
+        if (state.frameId) cancelAnimationFrame(state.frameId);
+        state.frameId = requestAnimationFrame(update);
+      }
+    }
+
+    function nearHideable() {
+      return state.furniture.find(item => item.hideable && distance(state.player, item) < 90);
+    }
+
+    function toggleHide() {
+      if (!state.running || state.paused || state.gameOver) return;
+      if (!nearHideable()) {
+        statusText.textContent = "Get closer to a sofa or table to hide.";
+        return;
+      }
+
+      state.player.hiding = !state.player.hiding;
+      playerEl.classList.toggle("hiding", state.player.hiding);
+      statusText.textContent = state.player.hiding ? "Hidden. Move to pop back out." : "Back in the open.";
+    }
+
+    function canMoveTo(next) {
+      const playerRect = rectFromCenter({ ...state.player, x: next.x, y: next.y });
+      if (playerRect.left < 18 || playerRect.right > stage.width - 18 || playerRect.top < 18 || playerRect.bottom > stage.height - 18) {
+        return false;
+      }
+      return !state.furniture.some(item => rectsOverlap(playerRect, rectFromCenter(item), 6));
+    }
+
+    function movePlayer(delta) {
+      let dx = 0;
+      let dy = 0;
+      if (keys.has("ArrowLeft") || keys.has("KeyA")) dx -= 1;
+      if (keys.has("ArrowRight") || keys.has("KeyD")) dx += 1;
+      if (keys.has("ArrowUp") || keys.has("KeyW")) dy -= 1;
+      if (keys.has("ArrowDown") || keys.has("KeyS")) dy += 1;
+      if (!dx && !dy) return;
+
+      const mag = Math.hypot(dx, dy) || 1;
+      const tiptoe = keys.has("ShiftLeft") || keys.has("ShiftRight");
+      const speed = tiptoe ? 120 : 206;
+      const next = {
+        x: state.player.x + dx / mag * speed * delta,
+        y: state.player.y + dy / mag * speed * delta
+      };
+
+      state.player.hiding = false;
+      playerEl.classList.remove("hiding");
+
+      if (canMoveTo({ x: next.x, y: state.player.y })) state.player.x = next.x;
+      if (canMoveTo({ x: state.player.x, y: next.y })) state.player.y = next.y;
+
+      if (!tiptoe) {
+        state.noiseCooldown -= delta;
+        if (state.noiseCooldown <= 0) {
+          state.noiseCooldown = .55;
+          showNoise();
+          for (const relative of state.relatives) {
+            if (distance(relative, state.player) < 150) {
+              relative.alert = 1.4;
+              relative.targetNoise = { x: state.player.x, y: state.player.y };
+            }
+          }
+        }
+      }
+    }
+
+    function updateRelatives(delta) {
+      for (const relative of state.relatives) {
+        relative.alert = Math.max(0, relative.alert - delta);
+
+        const target = relative.alert > 0 && relative.targetNoise ? relative.targetNoise : relative.route[relative.targetIndex];
+        const dx = target.x - relative.x;
+        const dy = target.y - relative.y;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist < 8) {
+          if (relative.alert > 0) {
+            relative.alert = 0;
+            relative.targetNoise = null;
+          } else {
+            relative.targetIndex = (relative.targetIndex + 1) % relative.route.length;
+          }
+        } else {
+          const speed = relative.alert > 0 ? relative.speed * 1.45 : relative.speed;
+          relative.x += dx / dist * speed * delta;
+          relative.y += dy / dist * speed * delta;
+          relative.dir = Math.atan2(dy, dx);
+        }
+      }
+    }
+
+    function playerInVision(relative) {
+      if (state.player.hiding) return false;
+      const dx = state.player.x - relative.x;
+      const dy = state.player.y - relative.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist <= CLOSE_CATCH_RANGE) return true;
+      if (dist > CATCH_RANGE) return false;
+
+      const angle = Math.atan2(dy, dx);
+      const diff = Math.atan2(Math.sin(angle - relative.dir), Math.cos(angle - relative.dir));
+      return Math.abs(diff) < CATCH_HALF_ANGLE;
+    }
+
+    function collectItems() {
+      for (const kit of state.kits) {
+        if (!kit.taken && distance(kit, state.player) < 46) {
+          kit.taken = true;
+          kit.el.remove();
+          state.kitCount += 1;
+          state.score += 75;
+          statusText.textContent = "Prank kit collected.";
+        }
+      }
+
+      for (const target of state.targets) {
+        if (!target.done && state.kitCount > 0 && distance(target, state.player) < 52) {
+          target.done = true;
+          target.el.classList.add("done");
+          state.kitCount -= 1;
+          state.pranks += 1;
+          state.score += 220;
+          statusText.textContent = "Target tagged. Sneak to the next one.";
+        } else if (!target.done && state.kitCount === 0 && distance(target, state.player) < 52) {
+          statusText.textContent = "Find a prank kit first.";
+        }
+      }
+
+      if (state.pranks >= state.targets.length && distance(state.exit, state.player) < 64) {
+        winGame();
+      }
+    }
+
+    function endGame(message, caughtBy = null) {
+      state.running = false;
+      state.gameOver = true;
+      state.paused = false;
+      if (state.frameId) cancelAnimationFrame(state.frameId);
+      state.frameId = 0;
+      keys.clear();
+      state.caughtBy = caughtBy;
+      state.score = Math.max(0, Math.floor(state.score));
+      renderStage();
+      pauseButton.textContent = "II";
+      pauseButton.setAttribute("aria-label", "Pause game");
+      overlay.querySelector("h1").textContent = state.won ? "Mission Complete" : "Caught";
+      setOverlayMessage(message);
+      nameInput.value = localStorage.getItem("rpgLastName") || "";
+      nameRow.classList.toggle("hidden", !state.won);
+      saveScoreButton.classList.toggle("hidden", !state.won);
+      startButton.textContent = "Restart";
+      overlay.classList.remove("hidden");
+      updateHud();
+    }
+
+    function winGame() {
+      if (state.gameOver) return;
+      const elapsed = (performance.now() - state.startTime) / 1000;
+      const speedBonus = Math.max(0, 520 - Math.floor(elapsed * 8));
+      state.won = true;
+      state.score += 500 + speedBonus;
+      endGame(`You escaped with every prank complete. Final score: ${Math.floor(state.score)}.`);
+    }
+
+    function update(time) {
+      if (!state.running || state.paused) return;
+
+      const delta = Math.min((time - state.lastTime) / 1000, .033);
+      state.lastTime = time;
+      state.score += delta * 11;
+
+      movePlayer(delta);
+      updateRelatives(delta);
+      collectItems();
+      if (!state.running || state.gameOver) return;
+
+      for (const relative of state.relatives) {
+        if (playerInVision(relative)) {
+          endGame(`A relative caught you sneaking. The red range shows where you were caught. Final score: ${Math.floor(state.score)}.`, relative);
+          return;
+        }
+      }
+
+      renderStage();
+      updateHud();
+      state.frameId = requestAnimationFrame(update);
+    }
+
+    startButton.addEventListener("click", resetGame);
+    saveScoreButton.addEventListener("click", saveCurrentScore);
+    leaderButton.addEventListener("click", openLeaderboard);
+    closeLeaderButton.addEventListener("click", closeLeaderboard);
+
+    nameInput.addEventListener("keydown", event => {
+      if (event.code === "Enter") {
+        event.preventDefault();
+        saveCurrentScore();
+      }
+    });
+
+    pauseButton.addEventListener("click", event => {
+      event.stopPropagation();
+      togglePause();
+    });
+
+    document.querySelectorAll("[data-key]").forEach(button => {
+      const key = button.dataset.key;
+      const press = event => {
+        event.preventDefault();
+        keys.add(key);
+        button.classList.add("active");
+      };
+      const release = event => {
+        event.preventDefault();
+        keys.delete(key);
+        button.classList.remove("active");
+      };
+
+      button.addEventListener("pointerdown", press);
+      button.addEventListener("pointerup", release);
+      button.addEventListener("pointercancel", release);
+      button.addEventListener("pointerleave", release);
+    });
+
+    function releaseTouchControls() {
+      for (const code of ["KeyW", "KeyA", "KeyS", "KeyD"]) {
+        keys.delete(code);
+      }
+      document.querySelectorAll(".touch-button.active").forEach(button => button.classList.remove("active"));
+    }
+
+    window.addEventListener("blur", releaseTouchControls);
+    window.addEventListener("pointerup", releaseTouchControls);
+    window.addEventListener("pointercancel", releaseTouchControls);
+
+    window.addEventListener("keydown", event => {
+      if (event.target instanceof HTMLInputElement) return;
+
+      if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "KeyA", "KeyD", "KeyW", "KeyS", "ShiftLeft", "ShiftRight"].includes(event.code)) {
+        event.preventDefault();
+        keys.add(event.code);
+      }
+
+      if (event.code === "Space") {
+        event.preventDefault();
+        toggleHide();
+      }
+
+      if (event.code === "KeyP") {
+        event.preventDefault();
+        togglePause();
+      }
+    });
+
+    window.addEventListener("keyup", event => {
+      keys.delete(event.code);
+    });
+
+    window.addEventListener("resize", renderStage);
+
+    buildStage();
+    renderStage();
+    updateHud();
+    loadRankPreview();
+  </script>
+  <script src="../sharedStyle/game-shell.js" defer data-shared-game-shell></script>
+</body>
+</html>

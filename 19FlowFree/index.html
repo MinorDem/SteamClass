@@ -38,6 +38,12 @@ footer{position:fixed;bottom:0;left:0;width:100%;background:rgba(255,243,224,.97
 @media(max-width:900px){.layout{grid-template-columns:1fr}.rank-sidebar{position:static}}@media(max-width:540px){:root{--cell:52px}.segment{width:13px;height:13px}.seg-n,.seg-s{width:13px}.seg-e,.seg-w{height:13px}}@media(max-width:400px){:root{--cell:44px}.segment{width:11px;height:11px}.seg-n,.seg-s{width:11px}.seg-e,.seg-w{height:11px}}
 </style>
   <link rel="stylesheet" href="../sharedStyle/game-shell.css" data-shared-game-shell>
+<style id="kid-friendly-polish-v1">/* Kid-friendly + tablet-ready polish (grades 1-5). Rides on the .happy-game class from game-shell.js; button/cell theming lives in game-shell.css. */
+body.happy-game{background:radial-gradient(circle,rgba(219,122,52,.10) 2px,transparent 2.4px) 0 0/46px 46px,radial-gradient(circle,rgba(42,140,130,.09) 2px,transparent 2.4px) 23px 23px/46px 46px,linear-gradient(180deg,#fdf5e6 0%,#fbedd6 55%,#f7e6c9 100%) !important;background-attachment:fixed,fixed,fixed !important;overflow-x:hidden}
+body.happy-game img,body.happy-game svg:not(.icon){max-width:100%;height:auto}
+body.happy-game .play,body.happy-game .play-area,body.happy-game .playfield,body.happy-game .game-area,body.happy-game .board-shell,body.happy-game .info-card,body.happy-game .order-card,body.happy-game .pot-section,body.happy-game .sidebar,body.happy-game .pictureBox,body.happy-game .clues,body.happy-game .hint-box,body.happy-game .rank-sub{background:#fffdf8;border-radius:16px;box-shadow:0 4px 0 rgba(46,36,24,.18)}
+@media(max-width:760px){body.happy-game button,body.happy-game .btn,body.happy-game select,body.happy-game input{font-size:16px !important}}
+</style>
 </head>
 <body>
 <header class="back-header"><a class="back-link" href="../">← Back to Puzzle Home</a></header>

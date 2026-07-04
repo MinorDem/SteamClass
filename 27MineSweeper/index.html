@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Memory Path · Ranked</title><style>
+<title>Mines · Ranked</title><style>
 :root{--bg:#f6f7fb;--card:#fff;--ink:#1f2937;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--ok:#16a34a;--bad:#dc2626}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:linear-gradient(180deg,#f8fafc,#eef2ff);color:var(--ink);min-height:100vh;padding-bottom:56px}
@@ -14,8 +14,6 @@ button{cursor:pointer}.primary{background:var(--accent);color:#fff;border-color:
 .stats{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:10px;color:var(--muted);font-weight:700}.val{color:var(--ink)}
 .play{min-height:360px;border:1px solid var(--line);border-radius:16px;background:#fff;padding:16px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;text-align:center}
 .grid{display:grid;gap:8px}.tile{border:1px solid var(--line);border-radius:10px;background:#f8fafc;display:flex;align-items:center;justify-content:center;font-weight:900;cursor:pointer;user-select:none}.tile.good{background:#dcfce7;border-color:#16a34a}.tile.bad{background:#fee2e2;border-color:#dc2626}
-/* Non-color cue so colorblind players can tell lit/correct from wrong tiles */
-.tile.good::after{content:"\2713";color:#15803d}.tile.bad::after{content:"\2717";color:#b91c1c}
 .rank-sidebar{position:sticky;top:58px}.rank-card h3{font-size:18px;margin-bottom:4px}.rank-note{font-size:12px;color:var(--muted);margin-bottom:12px}
 .rank-sub{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px}.rank-sub-title{font-weight:900;color:var(--accent);font-size:12px;margin-bottom:6px}.rank-sub ol{padding-left:20px}.rank-sub li{font-size:12px;margin:4px 0;color:var(--muted)}
 #nameDialog{position:fixed;inset:0;background:rgba(15,23,42,.35);display:none;align-items:center;justify-content:center;z-index:99}.dialog{background:#fff;border-radius:16px;padding:22px;max-width:380px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,.22)}.dialog h3{margin-bottom:8px}.dialog input{width:100%;margin:10px 0}.dialog-actions{display:flex;gap:10px;justify-content:flex-end}
@@ -33,7 +31,7 @@ body.happy-game .play,body.happy-game .play-area,body.happy-game .playfield,body
 </head><body>
 <header class="back-header"><a class="back-link" href="/puzzle">← Back to Puzzle Home</a></header>
 <div class="page"><div class="layout"><main><section class="card">
-<h1>🧠 Memory Path</h1><div class="sub">Watch a longer and faster pattern, remember the sequence, and repeat it correctly.</div>
+<h1>💣 Mines</h1><div class="sub">Reveal safe tiles on a larger minefield without hitting hidden mines.</div>
 <div class="controls"><span>Level:</span><select id="diffSelect"><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select><button class="primary" id="newBtn">New Game</button></div>
 <div class="stats"><div>⏱ Time <span class="val" id="timeEl">0</span>s</div><div id="extraStat"></div><div id="msg" class="msg"></div></div>
 <div class="play"><div id="gameArea"></div></div></section></main>
@@ -44,7 +42,7 @@ body.happy-game .play,body.happy-game .play-area,body.happy-game .playfield,body
 </section></aside></div></div>
 <div id="nameDialog"><div class="dialog"><h3>🎉 You won!</h3><p id="dialogPrompt"></p><input id="dialogName" placeholder="Your name" maxlength="40"/><div class="dialog-actions"><button id="cancelName">Cancel</button><button class="primary" id="submitName">Submit</button></div><div id="dialogStatus" class="msg bad"></div></div></div>
 <footer>© 2026 Yinghua International School. Made by Science and STEAM Teacher Chao Yu. For educational purposes only.</footer>
-<script>const TITLE="Memory Path";const BASE_GAME_ID="memorypath";
+<script>const TITLE="Mines";const BASE_GAME_ID="minesweeper";
 const el=id=>document.getElementById(id);
 let difficulty='easy',seconds=0,timer=null,gameOver=false,submitted=false;
 function gameId(diff=difficulty){return `${BASE_GAME_ID}_${diff}`;}
@@ -59,10 +57,10 @@ function openWinDialog(){el('dialogPrompt').textContent=`${TITLE} · ${difficult
 function closeWinDialog(){el('nameDialog').style.display='none'}
 function wireDialog(){el('cancelName').onclick=closeWinDialog;el('submitName').onclick=async()=>{const name=el('dialogName').value.trim();if(!name){el('dialogStatus').textContent='Name is required.';return}el('submitName').disabled=true;el('dialogStatus').textContent='Saving…';const ok=await submitScore(name);if(ok){closeWinDialog();loadAllRanks()}else el('dialogStatus').textContent='Could not save.';el('submitName').disabled=false}}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeWinDialog();if(e.key==='Enter'&&el('nameDialog').style.display==='flex')el('submitName').click()});
-let seq=[],input=[],showing=false;const sizes={easy:5,medium:6,hard:7};
-function newGame(){resetBase();seq=[];input=[];let n=sizes[difficulty];let area=el('gameArea');area.innerHTML=`<div class="grid" id="pathGrid" style="grid-template-columns:repeat(${n},46px)"></div><button id="startSeq" class="primary">Show Pattern</button>`;for(let i=0;i<n*n;i++){let b=document.createElement('button');b.className='tile';b.style.width='46px';b.style.height='46px';b.onclick=()=>tap(i);el('pathGrid').appendChild(b)}let len={easy:6,medium:9,hard:12}[difficulty];seq=Array.from({length:len},()=>Math.floor(Math.random()*n*n));el('extraStat').textContent=`Steps: ${len}`;el('startSeq').onclick=showSeq}
-async function showSeq(){if(showing)return;showing=true;input=[];let tiles=[...document.querySelectorAll('.tile')];for(let i of seq){tiles[i].classList.add('good');await new Promise(r=>setTimeout(r,{easy:350,medium:280,hard:220}[difficulty]));tiles[i].classList.remove('good');await new Promise(r=>setTimeout(r,90))}showing=false;el('msg').textContent='Now repeat the pattern.'}
-function tap(i){if(showing||gameOver)return;input.push(i);let t=document.querySelectorAll('.tile')[i];t.classList.add(i===seq[input.length-1]?'good':'bad');setTimeout(()=>t.className='tile',250);if(i!==seq[input.length-1]){el('msg').textContent='Wrong pattern. Try a new game.';el('msg').className='msg bad';gameOver=true;stopTimer();return}if(input.length===seq.length)winGame()}
+let mines=new Set(),revealed=new Set(),totalSafe=0,n=8,mineCount=8;
+function newGame(){resetBase();n={easy:10,medium:12,hard:15}[difficulty];mineCount={easy:16,medium:30,hard:55}[difficulty];mines=new Set();revealed=new Set();while(mines.size<mineCount)mines.add(Math.floor(Math.random()*n*n));totalSafe=n*n-mineCount;el('extraStat').textContent=`Mines: ${mineCount}`;el('gameArea').innerHTML=`<div class="grid" id="mineGrid" style="grid-template-columns:repeat(${n},{easy:'34px',medium:'32px',hard:'28px'}[difficulty])"></div>`;for(let i=0;i<n*n;i++){let b=document.createElement('button');b.className='tile';b.style.width={easy:'34px',medium:'32px',hard:'28px'}[difficulty];b.style.height={easy:'34px',medium:'32px',hard:'28px'}[difficulty];b.onclick=()=>reveal(i);el('mineGrid').appendChild(b)}}
+function countM(i){let x=i%n,y=Math.floor(i/n),c=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;let nx=x+dx,ny=y+dy;if(nx>=0&&ny>=0&&nx<n&&ny<n&&mines.has(ny*n+nx))c++}return c}
+function reveal(i){if(gameOver||revealed.has(i))return;let tiles=document.querySelectorAll('.tile');if(mines.has(i)){tiles[i].textContent='💣';tiles[i].classList.add('bad');el('msg').textContent='Boom! New game?';el('msg').className='msg bad';gameOver=true;stopTimer();return}revealed.add(i);tiles[i].textContent=countM(i)||'';tiles[i].classList.add('good');if(revealed.size===totalSafe)winGame()}
 wireDialog();el('newBtn').onclick=newGame;el('diffSelect').onchange=newGame;newGame();</script>
   <script src="../sharedStyle/game-shell.js" defer data-shared-game-shell></script>
 </body></html>

@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Find 5 Differences</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #182033;
+      background:
+        linear-gradient(90deg, rgba(24, 32, 51, .05) 1px, transparent 1px),
+        linear-gradient(rgba(24, 32, 51, .05) 1px, transparent 1px),
+        linear-gradient(180deg, #f7f0df 0%, #d8ecf0 52%, #f8fafc 100%);
+      background-size: 34px 34px, 34px 34px, auto;
+    }
+
+    body {
+      padding: 58px 14px 34px;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .back-home {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 40;
+      padding: 9px 13px;
+      border: 3px solid #1f2937;
+      background: rgba(255, 255, 255, .94);
+      color: #172033;
+      box-shadow: 0 5px 0 rgba(15, 23, 42, .18);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .page {
+      width: min(100%, 1540px);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 292px;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .game-shell {
+      display: grid;
+      gap: 12px;
+    }
+
+    .topbar,
+    .rank-card,
+    .dialog-panel {
+      border: 3px solid rgba(24, 32, 51, .38);
+      background: rgba(255, 255, 255, .9);
+      box-shadow: 0 12px 28px rgba(15, 23, 42, .12);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px;
+    }
+
+    h1,
+    h2 {
+      margin: 0;
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: clamp(24px, 4vw, 42px);
+    }
+
+    h2 {
+      font-size: 25px;
+    }
+
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .stat {
+      min-width: 94px;
+      padding: 8px 10px;
+      border: 2px solid rgba(24, 32, 51, .28);
+      background: #fff7ed;
+      font-size: 14px;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .photos {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .photo-panel {
+      min-width: 0;
+    }
+
+    .photo-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      min-height: 36px;
+      padding: 8px 10px;
+      border: 3px solid rgba(24, 32, 51, .38);
+      border-bottom: 0;
+      background: rgba(255, 255, 255, .92);
+      font-weight: 900;
+    }
+
+    .photo-wrap {
+      position: relative;
+      aspect-ratio: 4 / 3;
+      border: 3px solid rgba(24, 32, 51, .42);
+      background: #e5e7eb;
+      overflow: hidden;
+      box-shadow: 0 14px 34px rgba(15, 23, 42, .14);
+      cursor: crosshair;
+      touch-action: manipulation;
+    }
+
+    .photo-wrap img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    .marker {
+      position: absolute;
+      width: var(--size);
+      height: var(--size);
+      left: var(--x);
+      top: var(--y);
+      border: clamp(3px, .45vw, 6px) solid #ef4444;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, .86), 0 0 18px rgba(239, 68, 68, .55);
+      pointer-events: none;
+    }
+
+    .miss {
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      left: var(--x);
+      top: var(--y);
+      transform: translate(-50%, -50%) rotate(45deg);
+      pointer-events: none;
+      opacity: .95;
+      animation: fade-miss .55s ease-out forwards;
+    }
+
+    .miss::before,
+    .miss::after {
+      content: "";
+      position: absolute;
+      background: #1f2937;
+      border-radius: 999px;
+    }
+
+    .miss::before {
+      inset: 9px 0;
+    }
+
+    .miss::after {
+      inset: 0 9px;
+    }
+
+    @keyframes fade-miss {
+      to {
+        opacity: 0;
+        transform: translate(-50%, -50%) rotate(45deg) scale(1.35);
+      }
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border: 3px solid rgba(24, 32, 51, .34);
+      background: rgba(255, 255, 255, .88);
+      font-weight: 900;
+    }
+
+    .button {
+      min-height: 42px;
+      padding: 0 16px;
+      border: 3px solid #123447;
+      background: #facc15;
+      color: #182033;
+      box-shadow: 0 5px 0 rgba(15, 23, 42, .22);
+      cursor: pointer;
+      font-weight: 900;
+    }
+
+    .button:disabled {
+      cursor: not-allowed;
+      opacity: .58;
+      transform: none;
+      box-shadow: 0 5px 0 rgba(15, 23, 42, .22);
+    }
+
+    .button:active {
+      transform: translateY(2px);
+      box-shadow: 0 3px 0 rgba(15, 23, 42, .22);
+    }
+
+    .status {
+      color: #334155;
+    }
+
+    .rank-card {
+      padding: 16px;
+    }
+
+    .rank-note {
+      margin: 8px 0 12px;
+      color: #475569;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .leader-list {
+      margin: 0;
+      padding-left: 24px;
+      font-weight: 900;
+    }
+
+    .leader-list li {
+      margin: 8px 0;
+      padding: 8px;
+      border: 2px solid rgba(24, 32, 51, .16);
+      background: rgba(255, 255, 255, .68);
+    }
+
+    .dialog {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: rgba(15, 23, 42, .42);
+      z-index: 60;
+    }
+
+    .dialog-panel {
+      width: min(480px, 92vw);
+      padding: 22px;
+      text-align: center;
+    }
+
+    .dialog-panel p {
+      margin: 12px 0 16px;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
+    .name-row {
+      display: grid;
+      gap: 10px;
+      justify-items: center;
+    }
+
+    .name-row input {
+      width: min(290px, 78vw);
+      height: 42px;
+      border: 3px solid #123447;
+      padding: 0 12px;
+      background: #f8fafc;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .dialog-actions {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 1100px) {
+      .page {
+        grid-template-columns: 1fr;
+      }
+
+      .rank-card {
+        order: 2;
+      }
+    }
+
+    @media (max-width: 760px) {
+      body {
+        padding-inline: 8px;
+      }
+
+      .topbar {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .stats {
+        justify-content: flex-start;
+      }
+
+      .photos {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="../sharedStyle/game-shell.css" data-shared-game-shell>
+<style id="kid-friendly-polish-v1">/* Kid-friendly + tablet-ready polish (grades 1-5). Rides on the .happy-game class from game-shell.js; button/cell theming lives in game-shell.css. */
+body.happy-game{background:radial-gradient(circle,rgba(219,122,52,.10) 2px,transparent 2.4px) 0 0/46px 46px,radial-gradient(circle,rgba(42,140,130,.09) 2px,transparent 2.4px) 23px 23px/46px 46px,linear-gradient(180deg,#fdf5e6 0%,#fbedd6 55%,#f7e6c9 100%) !important;background-attachment:fixed,fixed,fixed !important;overflow-x:hidden}
+body.happy-game img,body.happy-game svg:not(.icon){max-width:100%;height:auto}
+body.happy-game .play,body.happy-game .play-area,body.happy-game .playfield,body.happy-game .game-area,body.happy-game .board-shell,body.happy-game .info-card,body.happy-game .order-card,body.happy-game .pot-section,body.happy-game .sidebar,body.happy-game .pictureBox,body.happy-game .clues,body.happy-game .hint-box,body.happy-game .rank-sub{background:#fffdf8;border-radius:16px;box-shadow:0 4px 0 rgba(46,36,24,.18)}
+@media(max-width:760px){body.happy-game button,body.happy-game .btn,body.happy-game select,body.happy-game input{font-size:16px !important}}
+</style>
+</head>
+<body>
+  <a class="back-home" href="../index.html">Back Home</a>
+
+  <div class="page">
+    <main class="game-shell">
+      <section class="topbar" aria-label="Game status">
+        <h1>Find 5 Differences</h1>
+        <div class="stats">
+          <div class="stat">Found <span id="foundText">0</span>/5</div>
+          <div class="stat">Time <span id="timeText">0</span>s</div>
+          <div class="stat">Misses <span id="missText">0</span></div>
+        </div>
+      </section>
+
+      <section class="photos" aria-label="Photo comparison">
+        <figure class="photo-panel">
+          <figcaption class="photo-label">
+            <span>Original</span>
+            <span>IMG 1514</span>
+          </figcaption>
+          <div class="photo-wrap" data-panel="original" aria-label="Original image">
+            <img src="IMG_1514.jpeg" alt="Original group photo">
+          </div>
+        </figure>
+
+        <figure class="photo-panel">
+          <figcaption class="photo-label">
+            <span>Changed</span>
+            <span>Find the edits</span>
+          </figcaption>
+          <div class="photo-wrap" data-panel="changed" aria-label="Changed image">
+            <img src="IMG_1514_diff.jpeg" alt="Changed group photo">
+          </div>
+        </figure>
+      </section>
+
+      <section class="actions" aria-live="polite">
+        <button class="button" id="resetButton" type="button">Restart</button>
+        <button class="button" id="submitButton" type="button" disabled>Save Score</button>
+        <span class="status" id="statusText">Circle all 5 differences.</span>
+      </section>
+    </main>
+
+    <aside class="rank-card" aria-label="Leaderboard">
+      <h2>Leaderboard</h2>
+      <p class="rank-note">Ranking: fastest wins first.</p>
+      <ol class="leader-list" id="leaderList">
+        <li>Loading...</li>
+      </ol>
+    </aside>
+  </div>
+
+  <section class="dialog hidden" id="winDialog" aria-modal="true" role="dialog" aria-labelledby="winTitle">
+    <div class="dialog-panel">
+      <h2 id="winTitle">All Found</h2>
+      <p id="winMessage">You found all 5 differences.</p>
+      <div class="name-row">
+        <input id="nameInput" maxlength="14" placeholder="Your name">
+        <div class="dialog-actions">
+          <button class="button" id="saveButton" type="button">Save</button>
+          <button class="button" id="closeButton" type="button">Close</button>
+        </div>
+      </div>
+      <p id="saveStatus" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <script>
+    const GAME_ID = "finddiff_img1514";
+    const TOTAL_DIFFS = 5;
+
+    const differences = [
+      { id: "flag", x: 5.3, y: 7.0, rx: 6.4, ry: 4.0, size: 12 },
+      { id: "alarm", x: 57.1, y: 33.6, rx: 2.7, ry: 3.2, size: 7 },
+      { id: "laptop", x: 11.3, y: 68.6, rx: 5.2, ry: 3.8, size: 10 },
+      { id: "chair", x: 46.8, y: 75.4, rx: 5.4, ry: 9.4, size: 14 },
+      { id: "flowers", x: 57.4, y: 69.2, rx: 5.3, ry: 6.8, size: 13 }
+    ];
+
+    const found = new Set();
+    let seconds = 0;
+    let misses = 0;
+    let timerId = 0;
+    let gameDone = false;
+    let submitted = false;
+
+    const foundText = document.getElementById("foundText");
+    const timeText = document.getElementById("timeText");
+    const missText = document.getElementById("missText");
+    const statusText = document.getElementById("statusText");
+    const resetButton = document.getElementById("resetButton");
+    const submitButton = document.getElementById("submitButton");
+    const winDialog = document.getElementById("winDialog");
+    const winMessage = document.getElementById("winMessage");
+    const nameInput = document.getElementById("nameInput");
+    const saveButton = document.getElementById("saveButton");
+    const closeButton = document.getElementById("closeButton");
+    const saveStatus = document.getElementById("saveStatus");
+    const leaderList = document.getElementById("leaderList");
+    const photoWraps = Array.from(document.querySelectorAll(".photo-wrap"));
+
+    function startTimer() {
+      stopTimer();
+      timerId = setInterval(() => {
+        seconds += 1;
+        timeText.textContent = seconds;
+      }, 1000);
+    }
+
+    function stopTimer() {
+      if (timerId) clearInterval(timerId);
+      timerId = 0;
+    }
+
+    function resetGame() {
+      found.clear();
+      seconds = 0;
+      misses = 0;
+      gameDone = false;
+      submitted = false;
+      foundText.textContent = "0";
+      timeText.textContent = "0";
+      missText.textContent = "0";
+      statusText.textContent = "Circle all 5 differences.";
+      submitButton.disabled = true;
+      saveStatus.textContent = "";
+      saveButton.disabled = false;
+      saveButton.textContent = "Save";
+      winDialog.classList.add("hidden");
+      photoWraps.forEach(wrap => {
+        wrap.querySelectorAll(".marker, .miss").forEach(el => el.remove());
+      });
+      startTimer();
+    }
+
+    function pointerPercent(event, wrap) {
+      const rect = wrap.getBoundingClientRect();
+      return {
+        x: (event.clientX - rect.left) / rect.width * 100,
+        y: (event.clientY - rect.top) / rect.height * 100
+      };
+    }
+
+    function findHit(point) {
+      return differences.find(diff => {
+        if (found.has(diff.id)) return false;
+        const nx = (point.x - diff.x) / diff.rx;
+        const ny = (point.y - diff.y) / diff.ry;
+        return nx * nx + ny * ny <= 1;
+      });
+    }
+
+    function addMarker(diff) {
+      photoWraps.forEach(wrap => {
+        const marker = document.createElement("div");
+        marker.className = "marker";
+        marker.style.setProperty("--x", `${diff.x}%`);
+        marker.style.setProperty("--y", `${diff.y}%`);
+        marker.style.setProperty("--size", `${diff.size}%`);
+        wrap.appendChild(marker);
+      });
+    }
+
+    function addMiss(point, wrap) {
+      const miss = document.createElement("div");
+      miss.className = "miss";
+      miss.style.setProperty("--x", `${point.x}%`);
+      miss.style.setProperty("--y", `${point.y}%`);
+      wrap.appendChild(miss);
+      setTimeout(() => miss.remove(), 600);
+    }
+
+    function handlePhotoClick(event) {
+      if (gameDone) return;
+
+      const wrap = event.currentTarget;
+      const point = pointerPercent(event, wrap);
+      const hit = findHit(point);
+
+      if (!hit) {
+        misses += 1;
+        missText.textContent = misses;
+        statusText.textContent = "Try another spot.";
+        addMiss(point, wrap);
+        return;
+      }
+
+      found.add(hit.id);
+      foundText.textContent = found.size;
+      addMarker(hit);
+
+      if (found.size >= TOTAL_DIFFS) {
+        finishGame();
+      } else {
+        statusText.textContent = `${TOTAL_DIFFS - found.size} left.`;
+      }
+    }
+
+    function finishGame() {
+      gameDone = true;
+      stopTimer();
+      statusText.textContent = "All 5 differences found.";
+      submitButton.disabled = false;
+      openSaveDialog();
+    }
+
+    function openSaveDialog() {
+      if (!gameDone) return;
+      winMessage.textContent = `Time: ${seconds}s. Misses: ${misses}. Enter your name for the leaderboard.`;
+      nameInput.value = localStorage.getItem("findDiffName") || "";
+      winDialog.classList.remove("hidden");
+      setTimeout(() => nameInput.focus(), 60);
+    }
+
+    function scoreValue() {
+      return Math.max(1, 1000 - seconds * 5 - misses * 25);
+    }
+
+    async function submitScore(playerName) {
+      try {
+        const res = await fetch("/api/score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            game: GAME_ID,
+            player_name: playerName,
+            seconds,
+            best_scores: scoreValue()
+          })
+        });
+        return res.ok;
+      } catch {
+        return false;
+      }
+    }
+
+    async function loadLeaderboard() {
+      leaderList.innerHTML = "<li>Loading...</li>";
+      try {
+        const res = await fetch(`/api/leaderboard?game=${encodeURIComponent(GAME_ID)}&limit=10`, { cache: "no-store" });
+        const data = await res.json();
+        const rows = Array.isArray(data) ? data : (data.rows || []);
+
+        if (!rows.length) {
+          leaderList.innerHTML = "<li>No scores yet.</li>";
+          return;
+        }
+
+        leaderList.innerHTML = "";
+        rows
+          .slice()
+          .sort((a, b) => {
+            const aSeconds = Number(a.seconds ?? 99999);
+            const bSeconds = Number(b.seconds ?? 99999);
+            if (aSeconds !== bSeconds) return aSeconds - bSeconds;
+            const aScore = Number(a.best_scores ?? a.bestScores ?? 0);
+            const bScore = Number(b.best_scores ?? b.bestScores ?? 0);
+            return bScore - aScore;
+          })
+          .slice(0, 10)
+          .forEach((entry, index) => {
+            const item = document.createElement("li");
+            const name = entry.player_name ?? entry.playerName ?? "Player";
+            const rowSeconds = entry.seconds ?? "?";
+            const best = entry.best_scores ?? entry.bestScores ?? 0;
+            item.textContent = `#${index + 1} ${name} - ${rowSeconds}s - Score ${best}`;
+            leaderList.appendChild(item);
+          });
+      } catch {
+        leaderList.innerHTML = "<li>Could not load leaderboard.</li>";
+      }
+    }
+
+    saveButton.addEventListener("click", async () => {
+      if (!gameDone || submitted) return;
+
+      const name = nameInput.value.trim().slice(0, 14) || "PLAYER";
+      localStorage.setItem("findDiffName", name);
+      saveButton.disabled = true;
+      saveButton.textContent = "Saving...";
+      saveStatus.textContent = "";
+
+      const ok = await submitScore(name);
+      if (!ok) {
+        saveButton.disabled = false;
+        saveButton.textContent = "Save";
+        saveStatus.textContent = "Could not save score.";
+        return;
+      }
+
+      submitted = true;
+      saveButton.textContent = "Saved";
+      saveStatus.textContent = `Saved for ${name}.`;
+      loadLeaderboard();
+    });
+
+    nameInput.addEventListener("keydown", event => {
+      if (event.code === "Enter") {
+        event.preventDefault();
+        saveButton.click();
+      }
+    });
+
+    closeButton.addEventListener("click", () => {
+      winDialog.classList.add("hidden");
+    });
+
+    resetButton.addEventListener("click", resetGame);
+    submitButton.addEventListener("click", openSaveDialog);
+    photoWraps.forEach(wrap => wrap.addEventListener("click", handlePhotoClick));
+
+    resetGame();
+    loadLeaderboard();
+  </script>
+  <script src="../sharedStyle/game-shell.js" defer data-shared-game-shell></script>
+</body>
+</html>
