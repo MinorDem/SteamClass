@@ -30,15 +30,15 @@
     }
 
     body {
-      padding: 58px 14px 38px;
+      padding: 14px 14px 56px;
       overflow-x: hidden;
     }
 
     .back-home {
-      position: fixed;
-      top: 12px;
-      left: 12px;
-      z-index: 20;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 0 14px;
       padding: 9px 13px;
       border: 2px solid #1d4ed8;
       border-radius: 8px;
@@ -314,13 +314,19 @@
       font-weight: 800;
     }
 
-    footer {
+    .site-footnote {
       position: fixed;
-      right: 10px;
-      bottom: 8px;
-      color: rgba(22, 32, 51, .55);
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 25;
+      padding: 7px 10px;
+      border-top: 1px solid rgba(15, 76, 129, .22);
+      background: rgba(255, 255, 255, .9);
+      color: #31556f;
+      text-align: center;
       font-size: 12px;
-      pointer-events: none;
+      font-weight: 800;
     }
 
     @media (max-width: 1050px) {
@@ -330,13 +336,15 @@
     }
 
     @media (max-width: 620px) {
-      body { padding-left: 8px; padding-right: 8px; }
+      body { padding-left: 8px; padding-right: 8px; padding-top: 10px; }
+      .back-home { margin-bottom: 12px; padding: 8px 11px; font-size: 13px; }
       .game-card,
       .side-card,
       .rank-card { padding: 12px; }
       .canvas-wrap { aspect-ratio: 10 / 13; }
     }
   </style>
+  <link rel="stylesheet" href="../sharedStyle/game-shell.css" data-shared-game-shell>
 </head>
 <body>
   <a class="back-home" href="../index.html">Back Home</a>
@@ -414,7 +422,7 @@
     </div>
   </div>
 
-  <footer>Game 35</footer>
+  <footer class="site-footnote">Copyright 2026 Yinghua International School. <br> Made by Science and STEAM Teacher Chao Yu. For educational purposes only.</footer>
 
   <script>
     const GAME_ID = "ramp_car_chase";
@@ -444,6 +452,10 @@
 
     const keys = new Set();
     const lanes = [-0.72, -0.24, 0.24, 0.72];
+    const PLAYER_X_LIMIT = 0.82;
+    const PLAYER_Z_MIN = 0.0;
+    const PLAYER_Z_MAX = 0.48;
+    const POLICE_CHANCE = 0.45;
     const state = {
       running: false,
       paused: false,
@@ -545,8 +557,8 @@
       const depthMove = (keys.has("ArrowUp") || keys.has("w") ? 1 : 0) - (keys.has("ArrowDown") || keys.has("s") ? 1 : 0);
       state.targetX += steer * dt * 1.65;
       state.targetZ += depthMove * dt * 0.54;
-      state.targetX = Math.max(-0.84, Math.min(0.84, state.targetX));
-      state.targetZ = Math.max(0.02, Math.min(0.3, state.targetZ));
+      state.targetX = Math.max(-PLAYER_X_LIMIT, Math.min(PLAYER_X_LIMIT, state.targetX));
+      state.targetZ = Math.max(PLAYER_Z_MIN, Math.min(PLAYER_Z_MAX, state.targetZ));
       state.playerX += (state.targetX - state.playerX) * Math.min(1, dt * 9);
       state.playerZ += (state.targetZ - state.playerZ) * Math.min(1, dt * 8);
 
@@ -566,7 +578,7 @@
       state.nextRamp -= dt;
       if (state.nextSpawn <= 0) {
         spawnVehicle();
-        state.nextSpawn = Math.max(0.45, 1.2 - state.elapsedSeconds * 0.01);
+        state.nextSpawn = Math.max(0.85, 1.75 - state.elapsedSeconds * 0.006);
       }
       if (state.nextRamp <= 0) {
         spawnRamp();
@@ -591,14 +603,15 @@
 
     function spawnVehicle() {
       const lane = lanes[Math.floor(Math.random() * lanes.length)];
-      const type = Math.random() < 0.72 ? "police" : "traffic";
+      const type = Math.random() < POLICE_CHANCE ? "police" : "traffic";
       state.objects.push({
         type,
         x: lane,
         targetX: lane,
         z: type === "police" ? -0.08 - Math.random() * 0.06 : 1.18 + Math.random() * 0.16,
         speedScale: type === "police" ? 1.03 + Math.random() * 0.18 : 0.58 + Math.random() * 0.12,
-        wobble: Math.random() * 10
+        wobble: Math.random() * 10,
+        color: ["#1f2937", "#475569", "#be123c", "#0f766e", "#ca8a04"][Math.floor(Math.random() * 5)]
       });
     }
 
@@ -674,10 +687,10 @@
       state.damage += 24;
       state.speed = Math.max(58, state.speed - 20);
       state.shake = 1.15;
-      state.targetX = Math.max(-0.84, Math.min(0.84, state.targetX + pushDir * 0.3));
-      state.playerX = Math.max(-0.88, Math.min(0.88, state.playerX + pushDir * 0.12));
-      state.targetZ = Math.max(0.02, Math.min(0.3, state.targetZ - 0.04));
-      state.playerZ = Math.max(0.02, Math.min(0.3, state.playerZ - 0.025));
+      state.targetX = Math.max(-PLAYER_X_LIMIT, Math.min(PLAYER_X_LIMIT, state.targetX + pushDir * 0.3));
+      state.playerX = Math.max(-PLAYER_X_LIMIT, Math.min(PLAYER_X_LIMIT, state.playerX + pushDir * 0.12));
+      state.targetZ = Math.max(PLAYER_Z_MIN, Math.min(PLAYER_Z_MAX, state.targetZ - 0.04));
+      state.playerZ = Math.max(PLAYER_Z_MIN, Math.min(PLAYER_Z_MAX, state.playerZ - 0.025));
 
       item.x = Math.max(-0.92, Math.min(0.92, item.x - pushDir * 0.1));
       item.targetX = Math.max(-0.92, Math.min(0.92, item.targetX - pushDir * 0.26));
@@ -694,9 +707,9 @@
       state.damage += 18;
       state.speed = Math.max(58, state.speed - 24);
       state.shake = 1;
-      state.targetX = Math.max(-0.84, Math.min(0.84, state.targetX + pushDir * 0.22));
-      state.playerX = Math.max(-0.88, Math.min(0.88, state.playerX + pushDir * 0.08));
-      state.targetZ = Math.max(0.02, Math.min(0.3, state.targetZ - 0.035));
+      state.targetX = Math.max(-PLAYER_X_LIMIT, Math.min(PLAYER_X_LIMIT, state.targetX + pushDir * 0.22));
+      state.playerX = Math.max(-PLAYER_X_LIMIT, Math.min(PLAYER_X_LIMIT, state.playerX + pushDir * 0.08));
+      state.targetZ = Math.max(PLAYER_Z_MIN, Math.min(PLAYER_Z_MAX, state.targetZ - 0.035));
       item.z = Math.min(1.35, item.z + 0.08);
       setMessage("Traffic bump. The ramp car got knocked off line.");
     }
@@ -727,7 +740,7 @@
     function roadX(x, z) {
       const perspective = 1 - z;
       const center = canvas.width / 2;
-      const width = canvas.width * (0.12 + perspective * 0.78);
+      const width = canvas.width * (0.16 + perspective * 0.82);
       return center + x * width / 2;
     }
 
@@ -772,30 +785,33 @@
 
     function drawCity(w, h, now) {
       const horizon = h * 0.35;
-      const wallTop = h * 0.42;
       for (let side = -1; side <= 1; side += 2) {
-        for (let i = 0; i < 10; i++) {
-          const x = side < 0 ? i * 82 - 26 : w - i * 82 - 58;
-          const depth = i / 10;
-          const bw = 70 - depth * 24;
-          const bh = 230 - depth * 126;
-          ctx.fillStyle = side < 0 ? "#8f969f" : "#a3a7ad";
-          ctx.fillRect(x, horizon - bh * .72, bw, bh);
-          ctx.fillStyle = "rgba(25,34,48,.42)";
-          for (let yy = horizon - bh * .64; yy < horizon + bh * .18; yy += 28) {
-            ctx.fillRect(x + 8, yy, bw - 16, 9);
+        for (let i = 0; i < 18; i++) {
+          const z = (i / 18 + state.roadOffset * 0.0014) % 1;
+          const depth = z * z;
+          const bw = 28 + depth * 92;
+          const bh = 72 + depth * 250;
+          const yBase = horizon + depth * h * .34;
+          const roadEdge = side < 0 ? w * (0.4 - depth * .4) : w * (0.6 + depth * .4);
+          const setback = 18 + depth * 54;
+          const x = side < 0 ? roadEdge - setback - bw : roadEdge + setback;
+          const top = yBase - bh;
+
+          const shade = Math.floor(150 - depth * 36);
+          ctx.fillStyle = side < 0
+            ? `rgb(${shade}, ${shade + 8}, ${shade + 17})`
+            : `rgb(${shade + 10}, ${shade + 12}, ${shade + 18})`;
+          ctx.fillRect(x, top, bw, bh);
+
+          ctx.fillStyle = side < 0 ? "rgba(15,23,42,.24)" : "rgba(255,255,255,.12)";
+          ctx.fillRect(side < 0 ? x + bw * .68 : x, top, bw * .32, bh);
+
+          ctx.fillStyle = "rgba(25,34,48,.45)";
+          const windowGap = Math.max(10, 24 - depth * 9);
+          for (let yy = top + 12; yy < yBase - 10; yy += windowGap) {
+            ctx.fillRect(x + bw * .16, yy, bw * .68, Math.max(4, 7 + depth * 4));
           }
         }
-      }
-      ctx.fillStyle = "#8b8174";
-      ctx.fillRect(0, wallTop, w, h * .16);
-      ctx.fillStyle = "rgba(255,255,255,.15)";
-      for (let x = 0; x < w; x += 34) ctx.fillRect(x, wallTop, 18, h * .16);
-      ctx.fillStyle = "#c7ced6";
-      for (let x = 110; x < w; x += 220) {
-        const sway = Math.sin((now || 0) / 900 + x) * 10;
-        ctx.fillRect(x + sway, horizon - 8, 4, 102);
-        ctx.fillRect(x + sway, horizon - 8, 42, 4);
       }
     }
 
@@ -806,10 +822,10 @@
       road.addColorStop(1, "#2d3744");
       ctx.fillStyle = road;
       ctx.beginPath();
-      ctx.moveTo(w * 0.42, horizon);
-      ctx.lineTo(w * 0.58, horizon);
-      ctx.lineTo(w * 0.97, h);
-      ctx.lineTo(w * 0.03, h);
+      ctx.moveTo(w * 0.4, horizon);
+      ctx.lineTo(w * 0.6, horizon);
+      ctx.lineTo(w, h);
+      ctx.lineTo(0, h);
       ctx.closePath();
       ctx.fill();
 
@@ -829,10 +845,10 @@
       ctx.strokeStyle = "rgba(255,255,255,.75)";
       ctx.lineWidth = 7;
       ctx.beginPath();
-      ctx.moveTo(w * .42, horizon);
-      ctx.lineTo(w * .05, h);
-      ctx.moveTo(w * .58, horizon);
-      ctx.lineTo(w * .95, h);
+      ctx.moveTo(w * .4, horizon);
+      ctx.lineTo(w * .02, h);
+      ctx.moveTo(w * .6, horizon);
+      ctx.lineTo(w * .98, h);
       ctx.stroke();
     }
 
@@ -843,11 +859,11 @@
       if (item.type === "ramp") {
         drawRamp(x, y, scale);
       } else {
-        drawCar(x, y, scale, item.type === "police", item.z < 0.05);
+        drawCar(x, y, scale, item.type === "police", item.z < 0.05, item.color);
       }
     }
 
-    function drawCar(x, y, s, police, chasing) {
+    function drawCar(x, y, s, police, chasing, color = "#334155") {
       if (police) {
         drawPoliceCar3D(x, y, s, chasing);
         return;
@@ -856,19 +872,81 @@
       const h = 150 * s;
       ctx.save();
       ctx.translate(x, y);
-      ctx.fillStyle = "rgba(0,0,0,.28)";
+      ctx.fillStyle = "rgba(0,0,0,.34)";
       ctx.beginPath();
-      ctx.ellipse(0, h * .33, w * .6, h * .18, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, h * .42, w * .7, h * .2, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = "#1f2937";
-      ctx.fillRect(-w * .45, -h * .62, w * .9, h * .92);
-      ctx.fillStyle = "#334155";
-      ctx.fillRect(-w * .34, -h * .46, w * .68, h * .34);
-      ctx.fillStyle = "#64748b";
-      ctx.fillRect(-w * .44, -h * .08, w * .88, h * .18);
+
+      const body = ctx.createLinearGradient(0, -h * .62, 0, h * .48);
+      body.addColorStop(0, "#f8fafc");
+      body.addColorStop(.12, color);
+      body.addColorStop(.72, color);
+      body.addColorStop(1, "#0f172a");
+      ctx.fillStyle = body;
+      ctx.beginPath();
+      ctx.moveTo(-w * .42, -h * .62);
+      ctx.lineTo(w * .42, -h * .62);
+      ctx.lineTo(w * .58, h * .28);
+      ctx.lineTo(w * .42, h * .52);
+      ctx.lineTo(-w * .42, h * .52);
+      ctx.lineTo(-w * .58, h * .28);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(255,255,255,.22)";
+      ctx.beginPath();
+      ctx.moveTo(-w * .28, -h * .55);
+      ctx.lineTo(-w * .06, -h * .55);
+      ctx.lineTo(-w * .18, h * .38);
+      ctx.lineTo(-w * .38, h * .32);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "#172033";
+      ctx.beginPath();
+      ctx.moveTo(-w * .3, -h * .46);
+      ctx.lineTo(w * .3, -h * .46);
+      ctx.lineTo(w * .4, -h * .1);
+      ctx.lineTo(-w * .4, -h * .1);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#0ea5e9";
+      ctx.globalAlpha = .45;
+      ctx.beginPath();
+      ctx.moveTo(-w * .24, -h * .39);
+      ctx.lineTo(w * .1, -h * .39);
+      ctx.lineTo(w * .18, -h * .18);
+      ctx.lineTo(-w * .3, -h * .18);
+      ctx.closePath();
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      ctx.fillStyle = "rgba(15,23,42,.5)";
+      ctx.beginPath();
+      ctx.moveTo(-w * .5, h * .05);
+      ctx.lineTo(w * .5, h * .05);
+      ctx.lineTo(w * .42, h * .42);
+      ctx.lineTo(-w * .42, h * .42);
+      ctx.closePath();
+      ctx.fill();
+
       ctx.fillStyle = "#111827";
-      ctx.fillRect(-w * .56, -h * .36, w * .16, h * .58);
-      ctx.fillRect(w * .4, -h * .36, w * .16, h * .58);
+      ctx.fillRect(-w * .62, -h * .28, w * .18, h * .68);
+      ctx.fillRect(w * .44, -h * .28, w * .18, h * .68);
+      ctx.fillStyle = "#475569";
+      ctx.fillRect(-w * .59, -h * .18, w * .1, h * .48);
+      ctx.fillRect(w * .49, -h * .18, w * .1, h * .48);
+      ctx.fillStyle = "#f8fafc";
+      ctx.fillRect(-w * .18, h * .36, w * .36, h * .08);
+      ctx.fillStyle = "#facc15";
+      ctx.fillRect(-w * .38, -h * .58, w * .18, h * .06);
+      ctx.fillRect(w * .2, -h * .58, w * .18, h * .06);
+      ctx.fillStyle = "#ef4444";
+      ctx.fillRect(-w * .42, h * .44, w * .16, h * .06);
+      ctx.fillRect(w * .26, h * .44, w * .16, h * .06);
+      ctx.strokeStyle = "rgba(255,255,255,.22)";
+      ctx.lineWidth = Math.max(1, 2 * s);
+      ctx.stroke();
       ctx.restore();
     }
 
@@ -918,7 +996,12 @@
       ctx.closePath();
       ctx.fill();
 
-      ctx.fillStyle = "#dbeafe";
+      const shell = ctx.createLinearGradient(0, -h * .72, 0, h * .58);
+      shell.addColorStop(0, "#ffffff");
+      shell.addColorStop(.45, "#e0f2fe");
+      shell.addColorStop(.46, "#1e3a8a");
+      shell.addColorStop(1, "#0f172a");
+      ctx.fillStyle = shell;
       ctx.beginPath();
       ctx.moveTo(-w * .42, -h * .62);
       ctx.lineTo(w * .42, -h * .62);
@@ -926,6 +1009,15 @@
       ctx.lineTo(w * .42, h * .48);
       ctx.lineTo(-w * .42, h * .48);
       ctx.lineTo(-w * .56, h * .24);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(255,255,255,.28)";
+      ctx.beginPath();
+      ctx.moveTo(-w * .32, -h * .55);
+      ctx.lineTo(-w * .08, -h * .55);
+      ctx.lineTo(-w * .18, h * .36);
+      ctx.lineTo(-w * .38, h * .28);
       ctx.closePath();
       ctx.fill();
 
@@ -984,6 +1076,16 @@
       ctx.strokeStyle = "rgba(15,23,42,.35)";
       ctx.lineWidth = Math.max(1, 3 * s);
       ctx.strokeRect(-w * .18, h * .18, w * .36, h * .16);
+      ctx.strokeStyle = "rgba(255,255,255,.28)";
+      ctx.lineWidth = Math.max(1, 2 * s);
+      ctx.beginPath();
+      ctx.moveTo(-w * .42, -h * .6);
+      ctx.lineTo(-w * .54, h * .22);
+      ctx.lineTo(-w * .4, h * .48);
+      ctx.moveTo(w * .42, -h * .6);
+      ctx.lineTo(w * .54, h * .22);
+      ctx.lineTo(w * .4, h * .48);
+      ctx.stroke();
       ctx.restore();
     }
 
@@ -1022,24 +1124,71 @@
       ctx.beginPath();
       ctx.ellipse(0, 72 + lift * .18, 98, 24, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = "#0f4dd6";
+
+      const blueBody = ctx.createLinearGradient(0, -78, 0, 78);
+      blueBody.addColorStop(0, "#60a5fa");
+      blueBody.addColorStop(.18, "#2563eb");
+      blueBody.addColorStop(.7, "#0f4dd6");
+      blueBody.addColorStop(1, "#0b1f57");
+      ctx.fillStyle = blueBody;
       ctx.beginPath();
-      ctx.moveTo(-92, 48);
-      ctx.lineTo(96, 48);
-      ctx.lineTo(58, -52);
-      ctx.lineTo(-82, -10);
+      ctx.moveTo(-76, 48);
+      ctx.lineTo(78, 48);
+      ctx.lineTo(50, -58);
+      ctx.lineTo(-64, -24);
+      ctx.lineTo(-84, 20);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(255,255,255,.24)";
+      ctx.beginPath();
+      ctx.moveTo(-56, -12);
+      ctx.lineTo(8, -34);
+      ctx.lineTo(-2, 36);
+      ctx.lineTo(-70, 30);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "#082f49";
+      ctx.beginPath();
+      ctx.moveTo(-42, -38);
+      ctx.lineTo(26, -52);
+      ctx.lineTo(46, -14);
+      ctx.lineTo(-34, 4);
       ctx.closePath();
       ctx.fill();
       ctx.fillStyle = "#38bdf8";
-      ctx.fillRect(-42, -34, 62, 28);
+      ctx.globalAlpha = .55;
+      ctx.beginPath();
+      ctx.moveTo(-32, -32);
+      ctx.lineTo(16, -42);
+      ctx.lineTo(28, -20);
+      ctx.lineTo(-26, -8);
+      ctx.closePath();
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
       ctx.fillStyle = "#0f172a";
-      ctx.fillRect(-86, 32, 28, 44);
-      ctx.fillRect(56, 32, 28, 44);
+      ctx.fillRect(-76, 28, 24, 52);
+      ctx.fillRect(52, 28, 24, 52);
+      ctx.fillStyle = "#334155";
+      ctx.fillRect(-72, 38, 14, 32);
+      ctx.fillRect(57, 38, 14, 32);
       ctx.fillStyle = "#f8fafc";
-      ctx.fillRect(-16, 44, 34, 10);
+      ctx.fillRect(-18, 42, 38, 11);
+      ctx.fillStyle = "#facc15";
+      ctx.fillRect(-58, -4, 18, 8);
+      ctx.fillRect(38, -4, 18, 8);
       ctx.fillStyle = "#ef4444";
-      ctx.fillRect(-70, 50, 16, 10);
-      ctx.fillRect(54, 50, 16, 10);
+      ctx.fillRect(-60, 50, 16, 10);
+      ctx.fillRect(46, 50, 16, 10);
+      ctx.strokeStyle = "rgba(255,255,255,.28)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-64, -22);
+      ctx.lineTo(50, -58);
+      ctx.lineTo(78, 48);
+      ctx.stroke();
       ctx.restore();
     }
 
@@ -1049,9 +1198,11 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            // Survival game: longer is better, so store survival time in best_scores
+            // (higher-is-better), matching Snake Run. Do NOT use best_seconds (lower-is-better).
             game: GAME_ID,
             player_name: name.trim().slice(0, 40),
-            seconds: state.elapsedSeconds
+            best_scores: Math.max(0, Math.floor(state.elapsedSeconds))
           })
         });
         if (!res.ok) return false;
@@ -1073,12 +1224,15 @@
           rankPreviewList.innerHTML = "<li>No scores yet.</li>";
           return;
         }
-        rows.forEach((entry, index) => {
-          const name = entry.player_name ?? entry.playerName ?? "Unknown";
-          const wins = entry.win_count ?? entry.wins ?? entry.winCount ?? 0;
-          const best = entry.best_seconds ?? entry.bestSeconds ?? null;
+        // Rank client-side: wins DESC, then best survival time (best_scores) DESC.
+        const norm = rows.map(entry => ({
+          name: (entry.player_name ?? entry.playerName ?? "Unknown").toString(),
+          wins: Number(entry.win_count ?? entry.wins ?? entry.winCount ?? 0) || 0,
+          best: Number(entry.best_scores ?? entry.bestScores ?? entry.bestScore ?? entry.score ?? 0) || 0
+        })).sort((a,b)=>(b.wins-a.wins)||(b.best-a.best));
+        norm.forEach((entry, index) => {
           const item = document.createElement("li");
-          item.textContent = `#${index + 1} ${name} - ${wins}W` + (best != null ? ` - Best: ${best}s` : "");
+          item.textContent = `#${index + 1} ${entry.name} - ${entry.wins}W - Best: ${entry.best}s`;
           rankPreviewList.appendChild(item);
         });
       } catch {
@@ -1160,5 +1314,6 @@
     loadRankPreview();
     resetGame();
   </script>
+  <script src="../sharedStyle/game-shell.js" defer data-shared-game-shell></script>
 </body>
 </html>

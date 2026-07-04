@@ -157,6 +157,7 @@
       border-top: 1px solid #ccc;
     }
   </style>
+  <link rel="stylesheet" href="../sharedStyle/game-shell.css" data-shared-game-shell>
 </head>
 <body>
 
@@ -331,8 +332,9 @@ async function loadLeaderboard(diff, targetEl){
 
     
 // Normalize to {name, wins, score} using best_scores (ignore best_seconds entirely)
+const escName = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 const normalized = rows.map(r => {
-  const name = (r.player_name ?? r.playerName ?? "Unknown").toString();
+  const name = escName((r.player_name ?? r.playerName ?? "Unknown").toString());
   const wins = Number(r.win_count ?? r.wins ?? r.winCount ?? 0) || 0;
 
   const score = Number(r.best_scores ?? r.bestScores ?? r.bestScore ?? r.score ?? 0) || 0;
@@ -702,5 +704,6 @@ if (dialogSubmit) dialogSubmit.onclick = async () => {
     © 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528. <br>
     The STEAM Teacher is Chao Yu. For educational purposes only. All rights reserved.
   </footer>
+  <script src="../sharedStyle/game-shell.js" defer data-shared-game-shell></script>
 </body>
 </html>

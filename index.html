@@ -3,517 +3,116 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Puzzle Hub</title>
+  <title>Happy Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@500;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    body{
-      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      /* background:#fff; */
-      background: #fff9cc;   /* ← light yellow */
-      margin:0;
-      padding:0;
-      color:#111827;
-    }
-    .page{
-      min-height:100vh;
-      display:flex;
-      flex-direction:column;
-      padding:24px;
-      box-sizing:border-box;
-    }
-    .container{ max-width:920px; margin:0 auto; }
-    h1{ margin:0 0 6px; font-size:28px; }
-    .sub{ color:#374151; margin:0 0 18px; line-height:1.4; }
-
-    .grid{
-      display:grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap:14px;
-      margin-top: 10px;
-      margin-bottom: 18px;
-    }
-    .card{
-      border:1px solid #e5e7eb;
-      border-radius:14px;
-      padding:16px;
-      box-shadow: 0 2px 8px rgba(17,24,39,0.06);
-      background:#fff;
-      display: flex;
-      flex-direction: column;
-    }
-    .card.student-feature,
-    .card.special-touch {
-      position: relative;
-      border: 2px solid #f59e0b;
-      background:
-        linear-gradient(180deg, rgba(255, 251, 235, 0.98), rgba(255, 255, 255, 0.98));
-      box-shadow:
-        0 0 0 4px rgba(245, 158, 11, 0.16),
-        0 12px 28px rgba(146, 64, 14, 0.16);
-    }
-    .card.student-feature::before {
-      content: "Student Made";
-      position: absolute;
-      top: -11px;
-      right: 14px;
-      padding: 5px 10px;
-      border-radius: 999px;
-      border: 2px solid #92400e;
-      background: #facc15;
-      color: #78350f;
-      font-size: 12px;
-      font-weight: 900;
-      letter-spacing: 0;
-    }
-    .card.special-touch::before {
-      content: "Special Touch";
-      position: absolute;
-      top: -11px;
-      right: 14px;
-      padding: 5px 10px;
-      border-radius: 999px;
-      border: 2px solid #92400e;
-      background: #facc15;
-      color: #78350f;
-      font-size: 12px;
-      font-weight: 900;
-      letter-spacing: 0;
-    }
-    .card.student-feature h2,
-    .card.special-touch h2 {
-      color: #92400e;
-    }
-    .card.most-played {
-      position: relative;
-      border: 2px solid #f59e0b;
-      background:
-        linear-gradient(180deg, rgba(255, 251, 235, 0.98), rgba(255, 255, 255, 0.98));
-      box-shadow:
-        0 0 0 4px rgba(245, 158, 11, 0.16),
-        0 14px 26px rgba(146, 64, 14, 0.18);
-    }
-    .card.most-played::before {
-      content: "Most Played";
-      position: absolute;
-      top: -11px;
-      right: 14px;
-      padding: 5px 10px;
-      border-radius: 999px;
-      background: #f59e0b;
-      color: white;
-      font-size: 12px;
-      font-weight: 800;
-      letter-spacing: 0.3px;
-      text-transform: uppercase;
-      box-shadow: 0 6px 14px rgba(146, 64, 14, 0.28);
-    }
-    .card.most-played h2 {
-      color: #92400e;
-    }
-    .card h2{
-      margin:0 0 6px;
-      font-size:18px;
-    }
-    .card p{
-      margin:0 0 12px;
-      color:#4b5563;
-      font-size:14px;
-      line-height:1.35;
-      flex-grow: 1;
-    }
-    .btn{
-      display:flex;
-      align-items: center;      /* vertical centering */
-      justify-content: center;  /* horizontal centering */
-      padding:10px 12px;
-      border-radius:10px;
-      border:1px solid #2563eb;
-      background:#2563eb;
-      color:#fff;
-      text-decoration:none;
-      font-weight:700;
-      font-size:14px;
-    }
-    .btn.secondary{
-      background:#fff;
-      color:#2563eb;
-    }
-    .btn.disabled {
-      background: #e5e7eb;     /* gray */
-      color: #9ca3af;          /* muted text */
-      border-color: #e5e7eb;
-      pointer-events: none;   /* disables clicking */
-      cursor: not-allowed;
-    }
-
-    .card.disabled {
-      opacity: 0.6;
-    }
-
-    .coming-soon {
-      color: #dc4e26;      /* nice modern red */
-      font-weight: 600;   /* optional emphasis */
-    }
-
-    .site-footer{
-      margin-top:auto;             /* push to bottom when page is short */
-      background:#fff9cc;
-      text-align:center;
-      padding:10px 12px;
-      font-size:14px;
-      color: #555;
-      border-top:1px solid #e5e7eb;
-      border-radius:12px;
-    }
-    .site-footer br{ line-height: 1.6; }
-
-    code{ background:#f3f4f6; padding:2px 6px; border-radius:6px; }
+    :root{--board:#efe3c8;--kraft:#d9b27c;--ink:#2e2418;--soft:#6b5a44;--paper:#fffdf8;--tape:#f3ecd8;--word:#2a8c82;--puzzle:#7c5cb0;--reflex:#db7a34;--strategy:#386cb0;--utility:#b23b3b;--shadow:rgba(46,36,24,.18);--line:rgba(46,36,24,.28)}
+    *{box-sizing:border-box} html,body{margin:0;min-height:100%}
+    body{background:repeating-linear-gradient(0deg,rgba(46,36,24,.025) 0,rgba(46,36,24,.025) 1px,transparent 1px,transparent 4px),var(--board);color:var(--ink);font-family:"Nunito",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    .wrap{width:min(100%,1160px);margin:0 auto;padding:32px 20px 44px}
+    header{position:relative;overflow:hidden;padding:clamp(24px,5vw,40px);border:3px solid var(--ink);border-radius:8px;background:var(--kraft);box-shadow:7px 7px 0 var(--shadow)}
+    header:after{content:"";position:absolute;top:-8px;right:clamp(22px,6vw,72px);width:78px;height:34px;border:1px solid var(--line);background:rgba(243,236,216,.86);transform:rotate(4deg);box-shadow:0 3px 5px rgba(46,36,24,.12)}
+    .mono,.eyebrow,.manifest,.tag,footer{font-family:"Space Mono",Consolas,monospace}.eyebrow{display:flex;gap:10px;align-items:center;margin-bottom:10px;color:var(--soft);font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}.eyebrow:before{content:"";width:9px;height:9px;border-radius:50%;background:var(--utility)}
+    h1{margin:0 0 6px;font-family:"Baloo 2",system-ui,sans-serif;font-size:clamp(40px,7vw,68px);line-height:.92;letter-spacing:0}.sub{max-width:760px;margin:0;color:var(--soft);font-size:clamp(15px,2vw,18px);font-weight:800;line-height:1.35}.manifest{display:flex;flex-wrap:wrap;gap:10px 24px;margin-top:20px;padding-top:16px;border-top:2px dashed rgba(46,36,24,.32);font-size:12px}
+    .category{margin-top:42px}.category-head{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin-bottom:16px}.tag{display:inline-flex;align-items:center;min-height:32px;padding:6px 14px;border-radius:4px;color:var(--paper);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;box-shadow:3px 3px 0 var(--shadow);transform:rotate(-1deg)}.category h2{margin:0;font-family:"Baloo 2",system-ui,sans-serif;font-size:clamp(22px,3vw,30px);line-height:1}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
+    .tile{position:relative;display:flex;min-height:172px;padding:18px;border:2px solid var(--ink);border-radius:8px;background:var(--paper);box-shadow:4px 4px 0 var(--shadow);color:var(--ink);text-decoration:none;transition:transform .16s ease,box-shadow .16s ease}.tile:hover{transform:translate(-3px,-3px);box-shadow:7px 7px 0 var(--shadow)}.tile:focus-visible{outline:3px solid var(--utility);outline-offset:3px}.tile-inner{display:flex;width:100%;flex-direction:column;gap:8px}.tile-number{color:var(--soft);font-family:"Nunito",system-ui,sans-serif;font-variant-numeric:tabular-nums;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.tile h3{margin:0;font-family:"Baloo 2",system-ui,sans-serif;font-size:22px;line-height:1}.tile p{margin:0;color:var(--soft);font-size:13px;font-weight:700;line-height:1.35}.play{align-self:flex-start;margin-top:auto;padding:5px 10px;border-radius:999px;background:var(--tape);color:var(--ink);font-family:"Space Mono",Consolas,monospace;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}.featured{border-width:3px}.featured:after{content:attr(data-label);position:absolute;top:-12px;right:12px;padding:5px 10px;border:2px solid var(--ink);border-radius:999px;background:#f2c94c;color:var(--ink);font-family:"Space Mono",Consolas,monospace;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+    .cat-word .tag,.cat-word .play{background:var(--word);color:var(--paper)}.cat-word .tile{border-color:var(--word)}.cat-puzzle .tag,.cat-puzzle .play{background:var(--puzzle);color:var(--paper)}.cat-puzzle .tile{border-color:var(--puzzle)}.cat-reflex .tag,.cat-reflex .play{background:var(--reflex);color:var(--paper)}.cat-reflex .tile{border-color:var(--reflex)}.cat-strategy .tag,.cat-strategy .play{background:var(--strategy);color:var(--paper)}.cat-strategy .tile{border-color:var(--strategy)}
+    .utility-panel{display:grid;grid-template-columns:1.35fr repeat(2,minmax(180px,.7fr));gap:16px;margin-top:46px}.utility-card{display:flex;min-height:112px;flex-direction:column;justify-content:center;padding:18px 20px;border:2px dashed var(--soft);border-radius:8px;background:var(--tape);color:var(--ink);text-decoration:none;box-shadow:4px 4px 0 var(--shadow)}.utility-card strong{font-family:"Baloo 2",system-ui,sans-serif;font-size:24px;line-height:1}.utility-card span{margin-top:6px;color:var(--soft);font-size:13px;font-weight:800}.contact{margin-top:28px;color:var(--soft);font-size:14px;font-weight:800;text-align:center}.contact a,footer a{color:inherit;text-decoration:none}footer{margin-top:18px;padding-top:18px;border-top:1px solid var(--line);color:var(--soft);font-size:11px;line-height:1.7;text-align:center}.disabled{opacity:.58;cursor:not-allowed}.disabled .play{background:#cfc4ad;color:var(--soft)}
+    @media (max-width:760px){.wrap{padding:18px 14px 32px}header{box-shadow:5px 5px 0 var(--shadow)}.utility-panel{grid-template-columns:1fr}}@media (max-width:520px){.grid{grid-template-columns:1fr}.tile{min-height:150px}}
   </style>
 </head>
 <body>
-  <div class="page">
-    <div class="container">
-    <h1>Puzzle Hub for the STEAM Class</h1>
-    <p class="sub">
-      Choose a puzzle below.
-      Improve your science, technology, engineering, art and mathematical skills.
-    </p>
-
-    <div class="grid">
-      <div class="card">
-        <h2>1) Number Guess</h2>
-        <p>Builds logical thinking and problem-solving skills by using patterns and feedback, just like engineers testing ideas.</p>
-        <a class="btn" href="./1NumGuess">Play</a>
-      </div>
-
-      <div class="card">
-        <h2>2) Sliding Puzzle</h2>
-        <p>Develops spatial reasoning and algorithmic thinking used in computer science and robotics.</p>
-        <a class="btn" href="./2SlidingPuzzle">Play</a>
-      </div>
-
-      <div class="card">
-        <h2>3) Hit the Target</h2>
-        <p>Applies physics concepts such as motion, angles, and force to improve accuracy through experimentation.</p>
-        <a class="btn" href="./3HitTarget">Play</a>
-      </div>
-
-      <div class="card most-played">
-        <h2>4) Word Guess (5 Letters)</h2>
-        <p>Strengthens pattern recognition and data-driven reasoning, similar to how scientists analyze results.</p>
-        <a class="btn" href="./4WordGuess">Play</a>
-      </div>
-
-      <div class="card">
-        <h2>5) Snake Run </h2>
-        <p>Introduces computational thinking and reaction-time analysis, connecting coding logic with real-time systems.</p>
-        <a class="btn" href="./5SnakeRun">Play</a>
-      </div>
-      
-      <div class="card">
-        <h2>6) Chess </h2>
-        <p>Enhances strategic planning, systems thinking, and decision-making used in engineering design and artificial intelligence. <br>
-        </p>
-        <a class="btn" href="./6IntlChess">Play</a>
-      </div>
-
-      <div class="card">
-        <h2>7) Fish Catching </h2>
-        <p>Uses probability, estimation, and timing to model real-world problem solving in math and science. <br>
-        </p>
-        <a class="btn" href="./7FishCatching/">Play</a>
-      </div>
-
-      <div class="card">
-        <h2>8) Flappy Bird </h2>
-        <p>Explores physics simulation, gravity, and iteration, helping students understand how game mechanics are engineered. <br>
-        </p>
-        <a class="btn" href="./8FlappyBird/">Play</a>
-      </div> 
-
-      <div class="card">
-        <h2>9) Cooking </h2>
-        <p>Encourages creativity and design thinking, highlighting the art component of STEAM through visual expression. <br>
-        </p>
-        <a class="btn" href="./9Cooking">Play</a>
-      </div>
-      
-      <div class="card most-played">
-        <h2>10) Count 10 seconds </h2>
-        <p>Encourages math thinking, highlighting the calculation component of STEAM through visual expression. <br>
-        </p>
-        <a class="btn" href="./10CountSeconds">Play</a>
-      </div>
-      
-      <div class="card">
-        <h2>11) Memory Match </h2>
-        <p>Develops memory and pattern recognition skills, emphasizing the connection between logic and visual recall as part of STEAM learning. <br>
-        </p>
-        <a class="btn" href="./11MemoryMatch">Play</a>
-      </div>
-      
-      <div class="card">
-        <h2>12) Checkers </h2>
-        <p>Encourages creativity and design thinking, highlighting the math component of STEAM through visual expression. <br>
-          <span class="coming-soon">Special thanks to Eli E., Emanuel K., Joel R. for suggesting the idea on March 11, 2026.</span>
-        </p>
-        <a class="btn" href="./12Checkers">Play</a>
-      </div>
-      
-      <div class="card">
-        <h2>13) Word Guess (6 Letters) </h2>
-        <p>Strengthens pattern recognition and data-driven reasoning, similar to how scientists analyze results.<br>
-        </p>
-        <a class="btn" href="./13WordGuess6">Play</a>
-      </div>
-      
-      <div class="card">
-        <h2>14) Math Speed </h2>
-        <p>Encourages quick mathematical thinking, highlighting the calculation and problem-solving aspects of STEAM through fast-paced practice and mental agility. <br>
-        </p>
-        <a class="btn" href="./14MathSpeed">Play</a>
-      </div>
-      
-      <div class="card">
-        <h2>15) Find Difference </h2>
-        <p>Encourages careful observation and visual discrimination, highlighting the pattern recognition and attention-to-detail aspects of STEAM through a fast-paced character comparison challenge.<br>
-          <span class="coming-soon">Special thanks to Maxence V. and Patrick G. for suggesting the idea on April 28, 2026.</span>
-        </p>
-        <a class="btn" href="./15FindDifference">Play</a>
-      </div>
-      
-      <div class="card">
-        <h2>16) Word Guess (7 Letters) </h2>
-        <p>Strengthens pattern recognition and data-driven reasoning, similar to how scientists analyze results.<br>
-        </p>
-        <a class="btn" href="./16WordGuess7">Play</a>
-      </div>
-      
-      <div class="card">
-        <h2>17) Pipes </h2>
-        <p>Strengthens spatial reasoning and logical deduction, similar to how engineers trace signal paths through a circuit.<br>
-        </p>
-        <a class="btn" href="./17Pipes">Play</a>
-      </div>
-      
-      <div class="card">
-        <h2>18) Uno </h2>
-        <p>Enhances pattern recognition, strategic thinking, and rapid decision-making as to match colors, numbers, and symbols while anticipating opponents’ moves.<br>
-            <span class="coming-soon">Special thanks to River U. for suggesting the idea on May 1, 2026.</span>
-        </p>
-        <a class="btn" href="./18Uno">Play</a>
-      </div>
-      
-      <div class="card">
-        <h2>19) Flow Free </h2>
-        <p>Enhances pattern recognition, strategic thinking, and rapid decision-making as to match colors, and numbers while anticipating different moves.<br>
-            <span class="coming-soon">Special thanks to Aiden K. for suggesting the idea on May 1, 2026.</span>
-        </p>
-        <a class="btn" href="./19FlowFree">Play</a>
-      </div>
-      
-      <div class="card">
-        <h2>20) Fight the Landlord </h2>
-        <p>Enhances pattern recognition, strategic thinking, and rapid decision-making, while anticipating different moves.<br>
-        </p>
-        <a class="btn" href="./20FightTheLandlord">Play</a>
-      </div>
-      
-      <div class="card">
-        <h2>21) Guess the Animal </h2>
-        <p>Enhances pattern recognition, strategic thinking, and rapid decision-making, while anticipating different moves.<br>
-           <span class="coming-soon">Special thanks to Conner N. for suggesting the idea on May 5, 2026.</span>
-        </p>
-        <a class="btn" href="./21GuessTheAnimal">Play</a>
-      </div>
-      
-      <div class="card">
-        <h2>22) Science Quizzes </h2>
-        <p>Strengthens scientific literacy, rapid recall, and critical thinking under pressure, while reinforcing connections across life science, earth science, physics, and chemistry concepts.<br>
-           <span class="coming-soon">Special thanks to Derek T. for suggesting the idea on May 7, 2026.</span>
-        </p>
-        <a class="btn" href="./22Trivia">Play</a>
-      </div>
-      
-      <div class="card">
-        <h2>23) Side Finish Run </h2>
-       <p>Develops hand-eye coordination, spatial reasoning, reaction speed, and strategic problem-solving ability under time pressure.<br>
-           <span class="coming-soon">Special thanks to Maxence V. for suggesting the idea on May 12, 2026.</span>
-        </p>
-        <a class="btn" href="./23SideFinishRun">Play</a>
-      </div>
-      
-      <div class="card special-touch">
-        <h2>24) Pieces Puzzle </h2>
-       <p>Enhances visual perception, spatial reasoning, concentration, memory, and logical sequencing skills while strengthening patience and problem-solving abilities through image reconstruction and pattern recognition.
-        </p>
-        <a class="btn" href="./24PiecePuzzle">Play</a>
-      </div>
-      
-      <div class="card">
-        <h2>25) Brick Breaker </h2>
-       <p>Improves hand-eye coordination, reaction speed, focus, and persistence while strengthening timing accuracy and rapid visual processing through increasingly demanding gameplay challenges.
-        </p>
-        <a class="btn" href="./25BrickBreaker">Play</a>
-      </div>
-      
-      <div class="card">
-        <h2>26) Color Link </h2>
-       <p>Enhances visual discrimination, attention to detail, reaction speed, and associative memory while reinforcing color recognition and multi-round concentration through progressively more difficult matching challenges.
-        </p>
-        <a class="btn" href="./26ColorLink">Play</a>
-      </div>
-      
-      <div class="card">
-        <h2>27) Ladder Climb </h2>
-       <p>Builds prediction skills, adaptive thinking, memory retention, and strategic planning while encouraging players to analyze patterns and make accurate choices under uncertainty.
-        </p>
-        <a class="btn" href="./29LadderClimb">Play</a>
-      </div>
-      
-      <div class="card">
-        <h2>28) Art Quizzes </h2>
-           <p>Strengthens art literacy under pressure, while reinforcing connections across science and art concepts.<br>       <span class="coming-soon">Special thanks to Aedan S. for suggesting the idea on May 19, 2026.</span>
-           </p>
-        <a class="btn" href="./28ArtQuizzes">Play</a>
-      </div>
-      
-      <div class="card">
-        <h2>29) Crossword </h2>
-           <p>Strengthens scientific literacy under pressure, while reinforcing connections across science concepts through interactive crossword challenges.<br>       
-           <span class="coming-soon">Special thanks to Emma B. for suggesting the idea on May 20, 2026.</span>
-           </p>
-        <a class="btn" href="./29CrossWord">Play</a>
-      </div>
-      
-      <div class="card">
-        <h2>30) Dog & Cat </h2>
-           <p>Builds reaction skills and strategic thinking through a fast-paced animal-themed challenge that encourages timing, focus, and quick decision-making.<br>
-            <span class="coming-soon"></span>
-           </p>
-        <a class="btn" href="./30DogCat">Play</a>
-      </div>
-    
-        <div class="card">
-            <h2>31) Blocks </h2>
-               <p>Builds timing, focus, and perseverance through a fast-paced obstacle course that challenges players to learn from repeated attempts. <br>
-                <span class="coming-soon"></span>
-               </p>
-            <a class="btn" href="./31Tetris">Play</a>
-          </div>
-          
-      <div class="card">
-        <h2>32) Role Play</h2>
-           <p>Builds strategy, patience, and quick decision-making as players sneak through a mission, collect items, avoid being spotted, and complete goals before escaping.<br>
-            <span class="coming-soon">Special thanks to Violet M. for suggesting the idea on May 15, 2026.</span>
-           </p>
-        <a class="btn" href="./32RolePlay">Play</a>
-      </div>
-          
-      <div class="card student-feature">
-        <h2>33) Geometry Dash</h2>
-           <p>Strengthens timing, focus, and perseverance through a fast-paced obstacle course that challenges players to learn from repeated attempts.<br>
-            <span class="coming-soon">Made by Derek Tsang on June 5, 2026.</span>
-           </p>
-        <a class="btn" href="./33Geometry">Play</a>
-      </div>
-
-      <div class="card special-touch">
-        <h2>34) Word Find</h2>
-           <p>Builds vocabulary, visual scanning, spelling, and pattern recognition as players search a 15 by 15 grid for 10 random science words in every direction.<br>
-            <span class="coming-soon"></span>
-           </p>
-        <a class="btn" href="./34WordFind">Play</a>
-      </div>
-
-      <div class="card">
-        <h2>35) Ramp Car</h2>
-           <p>Builds reaction speed, lane planning, focus, and persistence as players dodge police cars, hit ramps, and survive a fast city freeway chase.<br>
-            <span class="coming-soon"></span>
-           </p>
-        <a class="btn" href="./35RampCar">Play</a>
-      </div>
-
-      <div class="card">
-        <h2>36) In Progress</h2>
-           <p>.<br>
-            <span class="coming-soon"></span>
-           </p>
-        <a class="btn disabled" href="./">Play</a>
-      </div>
-      
-      <div class="card">
-        <h2>98) Ranking 🪜</h2>
-        <p>Wanna see where you are? <br> Click to find!<br>
-        </p>
-        <a class="btn" id="ranking" href="./rank">🪜 See Ranking!</a>
-      </div>
-      
-      <div class="card">
-        <h2>99) Leave Comments</h2>
-        <p>Have any praise or suggestions? Leave a feedback right here!<br>
-        </p>
-        <a class="btn" href="./feedback">😄 Feedback!</a>
-      </div>
-       
-      <div class="card">
-        <h2>100) Science Class is Fun 🎲</h2>
-        <p>Feeling lucky? Click Play and get teleported to a random puzzle — a surprise challenge awaits!<br>
-        </p>
-        <a class="btn" id="randomBtn" href="#">🎲 Surprise Me!</a>
-      </div>
-      
-    </div>
-    </div>
-
-    <footer class="site-footer">
-      © 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528. <br>
-      Made by the science and STEAM teacher Chao Yu. For educational purposes only. All rights reserved.
-    </footer>
-  </div>
+  <main class="wrap">
+    <header>
+      <h1>Happy Hub</h1>
+      <p class="sub">A crate full of STEAM games, puzzles, brain-benders, and student-made challenges.</p>
+      <div class="manifest"><span><strong>Cargo:</strong> 35 playable activities</span><span><strong>Status:</strong> open for class</span><span><strong>Handling:</strong> tap a tile to play</span></div>
+    </header>
+    <div id="sections"></div>
+    <section class="utility-panel" aria-label="Hub actions">
+      <a class="utility-card" href="./rank"><strong>See Ranking</strong><span>Find class scores and leaderboard results.</span></a>
+      <a class="utility-card" href="./feedback"><strong>Feedback</strong><span>Leave praise, bugs, or new game ideas.</span></a>
+      <a class="utility-card" id="randomBtn" href="#"><strong>Surprise Me</strong><span>Jump to a random puzzle.</span></a>
+    </section>
+    <footer>&copy; 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528.<br>Made by the science and STEAM teacher Chao Yu. For educational purposes only. All rights reserved.</footer>
+  </main>
   <script>
-    // Prevent page jump for disabled "Play" buttons.
-    document.addEventListener('click', (e) => {
-      const a = e.target.closest('a.btn.disabled');
-      if (!a) return;
-      e.preventDefault();
-    });
-
-    // ── Random puzzle jump for card 19 ──
-    const PUZZLE_URLS = [
-      'https://containertcg.com/puzzle/1NumGuess/',
-      'https://containertcg.com/puzzle/2SlidingPuzzle/',
-      'https://containertcg.com/puzzle/3HitTarget/',
-      'https://containertcg.com/puzzle/4WordGuess/',
-      'https://containertcg.com/puzzle/5SnakeRun/',
-      'https://containertcg.com/puzzle/6IntlChess/',
-      'https://containertcg.com/puzzle/7FishCatching/',
-      'https://containertcg.com/puzzle/8FlappyBird/',
-      'https://containertcg.com/puzzle/9Cooking/',
-      'https://containertcg.com/puzzle/10CountSeconds/',
-      'https://containertcg.com/puzzle/11MemoryMatch/',
-      'https://containertcg.com/puzzle/12Checkers/',
-      'https://containertcg.com/puzzle/13WordGuess6/',
-      'https://containertcg.com/puzzle/14MathSpeed/',
-      'https://containertcg.com/puzzle/15FindDifference/',
-      'https://containertcg.com/puzzle/16WordGuess7/',
-      'https://containertcg.com/puzzle/17Pipes/',
-      'https://containertcg.com/puzzle/18Uno/',
-      'https://containertcg.com/puzzle/19FlowFree/',
-      'https://containertcg.com/puzzle/20FigtTheLandlord/',
-      'https://containertcg.com/puzzle/21GuessTheAnimal/',
-      'https://containertcg.com/puzzle/22Trivia',
-      'https://containertcg.com/puzzle/23SideFinishRun',
-      'https://containertcg.com/puzzle/24PiecePuzzle',
-      'https://containertcg.com/puzzle/25BrickBreaker',
-      'https://containertcg.com/puzzle/26ColorLink',
+    const sections = [
+      {cls:"cat-word", tag:"Words & Knowledge", title:"Letters, clues, and facts", games:[
+        ["04","Word Guess 5","Use feedback and pattern recognition to find the hidden five-letter word.","./4WordGuess","Most Played"],
+        ["13","Word Guess 6","Analyze letter clues and test smarter guesses with a longer word.","./13WordGuess6"],
+        ["16","Word Guess 7","Stretch vocabulary and data-driven thinking with seven-letter challenges.","./16WordGuess7"],
+        ["22","Science Quizzes","Race through life science, earth science, physics, and chemistry questions.","./22Trivia"],
+        ["28","Art Quizzes","Connect art literacy with science concepts in a fast quiz format.","./28ArtQuizzes"],
+        ["29","Crossword","Solve science clues through careful recall and vocabulary connections.","./29CrossWord"],
+        ["34","Word Find","Scan a 15 by 15 grid for hidden science words in every direction.","./34WordFind","Special Touch"]
+      ]},
+      {cls:"cat-puzzle", tag:"Puzzle Lab", title:"Logic, space, and systems", games:[
+        ["01","Number Guess","Use patterns and feedback to find the mystery number.","./1NumGuess"],
+        ["02","Sliding Puzzle","Build spatial reasoning and algorithmic thinking one move at a time.","./2SlidingPuzzle"],
+        ["11","Memory Match","Match hidden pairs while training visual recall and concentration.","./11MemoryMatch"],
+        ["17","Pipes","Trace paths and connect networks like an engineer following a circuit.","./17Pipes"],
+        ["19","Flow Free","Connect matching colors while planning routes through the whole board.","./19FlowFree"],
+        ["24","Pieces Puzzle","Rebuild images with visual perception, sequencing, and patience.","./24PiecePuzzle","Special Touch"],
+        ["26","Color Link","Match color names and tiles through fast concentration rounds.","./26ColorLink"]
+      ]},
+      {cls:"cat-reflex", tag:"Motion & Reflex", title:"Timing, aim, and quick eyes", games:[
+        ["03","Hit the Target","Experiment with motion, angles, and accuracy under pressure.","./3HitTarget"],
+        ["05","Snake Run","Connect coding logic with reaction-time decisions in real time.","./5SnakeRun"],
+        ["07","Fish Catching","Use timing, estimation, and probability to catch the right targets.","./7FishCatching/"],
+        ["08","Flappy Bird","Feel gravity, iteration, and control through a quick arcade challenge.","./8FlappyBird/"],
+        ["10","Count Seconds","Estimate time precisely and test your internal clock.","./10CountSeconds","Most Played"],
+        ["14","Math Speed","Practice fast arithmetic and mental agility through quick problem solving.","./14MathSpeed"],
+        ["15","Find Difference","Spot the odd character through sharp observation and visual scanning.","./15FindDifference"],
+        ["23","Side Finish Run","Coordinate jumps, collect coins, and race toward the finish.","./23SideFinishRun"],
+        ["25","Brick Breaker","Clear bricks with timing accuracy, persistence, and rapid tracking.","./25BrickBreaker"],
+        ["27","Ladder Climb","Predict safe steps and adapt quickly as the climb gets trickier.","./29LadderClimb"],
+        ["30","Dog & Cat","Practice timing, focus, and quick choices in a fast challenge.","./30DogCat"],
+        ["31","Blocks","Build focus and perseverance through falling-block decisions.","./31Tetris"],
+        ["33","Geometry Dash","Learn timing and persistence through a fast obstacle course.","./33Geometry","Student Made"],
+        ["35","Ramp Car","Dodge traffic, hit ramps, and survive a freeway chase.","./35RampCar"]
+      ]},
+      {cls:"cat-strategy", tag:"Strategy & Create", title:"Plans, choices, and imagination", games:[
+        ["06","Chess","Practice strategic planning, systems thinking, and decision-making.","./6IntlChess"],
+        ["09","Cooking","Use creativity and design thinking through visual food creation.","./9Cooking"],
+        ["12","Checkers","Plan moves, watch patterns, and think a few steps ahead.","./12Checker"],
+        ["18","Uno","Match colors and numbers while anticipating opponents' moves.","./18Uno"],
+        ["20","Fight the Landlord","Read card patterns, make plans, and react to changing hands.","./20FightTheLandlord"],
+        ["21","Guess the Animal","Use clues and partial information to identify the mystery animal.","./21GuessTheAnimal"],
+        ["32","Role Play","Sneak, collect items, avoid detection, and complete the mission.","./32RolePlay"],
+        ["36","Wait for Ideas","A future slot for the next student suggestion or class experiment.","./",null,true]
+      ]}
     ];
 
-    document.getElementById('randomBtn').addEventListener('click', (e) => {
-      e.preventDefault();
-      const url = PUZZLE_URLS[Math.floor(Math.random() * PUZZLE_URLS.length)];
-      window.location.href = url;
+    const sectionsEl = document.getElementById("sections");
+    const tileHtml = ([num, name, desc, href, label, disabled]) => {
+      const classes = ["tile", label ? "featured" : "", disabled ? "disabled" : ""].filter(Boolean).join(" ");
+      const labelAttr = label ? ` data-label="${label}"` : "";
+      const action = disabled ? "Coming Soon" : "Play";
+      return `<a class="${classes}"${labelAttr} href="${href}"><div class="tile-inner"><span class="tile-number">Game ${num}</span><h3>${name}</h3><p>${desc}</p><span class="play">${action}</span></div></a>`;
+    };
+
+    sectionsEl.innerHTML = sections.map((section) => `
+      <section class="category ${section.cls}">
+        <div class="category-head"><span class="tag">${section.tag}</span><h2>${section.title}</h2></div>
+        <div class="grid">${section.games.map(tileHtml).join("")}</div>
+      </section>
+    `).join("");
+
+    document.addEventListener("click", (event) => {
+      const disabledLink = event.target.closest("a.disabled");
+      if (!disabledLink) return;
+      event.preventDefault();
+    });
+
+    const puzzleUrls = sections.flatMap((section) => section.games).filter((game) => !game[5]).map((game) => game[3]);
+    document.getElementById("randomBtn").addEventListener("click", (event) => {
+      event.preventDefault();
+      window.location.href = puzzleUrls[Math.floor(Math.random() * puzzleUrls.length)];
     });
   </script>
-
 </body>
 </html>
+

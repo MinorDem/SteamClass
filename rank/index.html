@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>🏆 Ranking</title>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@400;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet"/>
   <style>
     :root {
       --bg:#fffde7; --panel:#fffacd; --border:#e8d96a;
@@ -33,15 +33,17 @@
     tbody tr:hover td{background:#fef9c3!important;}
     td{padding:7px 10px;text-align:center;border-right:1px solid var(--border);white-space:nowrap;}
     td.sticky{border-right:2px solid var(--border);}
-    .rank{font-family:'Press Start 2P',monospace;font-size:9px;}
+    /* Numbers use Nunito with tabular figures so 0 and 8 are clearly distinct (was Press Start 2P / Rajdhani). */
+    td .rank,td.total,td .w0,td .w-lo,td .w-md,td .w-hi,td .w-top,.rank,.total,.w0,.w-lo,.w-md,.w-hi,.w-top{font-family:'Nunito',sans-serif;font-variant-numeric:tabular-nums;}
+    .rank{font-size:13px;font-weight:800;}
     .r1{color:#b8860b;}.r2{color:#5a6672;}.r3{color:#a0622a;}.r-else{color:var(--dim);}
     .pname{font-weight:700;font-size:14px;letter-spacing:.5px;}
-    .total{color:var(--pink);font-weight:700;font-size:15px;}
-    .w0{color:#ccc89a;font-size:11px;}
+    .total{color:var(--pink);font-weight:800;font-size:15px;}
+    .w0{color:#8a8459;font-size:11px;}
     .w-lo{color:var(--dim);}
     .w-md{color:var(--accent);font-weight:600;}
     .w-hi{color:var(--green);font-weight:700;}
-    .w-top{color:var(--gold);font-weight:700;font-size:15px;}
+    .w-top{color:var(--gold);font-weight:800;font-size:15px;}
     .sum-row td{background:#fff3b0!important;border-bottom:2px solid var(--gold);font-weight:800;}
     .sum-row .sticky{background:#fff3b0!important;}
     .sum-row .sum-label{color:var(--purple);letter-spacing:1px;}
@@ -51,7 +53,7 @@
   </style>
 </head>
 <body>
-<a class="back" href="/puzzle">← Back to Puzzle Home</a>
+<a class="back" href="../">← Back to Puzzle Home</a>
 <h1>🏆 ALL PUZZLE RANK</h1>
 <p class="subtitle"> All Players</p>
 <p class="status" id="status">Loading…</p>

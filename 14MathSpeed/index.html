@@ -203,6 +203,7 @@
 
     footer { position:fixed; bottom:0; left:0; width:100%; background:rgba(255,249,240,0.95); backdrop-filter:blur(4px); text-align:center; padding:8px 0; font-size:13px; color:var(--muted); border-top:1px solid var(--border); }
   </style>
+  <link rel="stylesheet" href="../sharedStyle/game-shell.css" data-shared-game-shell>
 </head>
 <body>
   <header class="back-header">
@@ -485,6 +486,7 @@
     document.getElementById("dialogName").addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById("dialogSubmit").click(); });
 
     // Leaderboard
+    const escName=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
     async function loadBoard(lv,listId){
       const list=document.getElementById(listId);
       try{
@@ -492,7 +494,7 @@
         const d=await r.json();
         const rows=Array.isArray(d)?d:(d.rows||[]);
         list.innerHTML = rows.length
-          ? rows.map((r,i)=>`<li>#${i+1} ${r.player_name||'Unknown'} — ${Number(r.best_scores)||0} pts (${r.win_count||0} games)</li>`).join('')
+          ? rows.map((r,i)=>`<li>#${i+1} ${escName(r.player_name||'Unknown')} — ${Number(r.best_scores)||0} pts (${r.win_count||0} games)</li>`).join('')
           : '<li>No scores yet.</li>';
       }catch(e){ list.innerHTML='<li>Could not load.</li>'; }
     }
@@ -508,5 +510,6 @@
     © 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528. <br>
     The STEAM Teacher is Chao Yu. For educational purposes only. All rights reserved.
   </footer>
+  <script src="../sharedStyle/game-shell.js" defer data-shared-game-shell></script>
 </body>
 </html>

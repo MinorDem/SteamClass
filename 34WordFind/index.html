@@ -332,7 +332,8 @@
       border-bottom: 0;
     }
 
-    #nameDialog {
+    #nameDialog,
+    #customDialog {
       position: fixed;
       inset: 0;
       z-index: 100;
@@ -371,6 +372,19 @@
       border-radius: 8px;
       color: var(--ink);
       font: 800 15px Arial, Helvetica, sans-serif;
+    }
+
+    .dialog textarea {
+      width: 100%;
+      min-height: 180px;
+      resize: vertical;
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--ink);
+      font: 800 15px/1.4 Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
     }
 
     .dialog-actions {
@@ -467,6 +481,7 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="../sharedStyle/game-shell.css" data-shared-game-shell>
 </head>
 <body>
   <a class="back-home" href="../index.html">Back Home</a>
@@ -476,10 +491,10 @@
       <div class="topbar">
         <div>
           <h1>Word Find</h1>
-          <p class="sub">Find 10 science words in a 15 by 15 grid. Words can go across, down, or diagonally.</p>
+          <p class="sub">Find the hidden words in a 15 by 15 grid. Words can go across, down, or diagonally.</p>
         </div>
         <div class="stats" aria-label="Game stats">
-          <div class="pill">Found<span id="foundCount">0/10</span></div>
+          <div class="pill">Found<span id="foundCount">0/0</span></div>
           <div class="pill">Time<span id="timer">0:00</span></div>
         </div>
       </div>
@@ -493,9 +508,9 @@
       <h2>Words</h2>
       <div id="wordList" class="word-list"></div>
       <div class="actions">
-        <button id="newGameBtn" class="action" type="button">New Grid</button>
-        <button id="grade3Btn" class="action secondary" type="button">Grade 3</button>
-        <button id="grade45Btn" class="action secondary" type="button">Grade 4/5</button>
+        <button id="newGameBtn" class="action secondary" type="button">New</button>
+        <button id="week1Btn" class="action" type="button">Week 1</button>
+        <button id="customBtn" class="action secondary" type="button">Make Your Own</button>
       </div>
       <p id="message" class="message">Drag from the first letter to the last letter. A straight line is the secret.</p>
     </aside>
@@ -522,35 +537,35 @@
     </div>
   </div>
 
+  <div id="customDialog">
+    <div class="dialog">
+      <h3>Customize Words</h3>
+      <p>Enter 3 to 10 words. Each word must use 3 to 10 letters.</p>
+      <textarea id="customWords" placeholder="Summer&#10;Camp&#10;is&#10;Fun" maxlength="140" spellcheck="false"></textarea>
+      <div class="dialog-actions">
+        <button id="cancelCustom" type="button">Cancel</button>
+        <button id="submitCustom" class="primary" type="button">Start</button>
+      </div>
+      <div id="customStatus" class="dialog-status"></div>
+    </div>
+  </div>
+
   <footer class="site-footnote">Copyright 2026 Yinghua International School. <br> Made by Science and STEAM Teacher Chao Yu. For educational purposes only.</footer>
 
   <script>
     const GAME_ID = "word_find";
     const SIZE = 15;
     const WORD_COUNT = 10;
-    const GRADE_3_WORDS = [
-      "Connor",
-      "Amara",
-      "Adriana",
-      "Bennett",
-      "Miriam",
-      "Jasper",
-      "Xander",
-      "William",
-      "Blake",
-      "Anaiah"
-    ];
-    const GRADE_45_WORDS = [
-      "Emma",
-      "Aedan",
-      "Aiden",
-      "Trevor",
-      "Alexandra",
-      "Patrick",
-      "Maxence",
-      "Derek",
-      "Connor",
-      "laoshi"
+    const WEEK_1_WORDS = [
+      "Chloe",
+      "Leia",
+      "Astrid",
+      "Ivy",
+      "Carter",
+      "Eleanor",
+      "Lucas",
+      "Caden",
+      "Emma"
     ];
     const SCIENCE_WORDS = [
       "ATOM",
@@ -652,8 +667,8 @@
     const timerEl = document.getElementById("timer");
     const messageEl = document.getElementById("message");
     const newGameBtn = document.getElementById("newGameBtn");
-    const grade3Btn = document.getElementById("grade3Btn");
-    const grade45Btn = document.getElementById("grade45Btn");
+    const week1Btn = document.getElementById("week1Btn");
+    const customBtn = document.getElementById("customBtn");
     const rankPreviewList = document.getElementById("rankPreviewList");
     const nameDialog = document.getElementById("nameDialog");
     const dialogPrompt = document.getElementById("dialogPrompt");
@@ -661,6 +676,11 @@
     const dialogStatus = document.getElementById("dialogStatus");
     const cancelName = document.getElementById("cancelName");
     const submitName = document.getElementById("submitName");
+    const customDialog = document.getElementById("customDialog");
+    const customWords = document.getElementById("customWords");
+    const customStatus = document.getElementById("customStatus");
+    const cancelCustom = document.getElementById("cancelCustom");
+    const submitCustom = document.getElementById("submitCustom");
 
     let grid = [];
     let solutionCells = new Map();
@@ -700,6 +720,9 @@
       const normalized = normalizeWords(activeWordBank);
       if (activeWordMode === "science") {
         return shuffle(normalized).slice(0, WORD_COUNT);
+      }
+      if (activeWordMode === "custom") {
+        return normalized.slice(0, WORD_COUNT);
       }
       return normalized.slice(0, WORD_COUNT).sort((a, b) => a.localeCompare(b));
     }
@@ -772,7 +795,7 @@
       updateTimer();
       render();
       loadRankPreview();
-      const modeText = mode === "grade3" ? "Grade 3 words loaded." : mode === "grade45" ? "Grade 4/5 words loaded." : "Random science words loaded.";
+      const modeText = mode === "week1" ? "Week 1 words loaded." : mode === "custom" ? "Custom words loaded." : "Random science words loaded.";
       setMessage(`${modeText} Drag from the first letter to the last letter.`);
     }
 
@@ -950,6 +973,7 @@
       if (gameOver) return;
       const hiddenWords = words.filter(word => !found.has(word));
       if (!hiddenWords.length) return;
+      revealed = true; // using the reveal trick blocks leaderboard submission (same as Reveal All)
       const word = hiddenWords[Math.floor(Math.random() * hiddenWords.length)];
       const path = solutionCells.get(word) || [];
       found.add(word);
@@ -973,7 +997,7 @@
       gameOver = true;
       updateTimer();
       clearInterval(timerId);
-      setMessage(`<strong>All 10 words found!</strong> Final time: ${timerEl.textContent}.`);
+      setMessage(`<strong>All ${words.length} words found!</strong> Final time: ${timerEl.textContent}.`);
       if (!submitted && !revealed) {
         submitted = true;
         openWinDialog();
@@ -1002,7 +1026,7 @@
     async function loadRankPreview() {
       rankPreviewList.innerHTML = "<li>Loading...</li>";
       try {
-        const res = await fetch(`/api/leaderboard?game=${encodeURIComponent(GAME_ID)}&limit=10`, { cache: "no-store" });
+        const res = await fetch(`/api/leaderboard?game=${encodeURIComponent(GAME_ID)}&limit=20`, { cache: "no-store" });
         const data = await res.json();
         const rows = Array.isArray(data) ? data : (data.rows || []);
         rankPreviewList.innerHTML = "";
@@ -1043,6 +1067,32 @@
       nameDialog.style.display = "none";
     }
 
+    function parseCustomWords(value) {
+      const seen = new Set();
+      return value
+        .split(/[\s,]+/)
+        .map(word => word.replace(/[^a-z]/gi, "").slice(0, 10))
+        .filter(word => word.length >= 3)
+        .filter(word => {
+          const key = word.toUpperCase();
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .slice(0, WORD_COUNT);
+    }
+
+    function openCustomDialog() {
+      customWords.value = localStorage.getItem("wordFindCustomWords") || "";
+      customStatus.textContent = "";
+      customDialog.style.display = "flex";
+      setTimeout(() => customWords.focus(), 50);
+    }
+
+    function closeCustomDialog() {
+      customDialog.style.display = "none";
+    }
+
     cancelName.addEventListener("click", closeWinDialog);
     submitName.addEventListener("click", async () => {
       const name = dialogName.value.trim();
@@ -1063,18 +1113,43 @@
       submitName.disabled = false;
     });
 
+    customBtn.addEventListener("click", openCustomDialog);
+    cancelCustom.addEventListener("click", closeCustomDialog);
+    submitCustom.addEventListener("click", () => {
+      const customList = parseCustomWords(customWords.value);
+      if (customList.length < 3) {
+        customStatus.textContent = "Enter at least 3 words with 3 or more letters.";
+        return;
+      }
+      localStorage.setItem("wordFindCustomWords", customList.join("\n"));
+      closeCustomDialog();
+      buildPuzzle(customList, "custom");
+    });
+
     document.addEventListener("keydown", event => {
-      if (event.key === "Escape") closeWinDialog();
+      if (event.key === "Escape") {
+        closeWinDialog();
+        closeCustomDialog();
+      }
       if (event.key === "Enter" && nameDialog.style.display === "flex") {
         submitName.click();
       }
-      if (event.key.length === 1 && nameDialog.style.display !== "flex") {
+      if (event.key.length === 1 && nameDialog.style.display !== "flex" && customDialog.style.display !== "flex") {
         keyTrickBuffer = (keyTrickBuffer + event.key.toLowerCase()).slice(-3);
         if (keyTrickBuffer === "cmd") {
           keyTrickBuffer = "";
           revealOneHiddenWord();
         }
       }
+    });
+
+    document.querySelectorAll("button").forEach(button => {
+      button.addEventListener("keydown", event => {
+        if (event.code === "Space") event.preventDefault();
+      });
+      button.addEventListener("keyup", event => {
+        if (event.code === "Space") event.preventDefault();
+      });
     });
 
     boardEl.addEventListener("pointerdown", event => {
@@ -1113,10 +1188,10 @@
     });
 
     newGameBtn.addEventListener("click", () => buildPuzzle(SCIENCE_WORDS, "science"));
-    grade3Btn.addEventListener("click", () => buildPuzzle(GRADE_3_WORDS, "grade3"));
-    grade45Btn.addEventListener("click", () => buildPuzzle(GRADE_45_WORDS, "grade45"));
+    week1Btn.addEventListener("click", () => buildPuzzle(WEEK_1_WORDS, "week1"));
 
-    buildPuzzle();
+    buildPuzzle(WEEK_1_WORDS, "week1");
   </script>
+  <script src="../sharedStyle/game-shell.js" defer data-shared-game-shell></script>
 </body>
 </html>

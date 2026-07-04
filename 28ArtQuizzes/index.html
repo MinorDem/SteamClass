@@ -221,6 +221,7 @@ select{
 
 footer{position:fixed;bottom:0;left:0;width:100%;background:rgba(253,246,227,.95);border-top:1px solid rgba(201,146,42,.25);text-align:center;padding:7px;font-size:11px;color:#9a8060;font-style:italic}
 </style>
+  <link rel="stylesheet" href="../sharedStyle/game-shell.css" data-shared-game-shell>
 </head>
 <body>
 <div class="wrap">
@@ -589,8 +590,9 @@ async function loadRankList(diff){
     el.innerHTML='';
     if(!rows.length){el.innerHTML='<div class="lb-empty">No scores yet</div>';return;}
     const medals=['🥇','🥈','🥉','',''];
+    const escName=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
     rows.forEach((r,i)=>{
-      const name=r.player_name??r.playerName??'Unknown';
+      const name=escName(r.player_name??r.playerName??'Unknown');
       const pts=r.best_scores??r.score??0;
       el.innerHTML+=`<span class="lb-rank">#${i+1}</span><span class="lb-medal">${medals[i]||''}</span><span class="lb-name">${name}</span><span class="lb-pts">${pts}pts</span>`;
     });
@@ -603,5 +605,6 @@ $('newBtn').onclick=newGame;
 $('playAgainBtn').onclick=newGame;
 loadAllRanks();
 </script>
+  <script src="../sharedStyle/game-shell.js" defer data-shared-game-shell></script>
 </body>
 </html>

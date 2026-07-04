@@ -208,6 +208,7 @@
       border-top: 1px solid #ccc;
     }
   </style>
+  <link rel="stylesheet" href="../sharedStyle/game-shell.css" data-shared-game-shell>
 </head>
 <body>
   <header class="back-header">
@@ -309,6 +310,7 @@
     let minRange = 1;
     let maxRange = maxValue;
     let gameWon = false;
+    let _cheated = false; // set when the reveal hint is used; blocks leaderboard submission
 
     const rangeText = document.getElementById("rangeText");
     const guessInput = document.getElementById("guessInput");
@@ -356,6 +358,7 @@
     }
 
     async function submitWin(playerName, attemptsCount){
+      if (_cheated) return false; // no leaderboard entry after using the reveal hint
       try {
         const res = await fetch("/api/score", {
           method: "POST",
@@ -394,6 +397,7 @@
 
       // Secret hint: enter 1000000007 to reveal the target (does NOT count as an attempt)
       if (raw === "1000000007") {
+        _cheated = true; // block leaderboard submission after revealing the target
         if (revealEl) {
           revealEl.style.display = "block";
           revealEl.textContent = `🔎 Hint: The target number is ${formatNum(target)}.`;
@@ -439,6 +443,7 @@
       minRange = 1;
       maxRange = maxValue;
       gameWon = false;
+      _cheated = false;
 
       updateRangeUI();
       updateStats();
@@ -539,5 +544,6 @@
     © 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528. <br>
     The STEAM Teacher is Chao Yu. For educational purposes only. All rights reserved.
   </footer>
+  <script src="../sharedStyle/game-shell.js" defer data-shared-game-shell></script>
 </body>
 </html>

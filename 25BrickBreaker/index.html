@@ -20,7 +20,9 @@ button{cursor:pointer}.primary{background:var(--accent);color:#fff;border-color:
 .msg.ok{color:var(--ok);font-weight:900}.msg.bad{color:var(--bad);font-weight:900}
 footer{position:fixed;bottom:0;left:0;width:100%;background:rgba(255,255,255,.95);border-top:1px solid var(--line);text-align:center;padding:7px;font-size:12px;color:var(--muted)}
 @media(max-width:850px){.layout{grid-template-columns:1fr}.rank-sidebar{position:static}}
-</style></head><body>
+</style>
+  <link rel="stylesheet" href="../sharedStyle/game-shell.css" data-shared-game-shell>
+</head><body>
 <header class="back-header"><a class="back-link" href="/puzzle">← Back to Puzzle Home</a></header>
 <div class="page"><div class="layout"><main><section class="card">
 <h1>🧱 Brick Breaker</h1><div class="sub">Break a larger wall of bricks as quickly as possible. Hard mode has many more bricks.</div>
@@ -40,7 +42,7 @@ let difficulty='easy',seconds=0,timer=null,gameOver=false,submitted=false;
 function gameId(diff=difficulty){return `${BASE_GAME_ID}_${diff}`;}
 function startTimer(){if(timer)return;timer=setInterval(()=>{seconds++;el('timeEl').textContent=seconds},1000)}
 function stopTimer(){clearInterval(timer);timer=null}
-function resetBase(){difficulty=el('diffSelect').value;seconds=0;gameOver=false;submitted=false;stopTimer();startTimer();el('timeEl').textContent='0';el('msg').textContent='';el('msg').className='msg';loadAllRanks()}
+function resetBase(){difficulty=el('diffSelect').value;seconds=0;gameOver=false;submitted=false;stopTimer();el('timeEl').textContent='0';el('msg').textContent='';el('msg').className='msg';loadAllRanks()}
 function winGame(){if(gameOver)return;gameOver=true;stopTimer();el('msg').textContent=`Completed in ${seconds}s!`;el('msg').className='msg ok';if(!submitted){submitted=true;openWinDialog()}}
 async function submitScore(name){try{const res=await fetch('/api/score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:gameId(),player_name:name.trim().slice(0,40),seconds})});if(!res.ok)return false;const data=await res.json().catch(()=>({}));return data.ok===true}catch{return false}}
 async function loadRankList(diff){const list=el(`rank${diff[0].toUpperCase()+diff.slice(1)}`);try{const res=await fetch(`/api/leaderboard?game=${encodeURIComponent(gameId(diff))}&limit=5`,{cache:'no-store'});const data=await res.json();const rows=Array.isArray(data)?data:(data.rows||[]);list.innerHTML='';if(!rows.length){list.innerHTML='<li>No scores yet.</li>';return}rows.forEach((r,i)=>{const name=r.player_name??r.playerName??'Unknown';const wins=r.win_count??r.wins??r.winCount??0;const best=r.best_seconds??r.bestSeconds??null;const li=document.createElement('li');li.textContent=`#${i+1} ${name} — ${wins}W`+(best!=null?` — Best: ${best}s`:'');list.appendChild(li)})}catch{list.innerHTML='<li>Could not load.</li>'}}
@@ -50,5 +52,7 @@ function closeWinDialog(){el('nameDialog').style.display='none'}
 function wireDialog(){el('cancelName').onclick=closeWinDialog;el('submitName').onclick=async()=>{const name=el('dialogName').value.trim();if(!name){el('dialogStatus').textContent='Name is required.';return}el('submitName').disabled=true;el('dialogStatus').textContent='Saving…';const ok=await submitScore(name);if(ok){closeWinDialog();loadAllRanks()}else el('dialogStatus').textContent='Could not save.';el('submitName').disabled=false}}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeWinDialog();if(e.key==='Enter'&&el('nameDialog').style.display==='flex')el('submitName').click()});
 let left=0;
-function newGame(){resetBase();left={easy:24,medium:48,hard:80}[difficulty];el('extraStat').textContent=`Bricks left: ${left}`;let cols={easy:6,medium:8,hard:10}[difficulty];el('gameArea').innerHTML=`<div class="grid" id="bricks" style="grid-template-columns:repeat(${cols},60px)"></div>`;for(let i=0;i<left;i++){let b=document.createElement('button');b.className='tile';b.style.width='48px';b.style.height='30px';b.textContent='🧱';b.onclick=()=>{if(b.disabled||gameOver)return;b.disabled=true;b.style.visibility='hidden';left--;el('extraStat').textContent=`Bricks left: ${left}`;if(left===0)winGame()};el('bricks').appendChild(b)}}
-wireDialog();el('newBtn').onclick=newGame;el('diffSelect').onchange=newGame;newGame();</script></body></html>
+function newGame(){resetBase();left={easy:24,medium:48,hard:80}[difficulty];el('extraStat').textContent=`Bricks left: ${left}`;let cols={easy:6,medium:8,hard:10}[difficulty];el('gameArea').innerHTML=`<div class="grid" id="bricks" style="grid-template-columns:repeat(${cols},60px)"></div>`;for(let i=0;i<left;i++){let b=document.createElement('button');b.className='tile';b.style.width='48px';b.style.height='30px';b.textContent='🧱';b.onclick=()=>{if(b.disabled||gameOver)return;startTimer();b.disabled=true;b.style.visibility='hidden';left--;el('extraStat').textContent=`Bricks left: ${left}`;if(left===0)winGame()};el('bricks').appendChild(b)}}
+wireDialog();el('newBtn').onclick=newGame;el('diffSelect').onchange=newGame;newGame();</script>
+  <script src="../sharedStyle/game-shell.js" defer data-shared-game-shell></script>
+</body></html>

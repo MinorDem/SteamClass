@@ -154,6 +154,7 @@
       border-top: 1px solid #ccc;
     }
   </style>
+  <link rel="stylesheet" href="../sharedStyle/game-shell.css" data-shared-game-shell>
 </head>
 <body>
   <header class="back-header">
@@ -230,10 +231,12 @@
 
     async function submitScore(playerName, seconds, diff){
       try{
+        // Survival game: longer is better, so store survival time in best_scores
+        // (higher-is-better), matching Snake Run. Do NOT use best_seconds (lower-is-better).
         await fetch("/api/score", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ game: gameIdFor(diff), player_name: playerName, seconds })
+          body: JSON.stringify({ game: gameIdFor(diff), player_name: playerName, best_scores: Math.max(0, Math.floor(seconds)) })
         });
         return true;
       }catch(e){ return false; }
@@ -248,12 +251,15 @@
         const rows = Array.isArray(data) ? data : (data.rows || []);
         list.innerHTML = "";
         if(!rows.length){ list.innerHTML = "<li>No scores yet.</li>"; return; }
-        rows.forEach((r,i)=>{
-          const name = r.player_name ?? r.playerName ?? "Unknown";
-          const wins = r.win_count ?? r.wins ?? r.winCount ?? 0;
-          const best = r.best_seconds ?? r.bestSeconds ?? null;
+        // Rank client-side: wins DESC, then best survival time (best_scores) DESC.
+        const norm = rows.map(r => ({
+          name: (r.player_name ?? r.playerName ?? "Unknown").toString(),
+          wins: Number(r.win_count ?? r.wins ?? r.winCount ?? 0) || 0,
+          best: Number(r.best_scores ?? r.bestScores ?? r.bestScore ?? r.score ?? 0) || 0
+        })).sort((a,b)=>(b.wins-a.wins)||(b.best-a.best));
+        norm.forEach((r,i)=>{
           const li = document.createElement("li");
-          li.textContent = `#${i+1} ${name} — Wins: ${wins}` + (best != null ? ` — Best: ${best}s` : "");
+          li.textContent = `#${i+1} ${r.name} — Wins: ${r.wins} — Best: ${r.best}s`;
           list.appendChild(li);
         });
       }catch(e){
@@ -625,5 +631,6 @@
     © 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528. <br>
     The STEAM Teacher is Chao Yu. For educational purposes only. All rights reserved.
   </footer>
+  <script src="../sharedStyle/game-shell.js" defer data-shared-game-shell></script>
 </body>
 </html>

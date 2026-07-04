@@ -568,7 +568,8 @@ async function loadFeed() {
     posts = Array.isArray(data) ? data : (Array.isArray(data?.rows) ? data.rows : []);
     renderFeed();
   } catch (e) {
-    feed.innerHTML = `<div class="empty">could not load posts — ${e.message}</div>`;
+    feed.innerHTML = '<div class="empty"></div>';
+    feed.firstChild.textContent = `could not load posts — ${e.message}`;
   }
 }
 

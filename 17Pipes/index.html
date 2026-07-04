@@ -111,7 +111,7 @@ button.primary:hover{background:#79b8ff;border-color:#79b8ff;}
   font-size:12px;font-weight:700;
   color:var(--muted);
 }
-.stat-val{color:var(--text);margin-left:4px;}
+.stat-val{color:var(--text);margin-left:4px;font-family:'Nunito','Segoe UI',sans-serif;font-variant-numeric:tabular-nums;font-weight:800;}
 .win-banner{
   color:var(--win);font-weight:700;font-size:13px;
   animation:glow .8s ease-in-out infinite alternate;
@@ -295,6 +295,7 @@ footer{
   :root{--tile:42px;--pipe-width:4px;}
 }
 </style>
+  <link rel="stylesheet" href="../sharedStyle/game-shell.css" data-shared-game-shell>
 </head>
 <body>
 
@@ -913,5 +914,6 @@ window.addEventListener('resize',()=>{ if(!solved) renderBoard(); });
 newGame();
 loadAllRanks();
 </script>
+  <script src="../sharedStyle/game-shell.js" defer data-shared-game-shell></script>
 </body>
 </html>

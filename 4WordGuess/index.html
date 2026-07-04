@@ -3,267 +3,70 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title> Word Guess (5 Letters)</title>
+  <title>Word Guess (5 Letters)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@500;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    body{
-      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      background:#fff;
-      margin:0;
-      padding:56px 24px 24px;
-      color:#111827;
-    }
-    .container{ max-width:1120px; margin:0 auto; }
-    h1{ margin:0 0 10px; }
-    .sub{ color:#374151; margin:0 0 16px; }
-
-    .controls{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-      margin: 12px 0 18px;
-    }
-    input[type="text"]{
-      width: 220px;
-      padding: 8px 10px;
-      font-size: 16px;
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
-      outline: none;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-    button{
-      padding: 8px 14px;
-      border: 1px solid #2563eb;
-      border-radius: 6px;
-      background:#2563eb;
-      color:#fff;
-      font-size: 14px;
-      cursor: pointer;
-    }
-    button.secondary{
-      background:#fff;
-      color:#2563eb;
-    }
-
-    .board{
-      display:grid;
-      grid-template-rows: repeat(6, 1fr);
-      gap:3px;
-      max-width: 360px;
-      margin: 10px 0 16px;
-    }
-    .row{
-      display:grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap:10px;
-    }
-    .cell{
-      width: 56px;
-      height: 56px;
-      border: 2px solid #d1d5db;
-      border-radius: 8px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-weight: 800;
-      font-size: 22px;
-      text-transform: uppercase;
-      user-select:none;
-    }
-
-    /* Colors */
-    .green { background:#22c55e; border-color:#22c55e; color:#fff; }
-    .yellow{ background:#eab308; border-color:#eab308; color:#fff; }
-    .black { background:#111827; border-color:#111827; color:#fff; }
-
-    .msg{ font-weight:700; min-height:22px; margin-top:8px; }
-    .hint{ color:#374151; font-size:14px; min-height:18px; }
-
-    .kbd {
-      margin-top: 18px;
-      max-width: 560px;
-    }
-
-    .kbd-row {
-      display: flex;
-      gap: 6px;
-      margin: 6px 0;
-    }
-
-    .key{
-      padding: 10px 10px;
-      border: 1px solid #d1d5db;
-      border-radius: 8px;
-      background:#f3f4f6;
-      font-weight:700;
-      cursor:pointer;
-      min-width: 34px;
-      text-align:center;
-    }
-    .key.green { background:#22c55e; border-color:#22c55e; color:#fff; }
-    .key.yellow{ background:#eab308; border-color:#eab308; color:#fff; }
-    .key.black { background:#111827; border-color:#111827; color:#fff; }
-
-    .small{ font-size:12px; color:#6b7280; margin-top:6px; }
-  
-    /* Back link (top-left) */
-    .back-header{
-      position: fixed;
-      top: 12px;
-      left: 12px;
-      z-index: 1000;
-    }
-    .back-link{
-      text-decoration:none;
-      color:#2563eb;
-      font-weight:700;
-      font-size:16px;
-    }
-
-  
-    .layout {
-      display: grid;
-      grid-template-columns: 1fr 320px;
-      gap: 16px;
-      align-items: start;
-    }
-    @media (max-width: 900px) {
-      .layout {
-        grid-template-columns: 1fr;
-      }
-      .rank-sidebar {
-        position: static;
-        order: 2;
-      }
-    }
-    .rank-sidebar {
-      position: sticky;
-      top: 72px;
-      max-height: calc(100vh - 96px);
-      overflow: auto;
-    }
-
-  
-    .layout {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 320px;
-      gap: 16px;
-      align-items: start;
-    }
-        .main-col > .container, .main-col .container {
-      margin: 0 auto; /* keep the game centered */
-      max-width: 720px;
-      width: 100%;
-    }
-    @media (max-width: 900px) {
-      .layout {
-        grid-template-columns: 1fr;
-      }
-      .rank-sidebar {
-        position: static;
-        order: 2;
-      }
-    }
-
-  
-    /* Layout: center game column, leaderboard on right */
-    .game-container{
-      max-width: 720px;
-      width: 100%;
-      margin: 0 auto;
-    }
-    .layout{
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 360px;
-      gap: 24px;
-      align-items: start;
-    }
-    .left-col{
-      display: flex;
-      justify-content: center;
-    }
-    .rank-sidebar{
-      position: sticky;
-      top: 72px;
-      max-height: calc(100vh - 96px);
-      overflow: auto;
-    }
-    @media (max-width: 980px){
-      .layout{ grid-template-columns: 1fr; }
-      .rank-sidebar{ position: static; max-height: none; }
-    }
-
+    :root{--board:#efe3c8;--kraft:#d9b27c;--ink:#2e2418;--soft:#6b5a44;--paper:#fffdf8;--tape:#f3ecd8;--word:#2a8c82;--puzzle:#7c5cb0;--reflex:#db7a34;--utility:#b23b3b;--green:#22c55e;--yellow:#eab308;--black:#1f2937;--line:rgba(46,36,24,.28);--shadow:rgba(46,36,24,.18)}
+    *{box-sizing:border-box}html,body{margin:0;min-height:100%}
+    body{background:repeating-linear-gradient(0deg,rgba(46,36,24,.025) 0,rgba(46,36,24,.025) 1px,transparent 1px,transparent 4px),var(--board);color:var(--ink);font-family:"Nunito",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:0}
+    .page{width:min(100%,1180px);margin:0 auto;padding:18px 16px 44px}.back-link{display:inline-flex;align-items:center;gap:8px;margin-bottom:16px;padding:9px 14px;border:2px solid var(--ink);border-radius:8px;background:var(--tape);box-shadow:3px 3px 0 var(--shadow);color:var(--ink);font-weight:900;text-decoration:none}.back-link:before{content:"<";font-family:"Space Mono",monospace}
+    .hero{position:relative;overflow:hidden;padding:clamp(22px,4vw,36px);border:3px solid var(--ink);border-radius:8px;background:var(--kraft);box-shadow:7px 7px 0 var(--shadow)}.hero:after{content:"";position:absolute;top:-8px;right:clamp(22px,6vw,70px);width:78px;height:34px;border:1px solid var(--line);background:rgba(243,236,216,.86);transform:rotate(4deg);box-shadow:0 3px 5px rgba(46,36,24,.12)}
+    h1{margin:0 0 6px;font-family:"Baloo 2",system-ui,sans-serif;font-size:clamp(38px,7vw,64px);line-height:.92;letter-spacing:0}.sub{max-width:740px;margin:0;color:var(--soft);font-size:clamp(15px,2vw,18px);font-weight:800;line-height:1.35}.manifest{display:flex;flex-wrap:wrap;gap:10px 14px;margin-top:18px;padding-top:16px;border-top:2px dashed rgba(46,36,24,.32)}.tag{display:inline-flex;align-items:center;min-height:31px;padding:5px 11px;border-radius:999px;background:var(--paper);color:var(--ink);font-family:"Space Mono",Consolas,monospace;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+    .layout{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:22px;align-items:start;margin-top:28px}.game-card,.rank-card{border:2px solid var(--ink);border-radius:8px;background:var(--paper);box-shadow:5px 5px 0 var(--shadow)}.game-card{padding:clamp(16px,3vw,24px)}.rank-card{position:sticky;top:16px;padding:18px;max-height:calc(100vh - 32px);overflow:auto}.rank-card h2{margin:0 0 8px;font-family:"Baloo 2",system-ui,sans-serif;font-size:26px;line-height:1}.rank-card p{margin:0 0 14px;color:var(--soft);font-weight:800;font-size:13px;line-height:1.35}.rank-card ol{margin:0;padding-left:24px}.rank-card li{margin:8px 0;color:var(--soft);font-weight:800;line-height:1.35}
+    .guide{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:18px}.guide-item{min-height:76px;padding:12px;border:2px dashed var(--line);border-radius:8px;background:var(--tape);font-weight:900}.guide-item strong{display:block;margin-bottom:4px;font-family:"Baloo 2",system-ui,sans-serif;font-size:20px;line-height:1}.guide-item span{display:block;color:var(--soft);font-size:13px;line-height:1.25}.guide-green strong{color:#15803d}.guide-yellow strong{color:#a16207}.guide-black strong{color:#111827}
+    .controls{display:grid;grid-template-columns:minmax(180px,260px) auto auto;gap:10px;align-items:stretch;justify-content:center;margin:16px 0 20px}input[type="text"]{width:100%;height:48px;padding:8px 12px;border:2px solid var(--ink);border-radius:8px;background:#fff;color:var(--ink);font-size:20px;font-weight:900;letter-spacing:.14em;text-align:center;text-transform:uppercase;outline:none;box-shadow:3px 3px 0 var(--shadow)}input[type="text"]:focus{outline:3px solid rgba(42,140,130,.28)}button{min-height:48px;padding:10px 16px;border:2px solid var(--ink);border-radius:8px;background:var(--word);box-shadow:3px 3px 0 var(--shadow);color:#fff;font-size:15px;font-weight:900;cursor:pointer}button.secondary{background:var(--tape);color:var(--ink)}button:active,.key:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--shadow)}
+    .board{display:grid;grid-template-rows:repeat(6,1fr);gap:8px;width:min(100%,350px);margin:8px auto 16px}.row{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.cell{aspect-ratio:1;width:100%;border:3px solid #d7c8aa;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;font-family:"Baloo 2",system-ui,sans-serif;font-weight:800;font-size:clamp(26px,7vw,38px);line-height:1;text-transform:uppercase;user-select:none;box-shadow:inset 0 -3px 0 rgba(46,36,24,.08)}.green{background:var(--green);border-color:#15803d;color:#fff}.yellow{background:var(--yellow);border-color:#a16207;color:#fff}.black{background:var(--black);border-color:#111827;color:#fff}
+    .msg{min-height:28px;margin-top:8px;text-align:center;font-family:"Baloo 2",system-ui,sans-serif;font-size:24px;font-weight:800;line-height:1.1}.hint{min-height:20px;color:var(--soft);text-align:center;font-weight:900}.kbd{max-width:650px;margin:18px auto 0}.kbd-row{display:flex;justify-content:center;gap:6px;margin:6px 0}.key{min-width:34px;min-height:42px;padding:10px 9px;border:2px solid var(--ink);border-radius:8px;background:var(--tape);box-shadow:2px 2px 0 var(--shadow);font-family:"Space Mono",Consolas,monospace;font-weight:700;text-align:center;cursor:pointer}.small{margin-top:10px;color:var(--soft);font-size:13px;font-weight:800;text-align:center}.hint-box{display:none;max-width:520px;margin:16px auto 0;padding:12px 14px;border:2px dashed var(--puzzle);border-radius:8px;background:#f6f0ff;color:var(--ink);font-weight:900;text-align:center}
+    footer{margin-top:28px;padding-top:18px;border-top:1px solid var(--line);color:var(--soft);font-family:"Space Mono",Consolas,monospace;font-size:11px;line-height:1.7;text-align:center}
+    @media (max-width:980px){.layout{grid-template-columns:1fr}.rank-card{position:static;max-height:none}.guide{grid-template-columns:1fr 1fr 1fr}}@media (max-width:640px){.page{padding:12px 10px 30px}.guide{grid-template-columns:1fr}.controls{grid-template-columns:1fr}.kbd{overflow-x:auto;padding-bottom:4px}.kbd-row{justify-content:flex-start}.key{min-width:32px}.rank-card,.game-card{box-shadow:4px 4px 0 var(--shadow)}}
   </style>
+  <link rel="stylesheet" href="../sharedStyle/game-shell.css" data-shared-game-shell>
 </head>
 <body>
   <canvas id="fwCanvas" style="position:fixed;inset:0;pointer-events:none;z-index:2000;"></canvas>
+  <main class="page">
+    <a class="back-link" href="/puzzle">Back to Happy Hub</a>
 
+    <section class="hero">
+      <h1>Guess the Word</h1>
+      <p class="sub">Crack the hidden 5-letter word in six tries. Use clues, try patterns, and keep your scientist brain curious.</p>
+      <div class="manifest">
+        <span class="tag">5 letters</span>
+        <span class="tag">6 tries</span>
+        <span class="tag">No login needed</span>
+      </div>
+    </section>
 
-  <header class="back-header">
-    <a class="back-link" href="/puzzle">← Back to Puzzle Home</a>
-  </header>
+    <div class="layout">
+      <section class="game-card" aria-label="Word Guess game">
+        <div class="guide" aria-label="Color guide">
+          <div class="guide-item guide-green"><strong>Green</strong><span>Right letter, right spot.</span></div>
+          <div class="guide-item guide-yellow"><strong>Yellow</strong><span>Right letter, new spot.</span></div>
+          <div class="guide-item guide-black"><strong>Black</strong><span>Not in this word.</span></div>
+        </div>
 
-  
-  <div class="layout">
-    <div class="left-col">
-      <div class="game-container">
+        <div class="controls">
+          <input id="guessInput" type="text" maxlength="5" placeholder="" autocomplete="off" aria-label="Type a five letter guess" />
+          <button id="submitBtn">Enter</button>
+          <button id="resetBtn" class="secondary">New Word</button>
+        </div>
 
-    <h1>Guess the Word (5 Letters)</h1>
-    <p class="sub">
-      Green = correct letter & correct position <br>
-      Yellow = correct letter but wrong position <br>
-      Black = not in the word
-    </p>
+        <div class="board" id="board" aria-label="Guess board"></div>
+        <div class="msg" id="msg" aria-live="polite"></div>
+        <div class="hint" id="hint"></div>
+        <div class="kbd" id="kbd" aria-label="On screen keyboard"></div>
+        <div class="small">Tip: You can type with your keyboard and press Enter.</div>
+        <div id="hintBox" class="hint-box">Hint: <strong id="hintText"></strong></div>
+      </section>
 
-    <div class="controls">
-      <input id="guessInput" type="text" maxlength="5" placeholder="Type 5 letters" autocomplete="off" />
-      <button id="submitBtn">Enter</button>
-      <button id="resetBtn" class="secondary">New Word</button>
+      <aside class="rank-card" id="rankPreview" aria-label="Leaderboard">
+        <h2>Leaderboard</h2>
+        <p>Wins and best times for Word Guess.</p>
+        <ol id="rankPreviewList"><li>Loading...</li></ol>
+      </aside>
     </div>
-
-    <div class="board" id="board"></div>
-
-    <div class="msg" id="msg"></div>
-    <div class="hint" id="hint"></div>
-
-    <div class="kbd" id="kbd"></div>
-    <div class="small">Tip: You can type with your keyboard and press Enter.</div>
-  
-    <div id="hintBox" style="
-      margin-top:16px;
-      padding:10px 12px;
-      border:1px dashed #c7d2fe;
-      border-radius:10px;
-      color:#1f2937;
-      display:none;
-      max-width:720px;
-    ">
-      🔎 Hint: <strong id="hintText"></strong>
-    </div>
-    </div>
-    </div>
-    <aside class="rank-sidebar">
-<div id="rankPreview" style="
-      margin-top:24px;
-      padding:12px 14px;
-      border:1px solid #e5e7eb;
-      border-radius:12px;
-      background:#fafafa;
-      max-width:720px;
-    ">
-      <h3 style="margin:0 0 8px;">🏆 Leaderboard</h3>
-      <ol id="rankPreviewList">
-        <li>Loading…</li>
-      </ol>
-      
-    </div>
-    </aside>
-  </div>
-
-  </div>
-
   <script>
     // Simple built-in word list (all 5 letters). Add your own!
     const WORDS = [
@@ -489,10 +292,10 @@
 
         const surpriseWords = new Set(["HAPPY","SCIEN","CLASS"]);
         if (surpriseWords.has(answer)) {
-          setMessage("🎉 You win!", "You found the surprise word. Go to the teacher and ask for a prize.");
+          setMessage("You win!", "You found the surprise word. Go to the teacher and ask for a prize.");
           celebrateSurpriseWord();
         } else {
-          setMessage("🎉 You win!", "Click “New Word” to play again.");
+          setMessage("You win!", "Click New Word to play again.");
         }
 
         // Prompt for name and submit score
@@ -517,7 +320,7 @@
       guessInput.value = "";
 
       if (rowIndex >= MAX_ROWS) {
-        setMessage(`Game over. The word was ${answer}.`, "Click “New Word” to try again.");
+        setMessage(`Game over. The word was ${answer}.`, "Click New Word to try again.");
         gameOver = true;
       } else {
         setMessage("Keep going!", `Attempts left: ${MAX_ROWS - rowIndex}`);
@@ -578,8 +381,10 @@
       }
     });
 
+    let _cheated = false; // set when the "cmd" reveal is used; blocks leaderboard submission
     function revealTwoLetters() {
       if (typeof answer !== "string" || answer.length < 2) return;
+      _cheated = true;
 
       const idx1 = Math.floor(Math.random() * answer.length);
       let idx2 = Math.floor(Math.random() * answer.length);
@@ -593,7 +398,7 @@
       const hintBox = document.getElementById("hintBox");
       const hintText = document.getElementById("hintText");
       if (hintBox && hintText) {
-        hintText.textContent = letters.join(" · ");
+        hintText.textContent = letters.join(" / ");
         hintBox.style.display = "block";
       }
     }
@@ -779,6 +584,7 @@
     }
 
     async function submitWinToDB(playerName, seconds) {
+      if (_cheated) return false; // no leaderboard entry after using the reveal cheat
       try {
         await fetch("/api/score", {
           method: "POST",
@@ -817,7 +623,7 @@
           const best = r.best_seconds ?? r.bestSeconds ?? null;
 
           const li = document.createElement("li");
-          li.textContent = ` ${name} — Wins: ${wins}` + (best != null ? ` — Best: ${best}s` : "");
+          li.textContent = ` ${name} - Wins: ${wins}` + (best != null ? ` - Best: ${best}s` : "");
           list.appendChild(li);
         });
       } catch (e) {
@@ -831,23 +637,8 @@
     resetGame();
     loadRankPreview();
   </script>
-
-  <!-- View Rank Page Button (bottom) -->
-
-  <footer style="
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background: #fafafa;
-        text-align: center;
-        padding: 8px 0;
-        font-size: 14px;
-        color: #555;
-        border-top: 1px solid #ccc;
-      ">
-        © 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528. <br>
-        The STEAM Teacher is Chao Yu. For educational purposes only. All rights reserved.
-    </footer>
+    <footer>&copy; 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528.<br>The STEAM Teacher is Chao Yu. For educational purposes only. All rights reserved.</footer>
+  </main>
+  <script src="../sharedStyle/game-shell.js" defer data-shared-game-shell></script>
 </body>
 </html>

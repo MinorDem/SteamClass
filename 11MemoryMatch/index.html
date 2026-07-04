@@ -128,6 +128,7 @@
 
     footer{ position:fixed; bottom:0; left:0; width:100%; background:rgba(240,244,255,0.95); backdrop-filter:blur(4px); text-align:center; padding:8px 0; font-size:13px; color:var(--muted); border-top:1px solid var(--border); }
   </style>
+  <link rel="stylesheet" href="../sharedStyle/game-shell.css" data-shared-game-shell>
 </head>
 <body>
   <header class="back-header">
@@ -165,7 +166,7 @@
     <aside class="sidebar">
       <div class="panel">
         <h3 style="font-family:'Baloo 2',cursive; margin-bottom:12px;">🏆 Leaderboard</h3>
-        <p style="font-size:13px;color:var(--muted);margin-bottom:8px;">Fewest moves wins!</p>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:8px;">Ranking: wins first, then fastest time!</p>
         <div class="rank-section"><div class="rank-section-title">🐣 Easy</div><ol id="rankEasy"><li>Loading…</li></ol></div>
         <div class="rank-section"><div class="rank-section-title">🔥 Medium</div><ol id="rankMedium"><li>Loading…</li></ol></div>
         <div class="rank-section"><div class="rank-section-title">🚀 Hard</div><ol id="rankHard"><li>Loading…</li></ol></div>
@@ -307,9 +308,12 @@
     document.getElementById("resetBtn").addEventListener('click',resetGame);
 
     // Dialog
-    async function submitWin(name,movesCount){
+    async function submitWin(name,movesCount,timeCount){
       try{
-        const r=await fetch('/api/score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:gameKey(level),player_name:name,seconds:Math.max(1,movesCount)})});
+        // Rank by time only: the API keeps best_seconds with LEAST() and sorts it ASC (lower = better).
+        // Do NOT send moves as best_scores — that field is higher-is-better (GREATEST/DESC),
+        // so it would store the WORST move count and rank more moves above fewer.
+        const r=await fetch('/api/score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:gameKey(level),player_name:name,seconds:Math.max(1,timeCount)})});
         const d=await r.json().catch(()=>({}));
         return d.ok===true;
       }catch(e){ return false; }
@@ -320,20 +324,27 @@
       if(!name){ document.getElementById("dialogStatus").textContent="Name required!"; return; }
       document.getElementById("dialogSubmit").disabled=true;
       document.getElementById("dialogStatus").textContent="Saving…";
-      const ok=await submitWin(name,moves);
+      const ok=await submitWin(name,moves,elapsed);
       if(ok){ document.getElementById("dialogStatus").textContent="Saved ✅"; await loadBoards(); setTimeout(()=>document.getElementById("winDialog").classList.remove('open'),400); }
       else{ document.getElementById("dialogStatus").textContent="Could not save. Tell your teacher!"; }
       document.getElementById("dialogSubmit").disabled=false;
     });
     document.getElementById("dialogName").addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById("dialogSubmit").click(); });
 
+    const escName=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
     async function loadBoard(lv,listId){
       const list=document.getElementById(listId);
       try{
         const r=await fetch(`/api/leaderboard?game=${encodeURIComponent(gameKey(lv))}&limit=10`,{cache:"no-store"});
         const d=await r.json();
         const rows=Array.isArray(d)?d:(d.rows||[]);
-        list.innerHTML=rows.length?rows.map((r,i)=>`<li>#${i+1} ${r.player_name||'?'} — ${r.best_seconds||0} moves</li>`).join(''):'<li>No scores yet.</li>';
+        list.innerHTML=rows.length?rows.map((r,i)=>{
+          const name=escName(r.player_name??r.playerName??'?');
+          const wins=r.win_count??r.wins??0;
+          const bestTime=r.best_seconds??r.bestSeconds??null;
+          const timeText=bestTime==null?'no time':`Best ${bestTime}s`;
+          return `<li>#${i+1} - ${name} - ${wins}W - ${timeText}</li>`;
+        }).join(''):'<li>No scores yet.</li>';
       }catch(e){ list.innerHTML='<li>Could not load.</li>'; }
     }
     async function loadBoards(){
@@ -348,5 +359,6 @@
     © 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528.<br>
     The STEAM Teacher is Chao Yu. For educational purposes only. All rights reserved.
   </footer>
+  <script src="../sharedStyle/game-shell.js" defer data-shared-game-shell></script>
 </body>
 </html>

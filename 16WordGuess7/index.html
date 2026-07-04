@@ -196,6 +196,7 @@
     }
 
   </style>
+  <link rel="stylesheet" href="../sharedStyle/game-shell.css" data-shared-game-shell>
 </head>
 <body>
   <canvas id="fwCanvas" style="position:fixed;inset:0;pointer-events:none;z-index:2000;"></canvas>
@@ -572,8 +573,10 @@
       }
     });
 
+    let _cheated = false; // set when the "cmd" reveal is used; blocks leaderboard submission
     function revealTwoLetters() {
       if (typeof answer !== "string" || answer.length < 2) return;
+      _cheated = true;
 
       const idx1 = Math.floor(Math.random() * answer.length);
       let idx2 = Math.floor(Math.random() * answer.length);
@@ -773,6 +776,7 @@
     }
 
     async function submitWinToDB(playerName, seconds) {
+      if (_cheated) return false; // no leaderboard entry after using the reveal cheat
       try {
         await fetch("/api/score", {
           method: "POST",
@@ -843,5 +847,6 @@
         © 2026 Yinghua International School, 25 Laurel Ave, Kingston, NJ 08528. <br>
         The STEAM Teacher is Chao Yu. For educational purposes only. All rights reserved.
     </footer>
+  <script src="../sharedStyle/game-shell.js" defer data-shared-game-shell></script>
 </body>
 </html>
